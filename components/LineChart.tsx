@@ -60,7 +60,7 @@ export default function LineChart({
       title: {
         display: true,
         text: title,
-        font: { size: 18, weight: 'bold' },
+        font: { size: 18, weight: 600 },
         padding: { bottom: 20 },
       },
       legend: {
@@ -88,7 +88,7 @@ export default function LineChart({
         title: {
           display: true,
           text: yAxisLabel,
-          font: { size: 13, weight: 'bold' },
+          font: { size: 13, weight: 600 },
         },
         ticks: {
           font: { size: 12 },
