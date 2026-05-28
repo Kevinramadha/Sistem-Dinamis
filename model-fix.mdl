@@ -1,0 +1,876 @@
+{UTF-8}
+Air Limbah Awal=1.48e+08
+	~	m³/tahun
+	~		|
+
+Akumulasi Polusi= INTEG (Produksi Air Limbah+Produksi Limbah Padat-Peluruhan Polusi Alami\
+		-Pengolahan Limbah,
+		0.174)
+	~	dimensionless
+	~		|
+
+Angkatan Kerja=Populasi Penduduk DIY * Labour Force Fraction
+	~	jiwa
+	~		|
+
+Area Destinasi Wisata=318.6
+	~	ha
+	~		|
+
+Carrying Capacity per ha=142.4
+	~	wisatawan/ha
+	~		|
+
+Clean Water from Rainfall=Jumlah Keluarga * Rainfall Collection per Household
+	~	m³/tahun
+	~		|
+
+Crowding Index=(Jumlah Wisatawan Nusantara + Jumlah Wisatawan Mancanegara) / (Area Destinasi Wisata\
+		 * Carrying Capacity per ha)
+	~	dimensionless
+	~		|
+
+Decay Rate=0.1
+	~	1/tahun
+	~	Laju Peluruhan
+	|
+
+Demolisi Akomodasi=Jumlah Unit Akomodasi / Umur Akomodasi Hotel Lifespan
+	~	Unit/tahun
+	~		|
+
+Effect of Crowding on Tourism=WITH LOOKUP(Crowding Index,
+	([(0,0)-(20000,1.5)],(0,0.8),(5000,1),(10000,0.95),(15000,0.85),(20000,0.8)))
+	~	dimensionless
+	~		|
+
+Effect of Labour Jobs on Immigration = WITH LOOKUP (Rasio Pengangguran,
+		([(0,0)-(25,1.5)],(0,0.8), (1,1), (5,1.2), (10,1.3), (15,1.3), (25,1.3)))
+	~	dimensionless
+	~		|
+
+Effect of Land Availability on Construction=WITH LOOKUP(Land Used Fraction,
+	([(0,0)-(1,1)],(0,1),(0.2,0.95),(0.4,0.85),
+	(0.6,0.7),(0.8,0.55),(0.9,0.5),(1,0.5)))
+	~	dimensionless
+	~		|
+
+Effect of Natural Beauty on Tourism = WITH LOOKUP (Natural Beauty Index,
+		([(0,0)-(2,1.5)],(0,0.2),(0.5,0.5),(0.8,0.8),(1,1),(1.2,1.2)))
+	~	dimensionless
+	~		|
+
+Effect of Pollution on Death Rate = WITH LOOKUP (Indeks Polusi Gabungan,
+		([(0,0)-(10,1.5)],(0,1), (0.5,1), (1,1), (1.5,1.1), (2,1.2), (3,1.35), (10,1.4)))
+	~	dimensionless
+	~		|
+
+Effect of Pollution on Tourism = WITH LOOKUP (Indeks Polusi Gabungan,
+		([(0,0)-(4,1.5)],(0,1.2), (0.5,1.1), (1,1), (1.5,0.9), (2,0.85), (3,0.8), (4,0.8)))
+	~	dimensionless
+	~		|
+
+Effect of Room Demand on Construction = WITH LOOKUP (Room Demand Ratio,
+		([(0,0)-(15,1.5)],(0,0.6), (0.5,0.7), (1,1), (1.5,1.3), (2,1.4), (10,1.4), (15,1.4)\
+		))
+	~	dimensionless
+	~		|
+
+Effect of Vegetation Cover on Infiltration=WITH LOOKUP(Vegetation Cover Ratio,
+	([(0,0)-(1.5,1.5)],(0,0.8),(0.5,0.9),
+	(1,1),(1.2,1)))
+	~	dimensionless
+	~		|
+
+Effect of Water Availability on Tourism = WITH LOOKUP ("Rasio Demand-Supply Air",
+		([(0,0)-(20,1.5)],(0,1.2), (1,1), (5,0.85), (10,0.8), (20,0.8), (30,0.8)))
+	~	dimensionless
+	~	Saat supply lebih besar dari demand (rasio < 1), multiplier > 1 sehingga \
+		sektor pariwisata meningkat. Sebaliknya, saat terjadi kekurangan air \
+		(rasio > 1), nilai multiplier menurun.
+	|
+
+Ekstraksi Air Tanah=MIN(Kebutuhan Air Total, Ekstraksi Air Tanah yang Diizinkan)
+	~	m³/tahun
+	~		|
+
+Ekstraksi Air Tanah yang Diizinkan=4e+07
+	~	m³/tahun
+	~		|
+
+Emigrasi=Populasi Penduduk DIY * Tingkat Emigrasi
+	~	jiwa/tahun
+	~		|
+
+Fraksi Air Limbah=0.8
+	~	dimensionless
+	~		|
+
+Hari per Tahun=365
+	~	hari
+	~		|
+
+Imbuhan Air Tanah=Normal Infiltration Rate * Effect of Vegetation Cover on Infiltration
+	~	m³/tahun
+	~		|
+
+Imigrasi=Populasi Penduduk DIY * Tingkat Imigrasi Dasar * Effect of Labour Jobs on Immigration
+	~	jiwa/tahun
+	~		|
+
+Indeks Kualitas Lingkungan=1 / (1 + Akumulasi Polusi)
+	~	dimensionless
+	~		~	:SUPPLEMENTARY 
+	|
+
+Indeks Polusi Air=Kebutuhan Air Total * Fraksi Air Limbah * (1 - Proporsi Pengolahan Air Limbah\
+		) / Air Limbah Awal
+	~	dimensionless
+	~	32700000 -> initial value 2024 utk air limbah 2024
+	|
+
+Indeks Polusi Gabungan=0.6 * Indeks Polusi Air + 0.4 * Indeks Polusi Padat
+	~	dimensionless
+	~		|
+
+Indeks Polusi Padat=(Limbah Padat Hotel + Limbah Padat Domestik) * (1 - Proporsi Pengolahan Limbah Padat\
+		) / Limbah Padat Awal
+	~	dimensionless
+	~	670000 -> initian value limbah padat 2024
+	|
+
+Jobs per Room=0.75
+	~	jiwa/kamar
+	~		|
+
+Jumlah Keluarga=Populasi Penduduk DIY / "Rata-rata Anggota per Keluarga"
+	~	keluarga
+	~		|
+
+Jumlah Unit Akomodasi= INTEG (Pembangunan Akomodasi Baru-Demolisi Akomodasi,
+		5850)
+	~	Unit
+	~		|
+
+Jumlah Wisatawan Mancanegara= INTEG (Pertumbuhan Wisatawan Mancanegara,
+		7.167e+06)
+	~	wisatawan
+	~		|
+
+Jumlah Wisatawan Nusantara= INTEG (Pertumbuhan Wisatawan Nusantara,
+		3.82e+07)
+	~	wisatawan
+	~		|
+
+Kebutuhan Air Domestik=Jumlah Keluarga * Penggunaan Air per Keluarga
+	~	m³/tahun
+	~		|
+
+Kebutuhan Air Hotel=Ketersediaan Kamar * Occupancy Rate Hotel * (0.6 * Penggunaan Air per Kamar Hotel Bintang\
+		 + 0.4 *"Penggunaan Air per Kamar Hotel Non-Bintang")
+	~	m³/tahun
+	~	angka 0.6 dan 0.4 -> sesuaikan dgn proporsi bps : cek rasio hotel bintang \
+		vs non bintang lalu hitung sendiri
+	|
+
+Kebutuhan Air Total=Kebutuhan Air Hotel + Kebutuhan Air Domestik
+	~	m³/tahun
+	~		|
+
+Kebutuhan Kamar Hotel=Total Hari Bermalam / (Hari per Tahun * Occupancy Rate Hotel * \
+		Visitor per Room * Seasonal Loading Factor)
+	~	kamar
+	~		|
+
+Kelahiran=Populasi Penduduk DIY * Tingkat Kelahiran CBR / 1000
+	~	jiwa/tahun
+	~		|
+
+Kematian=Populasi Penduduk DIY * Tingkat Kematian CDR / 1000 * Effect of Pollution on Death Rate
+	~	jiwa/tahun
+	~		|
+
+Ketersediaan Kamar=Jumlah Unit Akomodasi * "Rata-rata Kamar per Unit Akomodasi"
+	~	kamar
+	~		|
+
+Konversi Lahan ke Terbangun=Pembangunan Akomodasi Baru * Luas Lahan per Unit Akomodasi
+	~	ha/tahun
+	~		|
+
+Labour Force Fraction=0.48
+	~	dimensionless
+	~		|
+
+Lahan Diizinkan untuk Resort=1200
+	~	ha
+	~		|
+
+Lahan Tersedia untuk Pengembangan=Lahan Diizinkan untuk Resort - Luas Area Terbangun
+	~	ha
+	~		~	:SUPPLEMENTARY 
+	|
+
+Laju Konstruksi Hotel Dasar=166
+	~	Unit/tahun
+	~		|
+
+Laju Pertumbuhan Wisatawan Mancanegara Dasar=0.045
+	~	1/tahun
+	~		|
+
+Laju Pertumbuhan Wisatawan Nusantara Dasar=0.045
+	~	1/tahun
+	~		|
+
+Lama Tinggal Wisatawan Mancanegara=4
+	~	hari
+	~		|
+
+Lama Tinggal Wisatawan Nusantara=3
+	~	hari
+	~		|
+
+Land Used Fraction=Luas Area Terbangun / Lahan Diizinkan untuk Resort
+	~	dimensionless
+	~		|
+
+Lapangan Kerja Pariwisata=Ketersediaan Kamar * Jobs per Room
+	~	jiwa
+	~		|
+
+Leaking Rate Jaringan Air=0.4
+	~	dimensionless
+	~		|
+
+Limbah Padat Awal=3.46e+08
+	~	kg/tahun
+	~		|
+
+Limbah Padat Domestik=Jumlah Keluarga * Sampah Padat per Keluarga
+	~	kg/tahun
+	~		|
+
+Limbah Padat Hotel=Ketersediaan Kamar * Occupancy Rate Hotel * (0.6 * Sampah Padat per Kamar Hotel Bintang\
+		 + 0.4 * Sampah Padat per Kamar Hotel Non Bintang)
+	~	kg/tahun
+	~	Angka 0.6 (bintang) dan 0.4 (non-bintang) adalah asumsi proporsi komposisi kamar \
+		hotel yang SAYA tambahkan sendiri — tidak ada di paper rujukan maupun \
+		file variabelmu. Paper rujukan menggunakan required star rooms dan \
+		required non-star rooms sebagai variabel terpisah yang dihitung dari \
+		day-nights tourist × % tamu di hotel bintang/non-bintang.
+		
+		Yang benar: Buat dua auxiliary terpisah:
+			•	Limbah Padat Hotel Bintang = Ketersediaan Kamar Bintang × Occupancy Rate × \
+		Sampah per Kamar Bintang × 365
+			•	Limbah Padat Hotel Non-Bintang = Ketersediaan Kamar Non-Bintang × Occupancy \
+		Rate × Sampah per Kamar Non-Bintang × 365
+			•	Limbah Padat Hotel = Limbah Padat Hotel Bintang + Limbah Padat Hotel Non-Bintang
+		Atau, jika kamu ingin sederhanakan: gunakan proporsi dari data BPS DIY \
+		(berapa % kamar bintang vs non-bintang di DIY).
+	|
+
+Luas Area Terbangun= INTEG (Konversi Lahan ke Terbangun,
+		428)
+	~	ha
+	~		|
+
+Luas Hutan Awal=1220
+	~	ha
+	~		|
+
+Luas Hutan Vegetasi= INTEG (-Pengurangan Hutan Vegetasi,
+		1220)
+	~	ha
+	~		|
+
+Luas Lahan per Unit Akomodasi=0.15
+	~	ha/Unit
+	~		|
+
+Luas Lahan Pertanian= INTEG (-Pengurangan Lahan Pertanian,
+		930)
+	~	ha
+	~		~	:SUPPLEMENTARY 
+	|
+
+Natural Beauty Index=Vegetation Cover Ratio
+	~	dimensionless
+	~		|
+
+Normal Infiltration Rate=4.35e+07
+	~	m³/tahun
+	~		|
+
+Normalisasi Air Limbah=3.36e+10
+	~	m³
+	~		|
+
+Normalisasi Limbah Padat=1.82e+10
+	~	kg
+	~		|
+
+Occupancy Rate Hotel=0.65
+	~	dimensionless
+	~		|
+
+Pasokan Air=Treated Groundwater + Clean Water from Rainfall +Resevoir
+	~	m³/tahun
+	~		|
+
+Peluruhan Polusi Alami=Akumulasi Polusi * Decay Rate
+	~	dimensionless/tahun
+	~	'= Akumulasi Polusi × Decay Rate (laju peluruhan)
+	|
+
+Pembangunan Akomodasi Baru=Laju Konstruksi Hotel Dasar * Effect of Room Demand on Construction\
+		 * Effect of Land Availability on Construction
+	~	Unit/tahun
+	~		|
+
+Penggunaan Air per Kamar Hotel Bintang=160
+	~	m³/(kamar*tahun)
+	~		|
+
+"Penggunaan Air per Kamar Hotel Non-Bintang"=210
+	~	m³/(kamar*tahun)
+	~		|
+
+Penggunaan Air per Keluarga=175
+	~	m³/(tahun*keluarga)
+	~		|
+
+Pengolahan Limbah=Akumulasi Polusi * (0.6 * Proporsi Pengolahan Air Limbah + 0.4 * Proporsi Pengolahan Limbah Padat\
+		)/Waktu Pengolahan
+	~	dimensionless/tahun
+	~		|
+
+Pengurangan Hutan Vegetasi=Konversi Lahan ke Terbangun * 0.5
+	~	ha/tahun
+	~	Angka 0.5 adalah asumsi (50% dari pertanian, 50% dari hutan). Nanti ubah \
+		sesuai hasil LULC Sentinel-2 kamu. Misalnya jika LULC menunjukkan 70% dari \
+		pertanian → ganti jadi 0.7 dan 0.3.
+	|
+
+Pengurangan Lahan Pertanian=Konversi Lahan ke Terbangun * 0.5
+	~	ha/tahun
+	~	Angka 0.5 adalah asumsi (50% dari pertanian, 50% dari hutan). Nanti ubah \
+		sesuai hasil LULC Sentinel-2 kamu. Misalnya jika LULC menunjukkan 70% dari \
+		pertanian → ganti jadi 0.7 dan 0.3.
+	|
+
+Pertumbuhan Wisatawan Mancanegara=Jumlah Wisatawan Mancanegara * Laju Pertumbuhan Wisatawan Mancanegara Dasar\
+		 * Tourism Growth Multiplier
+	~	wisatawan/tahun
+	~		|
+
+Pertumbuhan Wisatawan Nusantara=Jumlah Wisatawan Nusantara * Laju Pertumbuhan Wisatawan Nusantara Dasar\
+		 * Tourism Growth Multiplier
+	~	wisatawan/tahun
+	~		|
+
+Populasi Penduduk DIY= INTEG (Imigrasi+Kelahiran-Emigrasi-Kematian,
+		3.68872e+06)
+	~	jiwa
+	~		|
+
+Produksi Air Limbah=Kebutuhan Air Total * Fraksi Air Limbah / Normalisasi Air Limbah
+	~	dimensionless/tahun
+	~	dinormalisasikan ke skala indeks
+	|
+
+Produksi Limbah Padat=(Limbah Padat Hotel + Limbah Padat Domestik)/Normalisasi Limbah Padat
+	~	dimensionless/tahun
+	~	D i n o r m a l i s a s i k e s k a l a i n d e k s , Produksi Air Limbah \
+		Produksi Air Limbah (INFLOW) b u k a n k g a b s o l u t
+	|
+
+Proporsi Pengolahan Air Limbah=0.05
+	~	dimensionless
+	~		|
+
+Proporsi Pengolahan Limbah Padat=0.02
+	~	dimensionless
+	~		|
+
+Rainfall Collection per Household=5
+	~	m³/ (keluarga*tahun)
+	~		|
+
+"Rasio Demand-Supply Air"=Kebutuhan Air Total / Pasokan Air
+	~	dimensionless
+	~		|
+
+Rasio Pengangguran=Angkatan Kerja / Total Pekerjaan Tersedia
+	~	dimensionless
+	~		|
+
+"Rata-rata Anggota per Keluarga"=3.5
+	~	jiwa/keluarga
+	~		|
+
+"Rata-rata Kamar per Unit Akomodasi"=15
+	~	kamar/Unit
+	~		|
+
+Rembesan Air ke Laut=MAX(Stok Air Tanah - 4.5e+08, 0) / Waktu Rembesan
+	~	m³/tahun
+	~		|
+
+Resevoir=1.2e+08
+	~	m³/tahun
+	~		|
+
+Room Demand Ratio=Kebutuhan Kamar Hotel / Ketersediaan Kamar
+	~	dimensionless
+	~		|
+
+Sampah Padat per Kamar Hotel Bintang=730
+	~	kg/(kamar*tahun)
+	~		|
+
+Sampah Padat per Kamar Hotel Non Bintang=912.5
+	~	kg/(kamar*tahun)
+	~		|
+
+Sampah Padat per Keluarga=292
+	~	kg/(keluarga*tahun)
+	~		|
+
+Seasonal Loading Factor=2
+	~	dimensionless
+	~		|
+
+Stok Air Tanah= INTEG (Imbuhan Air Tanah-Ekstraksi Air Tanah-Rembesan Air ke Laut,
+		4.4e+08)
+	~	m³
+	~		|
+
+Tingkat Emigrasi=0.003
+	~	1/tahun
+	~		|
+
+Tingkat Imigrasi Dasar=0.013
+	~	1/tahun
+	~		|
+
+Tingkat Kelahiran CBR=6.5
+	~	1/tahun
+	~		|
+
+Tingkat Kematian CDR=5.5
+	~	1/tahun
+	~		|
+
+Total Hari Bermalam=(Jumlah Wisatawan Nusantara * Lama Tinggal Wisatawan Nusantara) +\
+		 (Jumlah Wisatawan Mancanegara * Lama Tinggal Wisatawan Mancanegara
+	)
+	~	wisatawan*hari
+	~		|
+
+Total Pekerjaan Tersedia=Lapangan Kerja Pariwisata * (1 + 2.5)
+	~	jiwa
+	~		|
+
+Tourism Growth Multiplier=Effect of Water Availability on Tourism * Effect of Pollution on Tourism\
+		 * Effect of Crowding on Tourism
+	 * Effect of Natural Beauty on Tourism
+	~	dimensionless
+	~		|
+
+Treated Groundwater=Ekstraksi Air Tanah * (1 - Leaking Rate Jaringan Air)
+	~	m³/tahun
+	~		|
+
+Umur Akomodasi Hotel Lifespan=50
+	~	tahun
+	~		|
+
+Vegetation Cover Ratio=Luas Hutan Vegetasi / Luas Hutan Awal
+	~	dimensionless
+	~		|
+
+Visitor per Room=2
+	~	wisatawan/kamar
+	~		|
+
+Waktu Pengolahan=1
+	~	tahun
+	~		|
+
+Waktu Rembesan=1
+	~	tahun
+	~		|
+
+********************************************************
+	.Control
+********************************************************~
+		Simulation Control Parameters
+	|
+
+FINAL TIME  = 2050
+	~	tahun
+	~	The final time for the simulation.
+	|
+
+INITIAL TIME  = 2024
+	~	tahun
+	~	The initial time for the simulation.
+	|
+
+SAVEPER  = 
+        TIME STEP
+	~	tahun [0,?]
+	~	The frequency with which output is stored.
+	|
+
+TIME STEP  = 1
+	~	tahun [0,?]
+	~	The time step for the simulation.
+	|
+
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View 1
+$-1--1--1,0,|12||-1--1--1|-1--1--1|-1--1--1|-1--1--1|-1--1--1|96,96,29,2
+10,1,Jumlah Wisatawan Nusantara,1369,323,49,26,3,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,2,Jumlah Wisatawan Mancanegara,1367,479,49,26,3,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,3,Jumlah Unit Akomodasi,2541,406,61,26,3,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,4,48,1141,321,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,5,7,4,100,0,0,22,0,192,0,-1--1--1,,1|(1186,321)|
+1,6,7,1,4,0,0,22,0,192,0,-1--1--1,,1|(1276,321)|
+11,7,0,1226,321,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,8,Pertumbuhan Wisatawan Nusantara,1226,355,65,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,9,48,1141,478,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,10,12,9,100,0,0,22,0,192,0,-1--1--1,,1|(1190,478)|
+1,11,12,2,4,0,0,22,0,192,0,-1--1--1,,1|(1279,478)|
+11,12,0,1234,478,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,13,Pertumbuhan Wisatawan Mancanegara,1234,512,65,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,14,48,2810,406,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,15,17,14,100,0,0,22,0,192,0,-1--1--1,,1|(2756,406)|
+1,16,17,3,4,0,0,22,0,192,0,-1--1--1,,1|(2651,406)|
+11,17,0,2705,406,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,18,Pembangunan Akomodasi Baru,2705,440,46,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,19,48,2328,406,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,20,22,3,100,0,0,22,0,192,0,-1--1--1,,1|(2444,406)|
+1,21,22,19,4,0,0,22,0,192,0,-1--1--1,,1|(2367,406)|
+11,22,0,2402,406,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,23,Demolisi Akomodasi,2402,440,54,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,24,Total Hari Bermalam,1633,401,55,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,25,Kebutuhan Kamar Hotel,1823,405,63,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,26,Ketersediaan Kamar,2955,595,54,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,27,Room Demand Ratio,2146,604,55,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,28,Lapangan Kerja Pariwisata,3071,417,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,29,Laju Pertumbuhan Wisatawan Nusantara Dasar,1029,237,58,27,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,30,Laju Pertumbuhan Wisatawan Mancanegara Dasar,1069,605,65,27,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,31,Lama Tinggal Wisatawan Nusantara,1553,212,64,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,32,Lama Tinggal Wisatawan Mancanegara,1546,595,64,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,33,Occupancy Rate Hotel,2186,79,58,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,34,Visitor per Room,1885,542,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,35,Seasonal Loading Factor,1794,613,63,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,36,"Rata-rata Kamar per Unit Akomodasi",2978,731,65,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,37,Jobs per Room,2929,338,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,38,Umur Akomodasi Hotel Lifespan,2372,545,61,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,39,Laju Konstruksi Hotel Dasar,2798,550,56,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,40,Tourism Growth Multiplier,946,421,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,41,29,8,1,0,0,0,0,192,0,-1--1--1,,1|(1061,356)|
+1,42,1,8,1,0,0,0,0,192,0,-1--1--1,,1|(1304,394)|
+1,43,1,24,1,0,0,0,0,192,0,-1--1--1,,1|(1540,331)|
+1,44,2,24,1,0,0,0,0,192,0,-1--1--1,,1|(1538,474)|
+1,45,30,13,1,0,0,0,0,192,0,-1--1--1,,1|(1178,579)|
+1,46,2,13,1,0,0,0,0,192,0,-1--1--1,,1|(1306,567)|
+1,47,39,18,1,0,0,0,0,192,0,-1--1--1,,1|(2731,505)|
+10,48,Effect of Room Demand on Construction,2358,256,62,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,49,Effect of Land Availability on Construction,2051,778,65,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,50,40,8,1,0,0,0,0,192,0,-1--1--1,,1|(1148,416)|
+1,51,40,13,1,0,0,0,0,192,0,-1--1--1,,1|(1043,532)|
+1,52,49,18,1,0,0,0,0,192,0,-1--1--1,,1|(2391,639)|
+1,53,48,18,1,0,0,0,0,192,0,-1--1--1,,1|(2585,324)|
+1,54,3,23,1,0,0,0,0,192,0,-1--1--1,,1|(2491,493)|
+1,55,38,23,1,0,0,0,0,192,0,-1--1--1,,1|(2372,492)|
+1,56,3,26,1,0,0,0,0,192,0,-1--1--1,,1|(2813,366)|
+1,57,31,24,1,0,0,0,0,192,0,-1--1--1,,1|(1630,292)|
+1,58,32,24,1,0,0,0,0,192,0,-1--1--1,,1|(1620,508)|
+1,59,24,25,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,60,33,25,1,0,0,0,0,192,0,-1--1--1,,1|(1959,174)|
+1,61,34,25,1,0,0,0,0,192,0,-1--1--1,,1|(1828,481)|
+1,62,35,25,1,0,0,0,0,192,0,-1--1--1,,1|(1739,493)|
+1,63,36,26,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,64,25,27,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,65,26,27,1,0,0,0,0,192,0,-1--1--1,,1|(2279,676)|
+1,66,27,48,1,0,0,0,0,192,0,-1--1--1,,1|(2175,416)|
+1,67,26,28,1,0,0,0,0,192,0,-1--1--1,,1|(3020,531)|
+1,68,37,28,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,69,Populasi Penduduk DIY,4233,407,61,30,3,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,70,48,4484,404,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,71,73,70,100,0,0,22,0,192,0,-1--1--1,,1|(4453,404)|
+1,72,73,69,4,0,0,22,0,192,0,-1--1--1,,1|(4356,404)|
+11,73,0,4426,404,7,10,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,74,Kelahiran,4426,450,49,36,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,75,48,3844,416,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,76,78,69,100,0,0,22,0,192,0,-1--1--1,,1|(4113,416)|
+1,77,78,75,4,0,0,22,0,192,0,-1--1--1,,1|(3948,416)|
+11,78,0,4049,416,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,79,Kematian,4049,450,46,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,80,48,4216,89,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,81,83,69,100,0,0,22,0,192,0,-1--1--1,,1|(4216,303)|
+1,82,83,80,4,0,0,22,0,192,0,-1--1--1,,1|(4216,157)|
+11,83,0,4216,222,8,6,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,84,Emigrasi,4270,222,46,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,85,48,4210,578,10,6,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,86,88,85,100,0,0,22,0,192,0,-1--1--1,,1|(4210,544)|
+1,87,88,69,4,0,0,22,0,192,0,-1--1--1,,1|(4210,471)|
+11,88,0,4210,510,8,6,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,89,Imigrasi,4264,510,46,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,90,Angkatan Kerja,3863,275,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,91,Total Pekerjaan Tersedia,3256,276,64,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,92,Rasio Pengangguran,3589,441,54,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,93,Tingkat Kelahiran CBR,4448,540,58,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,94,Tingkat Kematian CDR,3888,531,58,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,95,Tingkat Imigrasi Dasar,4334,629,58,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,96,Tingkat Emigrasi,4360,135,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,97,Labour Force Fraction,3921,165,57,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,98,69,74,1,0,0,0,0,192,0,-1--1--1,,1|(4343,442)|
+1,99,93,74,1,0,0,0,0,192,0,-1--1--1,,1|(4451,500)|
+1,100,69,79,1,0,0,0,0,192,0,-1--1--1,,1|(4109,463)|
+1,101,94,79,1,0,0,0,0,192,0,-1--1--1,,1|(3925,469)|
+10,102,Effect of Pollution on Death Rate,4230,1051,55,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,103,102,79,1,0,0,0,0,192,0,-1--1--1,,1|(4170,726)|
+1,104,69,89,1,0,0,0,0,192,0,-1--1--1,,1|(4262,461)|
+1,105,95,89,1,0,0,0,0,192,0,-1--1--1,,1|(4310,568)|
+10,106,Effect of Labour Jobs on Immigration,3674,634,62,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,107,106,89,1,0,0,0,0,192,0,-1--1--1,,1|(4141,706)|
+1,108,69,84,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,109,96,84,1,0,0,0,0,192,0,-1--1--1,,1|(4284,171)|
+1,110,69,90,1,0,0,0,0,192,0,-1--1--1,,1|(4110,307)|
+1,111,97,90,1,0,0,0,0,192,0,-1--1--1,,1|(3896,206)|
+1,112,90,92,1,0,0,0,0,192,0,-1--1--1,,1|(3694,333)|
+1,113,28,91,1,0,0,0,0,192,0,-1--1--1,,1|(3119,345)|
+1,114,91,92,1,0,0,0,0,192,0,-1--1--1,,1|(3440,292)|
+1,115,92,106,1,0,0,0,0,192,0,-1--1--1,,1|(3582,553)|
+10,116,Kebutuhan Air Domestik,2701,1196,63,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,117,Luas Area Terbangun,1132,1122,56,26,3,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,118,Luas Lahan Pertanian,859,1201,57,26,3,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,119,Luas Hutan Vegetasi,852,1346,54,26,3,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,120,Stok Air Tanah,1895,1196,46,26,3,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,121,48,1454,1119,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,122,124,121,100,0,0,22,0,192,0,-1--1--1,,1|(1387,1119)|
+1,123,124,117,4,0,0,22,0,192,0,-1--1--1,,1|(1253,1119)|
+11,124,0,1323,1119,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,125,Konversi Lahan ke Terbangun,1323,1153,49,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,126,48,2113,1198,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,127,129,126,100,0,0,22,0,192,0,-1--1--1,,1|(2078,1198)|
+1,128,129,120,4,0,0,22,0,192,0,-1--1--1,,1|(1991,1198)|
+11,129,0,2046,1198,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,130,Imbuhan Air Tanah,2046,1232,51,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,131,48,1603,1196,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,132,134,120,100,0,0,22,0,192,0,-1--1--1,,1|(1793,1196)|
+1,133,134,131,4,0,0,22,0,192,0,-1--1--1,,1|(1669,1196)|
+11,134,0,1731,1196,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,135,Ekstraksi Air Tanah,1731,1230,51,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,136,48,1877,1422,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,137,139,120,100,0,0,22,0,192,0,-1--1--1,,1|(1877,1262)|
+1,138,139,136,4,0,0,22,0,192,0,-1--1--1,,1|(1877,1364)|
+11,139,0,1877,1309,8,6,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,140,Rembesan Air ke Laut,1942,1309,57,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,141,Vegetation Cover Ratio,1277,1512,60,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,142,Land Used Fraction,1495,919,51,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,143,Lahan Tersedia untuk Pengembangan,913,975,57,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,144,Kebutuhan Air Hotel,2480,857,54,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,145,Kebutuhan Air Total,2426,1349,53,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,146,Treated Groundwater,1670,1367,57,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,147,Pasokan Air,1560,1484,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,148,"Rasio Demand-Supply Air",1180,1767,65,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,149,Normal Infiltration Rate,2183,1323,61,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,150,Ekstraksi Air Tanah yang Diizinkan,1550,1280,63,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,151,Penggunaan Air per Kamar Hotel Bintang,2307,959,55,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,152,"Penggunaan Air per Kamar Hotel Non-Bintang",2644,979,69,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,153,Penggunaan Air per Keluarga,2811,1043,53,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,154,Leaking Rate Jaringan Air,1769,1437,64,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,155,Luas Lahan per Unit Akomodasi,1414,1290,53,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,156,Lahan Diizinkan untuk Resort,1052,796,58,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,157,18,125,1,0,0,0,0,192,0,-1--1--1,,1|(2111,944)|
+1,158,155,125,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+12,159,48,1069,1195,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,160,162,118,100,0,0,22,0,192,0,-1--1--1,,1|(948,1195)|
+1,161,162,159,4,0,0,22,0,192,0,-1--1--1,,1|(1026,1195)|
+11,162,0,986,1195,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,163,Pengurangan Lahan Pertanian,986,1229,53,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,164,48,1087,1344,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,165,167,119,100,0,0,22,0,192,0,-1--1--1,,1|(943,1344)|
+1,166,167,164,4,0,0,22,0,192,0,-1--1--1,,1|(1034,1344)|
+11,167,0,985,1344,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,168,Pengurangan Hutan Vegetasi,985,1378,53,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,169,Effect of Vegetation Cover on Infiltration,1982,1498,53,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,170,149,130,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,171,169,130,1,0,0,0,0,192,0,-1--1--1,,1|(2030,1381)|
+1,172,150,135,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,173,145,135,1,0,0,0,0,192,0,-1--1--1,,1|(1994,1087)|
+1,174,120,140,1,0,0,0,0,192,0,-1--1--1,,1|(1940,1290)|
+1,175,119,141,1,0,0,0,0,192,0,-1--1--1,,1|(1039,1457)|
+1,176,141,169,1,0,0,0,0,192,0,-1--1--1,,1|(1631,1562)|
+1,177,117,142,1,0,0,0,0,192,0,-1--1--1,,1|(1319,1034)|
+1,178,156,142,1,0,0,0,0,192,0,-1--1--1,,1|(1216,785)|
+1,179,142,49,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,180,26,144,1,0,0,0,0,192,0,-1--1--1,,1|(2667,805)|
+1,181,33,144,1,0,0,0,0,192,0,-1--1--1,,1|(2054,556)|
+1,182,151,144,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,183,152,144,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,184,153,116,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,185,144,145,1,0,0,0,0,192,0,-1--1--1,,1|(2501,1071)|
+1,186,116,145,1,0,0,0,0,192,0,-1--1--1,,1|(2558,1252)|
+1,187,135,146,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,188,154,146,1,0,0,0,0,192,0,-1--1--1,,1|(1756,1395)|
+1,189,146,147,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,190,Effect of Water Availability on Tourism,756,1446,59,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,191,148,190,1,0,0,0,0,192,0,-1--1--1,,1|(955,1627)|
+1,192,145,148,1,0,0,0,0,192,0,-1--1--1,,1|(1966,1678)|
+1,193,147,148,1,0,0,0,0,192,0,-1--1--1,,1|(1390,1652)|
+1,194,156,143,1,0,0,0,0,192,0,-1--1--1,,1|(953,874)|
+1,195,117,143,1,0,0,0,0,192,0,-1--1--1,,1|(1003,1064)|
+1,196,125,163,1,0,0,0,0,192,0,-1--1--1,,1|(1096,1225)|
+1,197,125,168,1,0,0,0,0,192,0,-1--1--1,,1|(1215,1320)|
+10,198,Jumlah Keluarga,3169,974,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,199,198,116,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,200,69,198,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,201,"Rata-rata Anggota per Keluarga",3021,882,58,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,202,201,198,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,203,Akumulasi Polusi,3600,1417,46,26,3,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,204,48,3827,1414,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,205,207,204,100,0,0,22,0,192,0,-1--1--1,,1|(3787,1414)|
+1,206,207,203,4,0,0,22,0,192,0,-1--1--1,,1|(3695,1414)|
+11,207,0,3751,1414,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,208,Produksi Limbah Padat,3751,1448,60,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,209,48,3361,1414,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,210,212,209,100,0,0,22,0,192,0,-1--1--1,,1|(3413,1414)|
+1,211,212,203,4,0,0,22,0,192,0,-1--1--1,,1|(3511,1414)|
+11,212,0,3462,1414,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,213,Produksi Air Limbah,3462,1448,53,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,214,48,3588,1565,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,215,217,203,100,0,0,22,0,192,0,-1--1--1,,1|(3588,1467)|
+1,216,217,214,4,0,0,22,0,192,0,-1--1--1,,1|(3588,1530)|
+11,217,0,3588,1498,8,6,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,218,Pengolahan Limbah,3649,1498,53,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,219,48,3579,1241,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,220,222,203,100,0,0,22,0,192,0,-1--1--1,,1|(3579,1357)|
+1,221,222,219,4,0,0,22,0,192,0,-1--1--1,,1|(3579,1280)|
+11,222,0,3579,1318,8,6,33,3,0,0,4,0,0,0,0,0,0,0,0,0
+10,223,Peluruhan Polusi Alami,3647,1318,60,26,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,224,Indeks Polusi Air,3700,2094,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,225,Indeks Polusi Padat,4087,1446,52,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,226,Indeks Polusi Gabungan,4345,1558,63,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,227,Indeks Kualitas Lingkungan,3902,1328,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,228,Crowding Index,700,458,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,229,Proporsi Pengolahan Air Limbah,3669,1695,63,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,230,Proporsi Pengolahan Limbah Padat,3744,1607,55,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,231,Fraksi Air Limbah,3460,1565,47,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,232,Sampah Padat per Kamar Hotel Bintang,3431,994,66,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,233,Sampah Padat per Kamar Hotel Non Bintang,3550,1113,66,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,234,Sampah Padat per Keluarga,3602,1936,49,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,235,Limbah Padat Hotel,3672,1006,52,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,236,26,235,1,0,0,0,0,192,0,-1--1--1,,1|(3349,736)|
+1,237,33,235,1,0,0,0,0,192,0,-1--1--1,,1|(3403,534)|
+1,238,232,235,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,239,233,235,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,240,Limbah Padat Domestik,3537,1823,62,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,241,198,240,1,0,0,0,0,192,0,-1--1--1,,1|(3244,1417)|
+1,242,234,240,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,243,240,208,1,0,0,0,0,192,0,-1--1--1,,1|(3788,1621)|
+1,244,235,208,1,0,0,0,0,192,0,-1--1--1,,1|(3789,1350)|
+1,245,145,213,1,0,0,0,0,192,0,-1--1--1,,1|(2904,1545)|
+1,246,231,213,1,0,0,0,0,192,0,-1--1--1,,1|(3440,1515)|
+1,247,203,218,1,0,0,0,0,192,0,-1--1--1,,1|(3635,1472)|
+1,248,230,218,1,0,0,0,0,192,0,-1--1--1,,1|(3721,1534)|
+1,249,229,218,1,0,0,0,0,192,0,-1--1--1,,1|(3676,1591)|
+1,250,203,223,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,251,Decay Rate,3696,1225,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,252,251,223,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,253,240,225,1,0,0,0,0,192,0,-1--1--1,,1|(3957,1690)|
+1,254,235,225,1,0,0,0,0,192,0,-1--1--1,,1|(3927,1180)|
+1,255,225,226,1,0,0,0,0,192,0,-1--1--1,,1|(4195,1528)|
+1,256,145,224,1,0,0,0,0,192,0,-1--1--1,,1|(2810,1922)|
+1,257,224,226,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,258,Effect of Pollution on Tourism,1518,1971,55,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,259,226,258,1,0,0,0,0,192,0,-1--1--1,,1|(3638,2166)|
+1,260,226,102,1,0,0,0,0,192,0,-1--1--1,,1|(4331,1314)|
+1,261,203,227,1,0,0,0,0,192,0,-1--1--1,,1|(3750,1352)|
+1,262,231,224,1,0,0,0,0,192,0,-1--1--1,,1|(3400,1831)|
+1,263,229,224,1,0,0,0,0,192,0,-1--1--1,,1|(3733,1877)|
+1,264,230,225,1,0,0,0,0,192,0,-1--1--1,,1|(3907,1511)|
+1,265,2,228,1,0,0,0,0,192,0,-1--1--1,,1|(1135,655)|
+1,266,1,228,1,0,0,0,0,192,0,-1--1--1,,1|(1061,184)|
+10,267,Area Destinasi Wisata,524,348,57,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,268,Carrying Capacity per ha,449,436,63,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,269,268,228,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,270,267,228,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,271,Air Limbah Awal,3860,1845,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,272,271,224,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,273,Limbah Padat Awal,3957,1552,51,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,274,273,225,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,275,Effect of Crowding on Tourism,693,187,56,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,276,228,275,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,277,Effect of Natural Beauty on Tourism,610,571,62,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,278,277,40,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,279,275,40,1,0,0,0,0,192,0,-1--1--1,,1|(804,332)|
+1,280,190,40,1,0,0,0,0,192,0,-1--1--1,,1|(771,953)|
+1,281,258,40,1,0,0,0,0,192,0,-1--1--1,,1|(690,1597)|
+10,282,Clean Water from Rainfall,2284,1755,66,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,283,Resevoir,1707,1507,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,284,283,147,1,0,0,0,0,192,0,-1--1--1,,1|(1646,1476)|
+1,285,282,147,1,0,0,0,0,192,0,-1--1--1,,1|(1791,1676)|
+1,286,198,282,1,0,0,0,0,192,0,-1--1--1,,1|(2872,1460)|
+10,287,Rainfall Collection per Household,2343,1861,57,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,288,287,282,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,289,Natural Beauty Index,460,659,56,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,290,289,277,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,291,141,289,1,0,0,0,0,192,0,-1--1--1,,1|(590,1415)|
+10,292,Luas Hutan Awal,1349,1414,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,293,292,141,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,294,Hari per Tahun,1772,297,46,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,295,294,25,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,296,Normalisasi Air Limbah,3357,1321,61,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,297,296,213,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,298,Normalisasi Limbah Padat,3937,1423,53,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,299,Waktu Rembesan,1959,1421,47,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,300,299,140,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,301,298,208,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+10,302,Waktu Pengolahan,3560,1619,50,26,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,303,302,218,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View 2
+$-1--1--1,0,|12||-1--1--1|-1--1--1|-1--1--1|-1--1--1|-1--1--1|96,96,100,2
+///---\\\
+:L<%^E!@
+1:current.vdfx
+4:Time
+5:Effect of Pollution on Tourism
+9:current
+19:29,0
+24:2024
+25:2050
+26:2050
+23:0
+15:0,0,0,0,0,0
+27:0,
+34:0,
+42:0
+72:0
+73:0
+95:0
+96:0
+97:0
+77:0
+78:0
+102:1
+93:0
+94:0
+92:0
+91:0
+90:0
+87:0
+75:
+43:
+103:8,8,8,3,8
+105:0,0,0,0,0,0,0,0,0,0
+104:Vensim Sans|12||0-0-0|0-0-0|-1--1--1|0-0-255|192-192-192|-1--1--1

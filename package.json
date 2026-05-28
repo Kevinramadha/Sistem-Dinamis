@@ -1,0 +1,33 @@
+{
+  "name": "simulasi-sistem-dinamis-diy",
+  "version": "1.0.0",
+  "description": "Simulasi Sistem Dinamis Pariwisata DIY dengan Next.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1",
+    "leaflet": "^1.9.4",
+    "next": "^16.2.1",
+    "react": "^19.2.4",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.2.4",
+    "react-leaflet": "^5.0.0"
+  },
+  "devDependencies": {
+    "@sdeverywhere/compile": "^0.7.28",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.2.1",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
