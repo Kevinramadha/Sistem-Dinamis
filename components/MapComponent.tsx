@@ -42,6 +42,22 @@ export default function MapComponent() {
           )
           .addTo(map);
 
+        fetch("/diy-boundary.geojson")
+          .then((res) => res.json())
+          .then((geojson) => {
+            const boundary = L.geoJSON(geojson, {
+              style: {
+                color: "#1D5A8C",
+                weight: 3,
+                opacity: 0.9,
+                fillColor: "#2BB3B6",
+                fillOpacity: 0.08,
+              },
+            }).addTo(map);
+            map.fitBounds(boundary.getBounds(), { padding: [20, 20] });
+          })
+          .catch((error) => console.error("Boundary load error:", error));
+
         (container as any).leafletMap = map;
       } catch (error) {
         console.error("Map error:", error);
