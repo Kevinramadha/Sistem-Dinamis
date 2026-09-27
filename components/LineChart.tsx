@@ -30,6 +30,7 @@ interface LineChartProps {
   title: string;
   yAxisLabel: string;
   colors?: string[];
+  heightPx?: number;
 }
 
 export default function LineChart({
@@ -38,20 +39,41 @@ export default function LineChart({
   title,
   yAxisLabel,
   colors = ["#2196F3", "#4CAF50", "#FF5722", "#9C27B0", "#FF9800"],
+  heightPx = 450,
 }: LineChartProps) {
   const labels = years.map((y) => y.toString());
-  
-  const datasets = Object.entries(data).map((entry, index) => ({
-    label: entry[0],
-    data: entry[1],
-    borderColor: colors[index % colors.length],
-    backgroundColor: colors[index % colors.length] + "1A",
-    borderWidth: 2,
-    pointRadius: 0,
-    pointHoverRadius: 6,
-    tension: 0.4,
-    fill: false,
-  }));
+
+  let colorIndex = 0;
+  const datasets = Object.entries(data).map((entry) => {
+    const isHistorical = entry[0].includes("(Aktual");
+    if (isHistorical) {
+      return {
+        label: entry[0],
+        data: entry[1],
+        borderColor: "#64748b",
+        backgroundColor: "#64748b1A",
+        borderWidth: 2,
+        borderDash: [5, 4],
+        pointRadius: 2,
+        pointHoverRadius: 6,
+        tension: 0,
+        fill: false,
+      };
+    }
+    const color = colors[colorIndex % colors.length];
+    colorIndex++;
+    return {
+      label: entry[0],
+      data: entry[1],
+      borderColor: color,
+      backgroundColor: color + "1A",
+      borderWidth: 2,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+      tension: 0.4,
+      fill: false,
+    };
+  });
 
   const options = {
     responsive: true,
@@ -60,7 +82,7 @@ export default function LineChart({
       title: {
         display: true,
         text: title,
-        font: { size: 18, weight: 600 },
+        font: { size: heightPx < 300 ? 13 : 18, weight: 600 },
         padding: { bottom: 20 },
       },
       legend: {
@@ -110,7 +132,7 @@ export default function LineChart({
   };
 
   return (
-    <div className="w-full" style={{ height: '450px' }}>
+    <div className="w-full" style={{ height: `${heightPx}px` }}>
       <Line data={{ labels, datasets }} options={options} />
     </div>
   );

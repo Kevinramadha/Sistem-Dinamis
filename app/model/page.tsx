@@ -2,44 +2,62 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import ModelEvaluation from "@/components/ModelEvaluation";
 
 const feedbackLoops = [
   {
+    code: "R1",
+    type: "Reinforcing",
+    name: "Pertumbuhan Wisatawan",
+    desc: "Jumlah Wisatawan (+) → Laju Kedatangan Wisatawan (+) → Jumlah Wisatawan. Pertumbuhan wisatawan bersifat akumulatif: basis kunjungan yang lebih besar menghasilkan kedatangan yang lebih besar.",
+    color: "#1D5A8C",
+    icon: "📈",
+  },
+  {
+    code: "R2",
+    type: "Reinforcing",
+    name: "Ekonomi–Investasi–Atraksi",
+    desc: "Wisatawan → Pengeluaran → PDRB → Investasi → Jumlah ODTW → Daya Tarik → Laju Kedatangan Wisatawan. Jalur tempat tuas Insentif Kebijakan bekerja.",
+    color: "#3A9C77",
+    icon: "💰",
+  },
+  {
     code: "B1",
     type: "Balancing",
-    name: "Turis Ekspansi",
-    desc: "Lebih banyak turis → lebih banyak akomodasi → daya tarik meningkat → lebih banyak turis",
-    color: "#1D5A8C",
-    icon: "🏨",
+    name: "Kepadatan Wisatawan",
+    desc: "Jumlah Wisatawan (+) → Kepadatan Wisatawan (+) → Daya Tarik (−) → Laju Kedatangan Wisatawan (−). Efek crowding; rem penyeimbang terkuat dalam model.",
+    color: "#E89D3E",
+    icon: "👥",
   },
   {
     code: "B2",
     type: "Balancing",
-    name: "Water Depletion",
-    desc: "Ekstraksi air meningkat → stok menurun → kualitas air menurun → ekstraksi lebih banyak",
+    name: "Daya Dukung Lahan",
+    desc: "Jumlah Hotel dan ODTW (+) → Rasio Daya Dukung Lahan (−) → Daya Tarik (+) → Laju Kedatangan Wisatawan. Jalur tempat tuas Kebijakan Konservasi Lahan bekerja.",
     color: "#2BB3B6",
-    icon: "💧",
+    icon: "🌱",
   },
   {
     code: "B3",
     type: "Balancing",
-    name: "Polusi Lingkungan",
-    desc: "Pembangunan meningkat → limbah meningkat → kualitas menurun → dampak ekonomi",
-    color: "#3A9C77",
-    icon: "🌱",
+    name: "Okupansi Akomodasi",
+    desc: "Jumlah Hotel (−) → Rasio Permintaan terhadap Kapasitas Kamar (+) → Laju Konstruksi Hotel (+) → Jumlah Hotel. Menyeimbangkan pasokan kamar terhadap permintaan.",
+    color: "#F4CD53",
+    icon: "🏨",
   },
   {
-    code: "R1",
-    type: "Reinforcing",
-    name: "Pertumbuhan Populasi",
-    desc: "Pekerjaan pariwisata terbuka → migrasi masuk → populasi naik → demand lebih tinggi",
-    color: "#E89D3E",
-    icon: "👥",
+    code: "B4",
+    type: "Balancing",
+    name: "Penyesuaian Tenaga Kerja",
+    desc: "Tenaga Kerja Pariwisata (−) → Selisih Tenaga Kerja Dibutuhkan (+) → Laju Penyerapan Tenaga Kerja (+) → Tenaga Kerja Pariwisata. Penyesuaian goal-seeking menuju kebutuhan.",
+    color: "#94a3b8",
+    icon: "👷",
   },
 ];
 
 export default function ModelPage() {
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"struktur" | "evaluasi">("struktur");
 
   return (
     <>
@@ -164,6 +182,17 @@ export default function ModelPage() {
           background: white;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
+
+        .page-tab {
+          padding: 10px 20px;
+          font-family: 'Sora', sans-serif;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: none;
+          border-radius: 10px;
+        }
       `}</style>
 
       <div className="min-h-screen" style={{ background: '#f8fafc' }}>
@@ -187,8 +216,31 @@ export default function ModelPage() {
           </div>
         </section>
 
-        <div className="max-w-6xl mx-auto px-6 py-16 space-y-16">
+        {/* ── TAB SWITCHER ─────────────────────────────────── */}
+        <div className="max-w-6xl mx-auto px-6 pt-8">
+          <div className="inline-flex gap-1 p-1 rounded-2xl" style={{ background: '#f1f5f9' }}>
+            <button
+              className="page-tab"
+              onClick={() => setActiveTab('struktur')}
+              style={activeTab === 'struktur' ? { background: '#1D5A8C', color: 'white' } : { background: 'transparent', color: '#64748b' }}
+            >
+              Struktur Model
+            </button>
+            <button
+              className="page-tab"
+              onClick={() => setActiveTab('evaluasi')}
+              style={activeTab === 'evaluasi' ? { background: '#1D5A8C', color: 'white' } : { background: 'transparent', color: '#64748b' }}
+            >
+              Evaluasi Model
+            </button>
+          </div>
+        </div>
 
+        <div className="max-w-6xl mx-auto px-6 py-16 space-y-16">
+          {activeTab === 'evaluasi' ? (
+            <ModelEvaluation />
+          ) : (
+          <>
           {/* ── CLD & SFD ────────────────────────────────────── */}
           <section>
             <div className="mb-10">
@@ -310,7 +362,8 @@ export default function ModelPage() {
               ))}
             </div>
           </section>
-
+          </>
+          )}
         </div>
 
         {/* Image zoom modal */}
