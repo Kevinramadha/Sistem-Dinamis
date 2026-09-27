@@ -87,7 +87,6 @@ public/
   CLD.png, SFD.png         Diagram model final
   diy-boundary.geojson      Batas Provinsi DIY untuk peta beranda
 research/
-  Buku Skripsi Kevin.docx   Naskah skripsi lengkap
   [FINAL] MODEL SISTEM DINAMIS.mdl   Model Vensim sumber
   [FIX] Master Data final.xlsx        Data kalibrasi
   hasil_*.xlsx, narasi_evaluasi_model.md   Data & narasi evaluasi model
@@ -108,5 +107,5 @@ Chart.js + react-chartjs-2 · Leaflet + react-leaflet · `@sdeverywhere/runtime`
 | Lokasi studi | Daerah Istimewa Yogyakarta |
 | Horizon simulasi | 2025 – 2050 |
 
-Naskah skripsi lengkap, data kalibrasi, dan data hasil evaluasi model tersedia di folder
+Model Vensim sumber, data kalibrasi, dan data hasil evaluasi model tersedia di folder
 [`research/`](./research) untuk keperluan telusur dan reproduksi.
