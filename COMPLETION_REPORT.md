@@ -8,7 +8,7 @@ Website simulasi sistem dinamis pariwisata berkelanjutan Daerah Istimewa Yogyaka
 
 **Development Server Status**: ✅ RUNNING
 **Akses Website**: http://localhost:3000
-**Lokasi Project**: `/Users/kevinramadha/Documents/[06] Tingkat IV/[00] Skripsi/Sistem Dinamis`
+**Lokasi Project**: folder repository ini setelah di-clone
 
 ---
 
@@ -371,7 +371,7 @@ rasio_demand_supply = demand_air / supply_air
 | **Developer** | Kevin Atha Fathoni Ramadha |
 | **University** | Universitas Gadjah Mada |
 | **Email** | kevin.ramadha@mail.ugm.ac.id |
-| **Lokasi Project** | `/Users/kevinramadha/Documents/[06] Tingkat IV/[00] Skripsi/Sistem Dinamis` |
+| **Lokasi Project** | folder repository ini setelah di-clone |
 | **Website** | http://localhost:3000 |
 
 ---

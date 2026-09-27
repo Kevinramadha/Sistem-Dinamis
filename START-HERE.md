@@ -28,7 +28,7 @@
 
 ### Start Development
 ```bash
-cd "/Users/kevinramadha/Documents/[06] Tingkat IV/[00] Skripsi/Sistem Dinamis"
+cd "/path/to/your/cloned/repository"
 npm run dev
 ```
 Visit: **http://localhost:3000**

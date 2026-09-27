@@ -14,7 +14,7 @@ npm install -g @sdeverywhere/cli
 ## Konversi Model Vensim
 
 ```bash
-cd /Users/kevinramadha/Documents/[06]\ Tingkat\ IV/[00]\ Skripsi/Sistem\ Dinamis
+cd /path/to/your/cloned/repository
 
 # Konversi model-fix.mdl ke JavaScript
 sde build model-fix.mdl --genformat js --builddir lib/

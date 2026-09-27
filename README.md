@@ -92,7 +92,7 @@ Model menghasilkan simulasi untuk 27 tahun (2024-2050):
 
 Untuk menjalankan ulang:
 ```bash
-cd "/Users/kevinramadha/Documents/[06] Tingkat IV/[00] Skripsi/Sistem Dinamis"
+cd "/path/to/your/cloned/repository"
 npm install
 npm run dev
 ```
@@ -266,7 +266,7 @@ export async function runModel(params: SimulationParams) {
 
 ### Server tidak berjalan?
 ```bash
-cd "/Users/kevinramadha/Documents/[06] Tingkat IV/[00] Skripsi/Sistem Dinamis"
+cd "/path/to/your/cloned/repository"
 npm install
 npm run dev
 ```
