@@ -1,346 +1,112 @@
-# 📚 Dokumentasi Lengkap - Simulasi Sistem Dinamis DIY
+# SimDIY — Simulasi Sistem Dinamis Pariwisata Berkelanjutan DIY
 
-## 🎉 Selamat Datang!
+Platform simulasi berbasis web untuk model sistem dinamis (system dynamics) pariwisata
+Daerah Istimewa Yogyakarta, dibangun sebagai bagian dari skripsi Diploma IV Politeknik
+Statistika STIS. Model Vensim asli dikompilasi ke JavaScript dengan
+[SDEverywhere](https://sdeverywhere.org/) dan dijalankan langsung di browser — bukan data
+dummy — sehingga proyeksi 2025–2050 di situs ini benar-benar hasil simulasi model.
 
-Proyek ini adalah platform interaktif untuk simulasi **Sistem Dinamis Pariwisata Berkelanjutan** Daerah Istimewa Yogyakarta. Website telah sepenuhnya dibangun dan siap digunakan.
+## Halaman
 
----
+| Halaman | Rute | Isi |
+|---|---|---|
+| Beranda | `/` | Ringkasan proyek, peta lokasi studi (batas Provinsi DIY di-highlight), ringkasan skenario |
+| Model | `/model` | Tab **Struktur Model** (CLD, SFD, 6 feedback loop) dan tab **Evaluasi Model** (hasil uji struktural, perilaku, kondisi ekstrem, dan sensitivitas) |
+| Skenario | `/skenario` | Perbandingan 3 skenario kebijakan resmi, dengan overlay data aktual 2016–2025 |
+| Eksplorasi Simulasi | `/simulasi` | Simulasi bebas dengan 2 tuas kebijakan resmi |
 
-## ✨ Fitur Utama
+## Model sistem dinamis
 
-### 1. **4 Halaman Utama**
+- **Tahun dasar 2025, horizon proyeksi 2025–2050**, 5 stok (Jumlah Wisatawan, Jumlah Hotel
+  dan Akomodasi, Jumlah Objek Daya Tarik Wisata, Tenaga Kerja Pariwisata, Lahan Terbangun).
+- Model final: `research/[FINAL] MODEL SISTEM DINAMIS.mdl`, dikompilasi ke
+  `lib/model-final.js` via `@sdeverywhere/runtime`.
+- **Dua tuas kebijakan** yang bisa diatur pengguna — Insentif Kebijakan dan Kebijakan
+  Konservasi Lahan — hasil penyaringan tiga kriteria (relevansi struktural, dasar kebijakan,
+  keterkendalian). Parameter lain sudah final hasil kalibrasi dan sengaja tidak diekspos
+  sebagai input, karena berstatus asumsi struktural yang diuji lewat analisis sensitivitas,
+  bukan instrumen kebijakan.
+- **Tiga skenario resmi**: Business-as-Usual, Sustainable, Development Priority (definisi
+  lengkap di `lib/scenarios.ts`).
+- Indikator kinerja dikelompokkan 4 dimensi: Ekonomi, Lingkungan, Sosial, dan Skala.
+- Data historis 2016–2025 (`lib/historicalData.ts`) ditampilkan sebagai overlay validasi di
+  chart Skenario dan Eksplorasi Simulasi.
 
-#### 🏠 **BERANDA** (`/`)
-- Hero section dengan gradient visual menarik
-- Penjelasan 4 elemen model (Stock, Flow, Auxiliary, Parameter)
-- Pres preview 5 skenario kebijakan
-- Peta interaktif Leaflet.js menunjukkan lokasi DIY
-- Informasi peneliti, universitas, dan periode simulasi
-- About section dengan struktur model
+## Evaluasi model
 
-#### 📊 **MODEL** (`/model`)
-- Tampilan Causal Loop Diagram (CLD) - gambar asli dari Vensim
-- Tampilan Stock & Flow Diagram (SFD) - diagram struktur model
-- Deskripsi 4 feedback loops utama (B1, B2, B3, R1)
-- Tabel detail struktur: 9 Stocks, 16 Flows, 12 Auxiliaries, 9 Parameters
-- Catatan integrasi dengan SDEverywhere
+Halaman `/model` → tab **Evaluasi Model** menyajikan hasil empat tahap pengujian standar
+System Dynamics (Barlas 1989; Sterman 2000), datanya diambil apa adanya dari file di
+`research/` (lihat bagian di bawah):
 
-#### 🎯 **SKENARIO** (`/skenario`)
-- Perbandingan antar 5 skenario kebijakan
-- Toggle untuk membandingkan satu skenario atau semua sekaligus
-- Pilih hingga 10 variabel output untuk ditampilkan
-- Chart.js interaktif dengan hover tooltips
-- Loading states dan error handling
+1. **Uji struktural** — kekekalan materi, uji loop umpan balik, uji galat integrasi.
+2. **Uji perilaku** — kesesuaian terhadap data historis (Discrepancy Coefficient, MAPE, uji
+   beda kemiringan tren), untuk model penuh maupun uji parsial per-subsistem.
+3. **Uji kondisi ekstrem** — 17 skenario nilai batas, termasuk pendokumentasian batas
+   validitas model.
+4. **Analisis sensitivitas** — tornado ranking ±10% dan pengujian rentang penuh, termasuk
+   temuan bahwa Kebijakan Konservasi Lahan hanya menggerakkan total Lahan Terbangun ≤1%.
 
-#### ⚙️ **SIMULASI** (`/simulasi`)
-- **Sidebar Kontrol Panel (sticky):**
-  - 5 tombol preset skenario (S1-S5)
-  - 9 slider parameter dengan dual input (range + number)
-  - Tombol "Jalankan Simulasi" dan "Reset ke BAU"
-  
-- **Output Area:**
-  - Checkbox untuk 10 variabel output
-  - Chart.js grafik real-time yang responsif
-  - Empty state sebelum simulasi dijalankan
+## Menjalankan secara lokal
 
-### 2. **Skenario Kebijakan (5 Pilihan)**
-
-| ID | Nama | Deskripsi | Icon |
-|----|------|-----------|------|
-| S1 | **BAU** | Baseline tanpa intervensi | 📈 |
-| S2 | **Sustainable** | Pertumbuhan moderat, pengelolaan tinggi | 🌿 |
-| S3 | **Conservation** | Konservasi ketat, pembatasan wisata | 🌍 |
-| S4 | **Aggressive** | Ekspansi maksimal, risiko overshoot | 🏗️ |
-| S5 | **Climate Adapt** | Adaptasi perubahan iklim & resiliensi | 🌊 |
-
-Setiap skenario memiliki parameter spesifik yang berbeda.
-
-### 3. **9 Parameter Kontrol**
-
-1. **Laju Pertumbuhan Wisatawan Nusantara** (0% - 15%)
-2. **Laju Pertumbuhan Wisatawan Mancanegara** (0% - 15%)
-3. **Laju Konstruksi Hotel** (500 - 5000 unit/tahun)
-4. **Proporsi Pengolahan Air Limbah** (0% - 100%)
-5. **Proporsi Pengolahan Limbah Padat** (0% - 100%)
-6. **Ekstraksi Air Tanah** (20 - 60 juta m³/tahun)
-7. **Normal Infiltration Rate** (15 - 40 juta m³/tahun)
-8. **Lahan Diizinkan untuk Resort** (0% - 30%)
-9. **Luas Lahan per Unit Akomodasi** (800 - 3000 m²)
-
-### 4. **10 Variabel Output**
-
-Model menghasilkan simulasi untuk 27 tahun (2024-2050):
-
-1. Jumlah Wisatawan Nusantara
-2. Jumlah Wisatawan Mancanegara
-3. Jumlah Unit Akomodasi
-4. Populasi DIY
-5. Stok Air Tanah (dalam juta m³)
-6. Luas Area Terbangun (hektar)
-7. Akumulasi Polusi (indeks)
-8. Indeks Kualitas Lingkungan (0-1 scale)
-9. Lapangan Kerja Pariwisata (orang)
-10. Rasio Demand-Supply Air
-
----
-
-## 🚀 Cara Menggunakan
-
-### Instalasi & Setup
-
-**Project sudah siap dijalankan!** Development server sedang berjalan di `http://localhost:3000`.
-
-Untuk menjalankan ulang:
 ```bash
-cd "/path/to/your/cloned/repository"
 npm install
 npm run dev
 ```
 
-Server akan tersedia di: **http://localhost:3000**
+Buka `http://localhost:3000`.
 
-### Build untuk Production
+> Jika sebelumnya menjalankan `npm run build`, hapus dulu `.next/` sebelum `npm run dev`
+> (`rm -rf .next`) — Turbopack bisa panic kalau cache build-produksi dan dev tercampur.
+
+### Build produksi
 
 ```bash
 npm run build
 npm start
 ```
 
----
-
-## 📁 Struktur File
+## Struktur proyek
 
 ```
-Sistem Dinamis/
-├── app/
-│   ├── page.tsx              # Beranda (/)
-│   ├── layout.tsx            # Root layout
-│   ├── globals.css           # Tailwind CSS
-│   ├── model/
-│   │   └── page.tsx          # Model page (/model)
-│   ├── skenario/
-│   │   └── page.tsx          # Skenario page (/skenario)
-│   └── simulasi/
-│       └── page.tsx          # Simulasi page (/simulasi)
-│
-├── components/
-│   ├── Navbar.tsx            # Navigation bar
-│   ├── Footer.tsx            # Footer
-│   ├── LineChart.tsx         # Chart.js wrapper
-│   └── MapComponent.tsx      # Leaflet map
-│
-├── lib/
-│   ├── scenarios.ts          # 5 skenario + 10 variabel
-│   └── model.ts              # Model runner & dummy data
-│
-├── public/
-│   ├── CLD.png              # Causal Loop Diagram
-│   └── SFD.png              # Stock & Flow Diagram
-│
-├── package.json             # Dependencies
-├── tsconfig.json            # TypeScript config
-├── tailwind.config.ts       # Tailwind config
-├── next.config.ts           # Next.js config
-└── postcss.config.js        # PostCSS config
+app/
+  page.tsx              Beranda
+  model/page.tsx         Model (Struktur Model + Evaluasi Model)
+  skenario/page.tsx       Skenario
+  simulasi/page.tsx       Eksplorasi Simulasi
+components/
+  ModelEvaluation.tsx    Konten tab Evaluasi Model
+  LineChart.tsx          Wrapper Chart.js
+  MapComponent.tsx        Peta Leaflet + batas wilayah DIY
+lib/
+  model.ts               Runner simulasi (@sdeverywhere/runtime)
+  model-final.js          Model hasil kompilasi SDEverywhere (dari research/*.mdl)
+  scenarios.ts            Definisi 3 skenario resmi + daftar indikator kinerja
+  historicalData.ts        Data aktual 2016-2025 untuk overlay chart
+  evaluationData.ts        Data hasil uji struktural/perilaku/ekstrem/sensitivitas
+public/
+  CLD.png, SFD.png         Diagram model final
+  diy-boundary.geojson      Batas Provinsi DIY untuk peta beranda
+research/
+  Buku Skripsi Kevin.docx   Naskah skripsi lengkap
+  [FINAL] MODEL SISTEM DINAMIS.mdl   Model Vensim sumber
+  [FIX] Master Data final.xlsx        Data kalibrasi
+  hasil_*.xlsx, narasi_evaluasi_model.md   Data & narasi evaluasi model
 ```
 
----
+## Tech stack
 
-## 💾 Data & Model
+Next.js 16 (App Router, Turbopack) · React 19 · TypeScript · Tailwind CSS 4 ·
+Chart.js + react-chartjs-2 · Leaflet + react-leaflet · `@sdeverywhere/runtime`
 
-### Dummy Data Generator
+## Metadata penelitian
 
-Saat ini menggunakan **dummy data yang realistik** untuk testing UI. Generator menggunakan rumus berbasis sistem dinamis:
+| | |
+|---|---|
+| Judul | Simulasi Sistem Dinamis Pariwisata Berkelanjutan DIY |
+| Peneliti | Kevin Atha Fathoni Ramadha (222212691) |
+| Program Studi | Komputasi Statistik, Program Diploma IV — Politeknik Statistika STIS |
+| Lokasi studi | Daerah Istimewa Yogyakarta |
+| Horizon simulasi | 2025 – 2050 |
 
-```typescript
-// Wisatawan Nusantara (exponential growth)
-wisnus = 3,820,000 * (1 + laju_wisnus)^tahun
-
-// Wisatawan Mancanegara
-wisman = 1,340,000 * (1 + laju_wisman)^tahun
-
-// Akomodasi (linear growth)
-akomodasi = 23,400 + laju_konstruksi * tahun
-
-// Populasi (exponential)
-populasi = 3,743,052 * (1 + 0.008)^tahun
-
-// Stok Air Tanah (depletion model)
-stok_air = max(1.8e7, 440e6 - ekstraksi*t + infiltrasi*t)
-
-// Polusi (accumulation)
-polusi = 1.0 + tahun * 0.08 * (1 - proporsi_olah)
-
-// Kualitas Lingkungan (inverse)
-kualitas = 1 / (1 + polusi)
-```
-
-**Data berubah responsif terhadap perubahan parameter.**
-
-### Integrasi SDEverywhere (TODO)
-
-Model Vensim (`model-fix.mdl`) akan dikonversi ke JavaScript:
-
-```bash
-# 1. Install SDEverywhere CLI
-npm install -g @climateinteractive/sd-js-tools
-
-# 2. Konversi model
-sde build model-fix.mdl --format javascript
-
-# 3. Hasilnya: model.js (copy ke lib/sde-model.js)
-
-# 4. Update lib/model.ts untuk menggunakan SDEverywhere
-import { createModel } from './sde-model.js'
-
-export async function runModel(params: SimulationParams) {
-  const model = await createModel()
-  model.setInputs(params)
-  return model.runSimulation()
-}
-```
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-- **Framework:** Next.js 16.2.1 (React 19)
-- **Language:** TypeScript 5
-- **Styling:** Tailwind CSS 4
-- **Charts:** Chart.js 4.5.1 + react-chartjs-2
-- **Maps:** Leaflet 1.9.4 + react-leaflet
-
-### Development
-- **Build Tool:** Turbopack
-- **Linting:** ESLint 9
-- **Server:** Node.js (latest)
-
-### Color Scheme
-- **Primary:** Teal (#00897B)
-- **Secondary:** Cyan (#22D3EE)
-- **Scenario Colors:**
-  - S1: Blue (#2196F3)
-  - S2: Green (#4CAF50)
-  - S3: Teal (#009688)
-  - S4: Orange (#FF5722)
-  - S5: Purple (#9C27B0)
-
----
-
-## 📊 Features Detail
-
-### ✅ Charts
-- Line charts dengan multiple datasets
-- Hover tooltips menampilkan nilai exact
-- Legend interaktif
-- Responsif pada berbagai ukuran layar
-
-### ✅ Maps
-- Leaflet.js dengan OpenStreetMap tiles
-- Marker interaktif pada lokasi DIY
-- Dynamic loading (client-side only)
-- Popup information
-
-### ✅ Controls
-- 9 sliders dengan range validation
-- Number inputs untuk edit manual
-- Preset scenario buttons
-- Real-time update on change
-
-### ✅ Responsive Design
-- Mobile-first approach
-- Breakpoints: sm (640px), md (768px), lg (1024px)
-- Touch-friendly buttons dan sliders
-- Hamburger menu pada mobile
-
-### ✅ Accessibility
-- Proper form labels
-- ARIA attributes
-- Keyboard navigation
-- Semantic HTML
-
----
-
-## 🔍 Troubleshooting
-
-### Server tidak berjalan?
-```bash
-cd "/path/to/your/cloned/repository"
-npm install
-npm run dev
-```
-
-### Port 3000 sudah digunakan?
-```bash
-# Buka port berbeda
-npm run dev -- -p 3001
-# Akses ke http://localhost:3001
-```
-
-### Build error TypeScript?
-```bash
-npm run lint
-npm run build
-```
-
-### Chart tidak muncul?
-- Pastikan JavaScript enabled di browser
-- Refresh halaman (Ctrl+R atau Cmd+R)
-- Check browser console untuk errors
-
-### Map tidak muncul?
-- Map memerlukan JavaScript client-side
-- Pastikan Leaflet CSS loaded
-- Check network tab untuk tile loading
-
----
-
-## 📈 Performance
-
-| Metrik | Nilai |
-|--------|-------|
-| Build Time | ~2.5 detik |
-| Startup Time | ~350ms |
-| Page Size | Optimized |
-| TypeScript Coverage | 100% |
-
----
-
-## 🎓 Metadata Proyek
-
-| Detail | Nilai |
-|--------|-------|
-| **Judul** | Simulasi Sistem Dinamis Pariwisata Berkelanjutan DIY |
-| **Peneliti** | Kevin Atha Fathoni Ramadha |
-| **NIM** | 222212691 |
-| **Universitas** | Universitas Gadjah Mada |
-| **Periode Simulasi** | 2024 – 2050 (27 tahun) |
-| **Lokasi** | Daerah Istimewa Yogyakarta |
-| **Model Basis** | Vensim System Dynamics |
-
----
-
-## 🔗 Referensi
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [React Documentation](https://react.dev)
-- [Tailwind CSS](https://tailwindcss.com)
-- [Chart.js](https://www.chartjs.org)
-- [Leaflet.js](https://leafletjs.com)
-- [System Dynamics Society](https://www.systemdynamics.org)
-
----
-
-## 📞 Support
-
-Untuk pertanyaan atau masalah, hubungi:
-- **Peneliti:** Kevin Atha Fathoni Ramadha
-- **Universitas:** Universitas Gadjah Mada
-- **Email:** kevin.ramadha@mail.ugm.ac.id
-
----
-
-**🎉 Website Simulasi Sistem Dinamis DIY - Siap Digunakan!**
-
-Akses di: **http://localhost:3000**
+Naskah skripsi lengkap, data kalibrasi, dan data hasil evaluasi model tersedia di folder
+[`research/`](./research) untuk keperluan telusur dan reproduksi.
