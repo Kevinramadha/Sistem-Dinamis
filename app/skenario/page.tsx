@@ -2,16 +2,17 @@
 
 import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { scenarios, outputVariables, scenariosList } from "@/lib/scenarios";
+import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel } from "@/lib/model";
+import { historicalYears, getHistoricalSeries } from "@/lib/historicalData";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
 export default function SkenarioPage() {
-  const [activeScenario, setActiveScenario] = useState<string>("S1");
+  const [activeScenario, setActiveScenario] = useState<string>("BAU");
   const [selectedVariables, setSelectedVariables] = useState<string[]>([
-    "jumlah_wisnus",
-    "jumlah_akomodasi",
+    "jumlah_wisatawan",
+    "jumlah_hotel_dan_akomodasi",
   ]);
   const [compareAll, setCompareAll] = useState(false);
   const [simulationData, setSimulationData] = useState<any>(null);
@@ -61,15 +62,29 @@ export default function SkenarioPage() {
 
   const individualChartsData = useMemo(() => {
     if (!simulationData || selectedVariables.length === 0) return null;
-    const yearReference = (Object.values(simulationData)[0] as any)?.years;
+    const simYears: number[] = (Object.values(simulationData)[0] as any)?.years ?? [];
     return selectedVariables.map((varId) => {
       const variable = outputVariables.find((v) => v.id === varId);
+      const hist = getHistoricalSeries(varId);
+      const years = hist
+        ? [...historicalYears.filter((y) => !simYears.includes(y)), ...simYears]
+        : simYears;
       const data: any = {};
       Object.entries(simulationData).forEach(([scenarioName, scenarioData]: any) => {
         const key = `${variable?.label} (${scenarioName})`;
-        data[key] = scenarioData[varId] || [];
+        const values: number[] = scenarioData?.[varId] || [];
+        data[key] = years.map((y) => {
+          const idx = simYears.indexOf(y);
+          return idx >= 0 ? values[idx] : null;
+        });
       });
-      return { varId, variable, years: yearReference, data };
+      if (hist) {
+        data[`${variable?.label || varId} (Aktual 2016–2025)`] = years.map((y) => {
+          const idx = historicalYears.indexOf(y);
+          return idx >= 0 ? hist[idx] : null;
+        });
+      }
+      return { varId, variable, years, data };
     });
   }, [simulationData, selectedVariables]);
 
@@ -279,7 +294,7 @@ export default function SkenarioPage() {
                   <span style={{ color: '#2BB3B6' }}>Skenario</span>
                 </h1>
                 <p className="text-blue-200 text-base max-w-lg leading-relaxed">
-                  Jalankan dan bandingkan hasil simulasi dari 5 skenario kebijakan pariwisata DIY (2024–2050)
+                  Jalankan dan bandingkan hasil simulasi dari 3 skenario kebijakan pariwisata DIY (2025–2050)
                 </p>
               </div>
             </div>
@@ -351,7 +366,7 @@ export default function SkenarioPage() {
                   </button>
                   {compareAll && (
                     <p className="text-[11px] text-gray-400 mt-2 text-center">
-                      5 skenario akan dijalankan secara bersamaan
+                      3 skenario akan dijalankan secara bersamaan
                     </p>
                   )}
                 </div>
@@ -367,12 +382,15 @@ export default function SkenarioPage() {
                       {selectedVariables.length}
                     </span>
                   </p>
-                  <div className="space-y-0.5 max-h-48 overflow-y-auto pr-1"
+                  <div className="space-y-2 max-h-72 overflow-y-auto pr-1"
                     style={{ scrollbarWidth: 'thin', scrollbarColor: '#e2e8f0 transparent' }}>
-                    {outputVariables.map((variable) => {
+                    {outputDimensions.map((dim) => (
+                      <div key={dim}>
+                        <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">{dim}</p>
+                        {outputVariables.filter((v) => v.dimension === dim).map((variable) => {
                       const isChecked = selectedVariables.includes(variable.id);
                       return (
-                        <label key={variable.id} className="var-checkbox">
+                        <label key={variable.id} className="var-checkbox" title={variable.ambang ? `Arah: ${variable.arah} · Ambang ${variable.ambang}` : `Arah: ${variable.arah}`}>
                           <input
                             type="checkbox"
                             checked={isChecked}
@@ -396,7 +414,9 @@ export default function SkenarioPage() {
                           <span className="ml-auto text-[10px] text-gray-400">{variable.unit}</span>
                         </label>
                       );
-                    })}
+                        })}
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -459,7 +479,7 @@ export default function SkenarioPage() {
                   </div>
                   <div>
                     <span className="font-semibold text-gray-900 text-sm">Mode Perbandingan</span>
-                    <p className="text-xs text-gray-400 mt-0.5">Semua 5 skenario akan dibandingkan dalam satu grafik</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Semua 3 skenario akan dibandingkan dalam satu grafik</p>
                   </div>
                 </div>
               )}
@@ -488,7 +508,7 @@ export default function SkenarioPage() {
                         <div>
                           <p className="section-label mb-0.5">Hasil Simulasi</p>
                           <h3 className="font-display font-bold text-gray-900 text-sm">
-                            {compareAll ? 'Perbandingan 5 Skenario - Semua Variabel' : 'Perbandingan Variabel - ' + activeScenarioObj?.label}
+                            {compareAll ? 'Perbandingan 3 Skenario - Semua Variabel' : 'Perbandingan Variabel - ' + activeScenarioObj?.label}
                           </h3>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -500,7 +520,7 @@ export default function SkenarioPage() {
                         <LineChart
                           years={chartData.years}
                           data={chartData.data}
-                          title={compareAll ? 'Perbandingan 5 Skenario - Semua Variabel' : 'Perbandingan Variabel'}
+                          title={compareAll ? 'Perbandingan 3 Skenario - Semua Variabel' : 'Perbandingan Variabel'}
                           yAxisLabel="Nilai"
                         />
                       </div>
@@ -514,7 +534,7 @@ export default function SkenarioPage() {
                             <div>
                               <p className="section-label mb-0.5" style={{ color: '#1D5A8C' }}>{chartItem.variable?.label}</p>
                               <h3 className="font-display font-bold text-gray-900 text-sm">
-                                {compareAll ? 'Perbandingan 5 Skenario' : activeScenarioObj?.label}
+                                {compareAll ? 'Perbandingan 3 Skenario' : activeScenarioObj?.label}
                               </h3>
                             </div>
                             <div className="flex items-center gap-1.5">
@@ -589,7 +609,7 @@ export default function SkenarioPage() {
                               <p className="section-label mb-0.5">Tabel Data</p>
                               <h3 className="font-display font-bold text-gray-900 text-sm">
                                 Detail Output Simulasi
-                                <span className="ml-2 text-xs font-normal text-gray-400">· Proyeksi 2024–2050</span>
+                                <span className="ml-2 text-xs font-normal text-gray-400">· Proyeksi 2025–2050</span>
                               </h3>
                             </div>
                             <button
@@ -885,7 +905,7 @@ export default function SkenarioPage() {
                         <div className="font-display font-bold text-sm" style={{ color: activeScenarioObj.color }}>
                           {typeof val === 'number' && val > 1e5
                             ? (val / 1e6).toFixed(1) + "M"
-                            : typeof val === 'number' && val < 1
+                            : typeof val === 'number' && val <= 1
                             ? (val * 100).toFixed(1) + "%"
                             : val.toLocaleString()}
                         </div>

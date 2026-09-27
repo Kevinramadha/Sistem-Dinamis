@@ -7,7 +7,7 @@ const navLinks = [
   { href: "/", label: "Beranda" },
   { href: "/model", label: "Model" },
   { href: "/skenario", label: "Skenario" },
-  { href: "/simulasi", label: "Simulasi" },
+  { href: "/simulasi", label: "Eksplorasi Simulasi" },
 ];
 
 export default function Navbar() {
@@ -97,7 +97,7 @@ export default function Navbar() {
           {/* CTA + Mobile Toggle */}
           <div className="flex items-center gap-4">
             <Link href="/simulasi" className="nav-cta hidden md:inline-flex">
-              Mulai Simulasi →
+              Mulai Eksplorasi →
             </Link>
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -139,7 +139,7 @@ export default function Navbar() {
                 className="mt-2 text-center py-3 rounded-xl text-sm font-semibold"
                 style={{ background: '#1D5A8C', color: 'white', fontFamily: 'Sora, sans-serif' }}
               >
-                Mulai Simulasi →
+                Mulai Eksplorasi →
               </Link>
             </div>
           </div>

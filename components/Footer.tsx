@@ -41,7 +41,7 @@ export default function Footer() {
                 {[
                   { label: "Model", color: '#1D5A8C' },
                   { label: "Simulasi", color: '#2BB3B6' },
-                  { label: "2024-2050", color: '#3A9C77' },
+                  { label: "2025-2050", color: '#3A9C77' },
                 ].map((tag, i) => (
                   <span key={i} className="text-xs px-3 py-1 rounded-full font-medium shrink-0" style={{ background: tag.color + '25', color: tag.color, border: `1px solid ${tag.color}40`, fontFamily: 'DM Sans, sans-serif' }}>
                     {tag.label}
@@ -63,7 +63,7 @@ export default function Footer() {
                   { key: "Peneliti", val: "Kevin Atha Fathoni Ramadha" },
                   { key: "NIM", val: "222212691" },
                   { key: "Lokasi", val: "DIY, Indonesia" },
-                  { key: "Periode", val: "2024 – 2050" },
+                  { key: "Periode", val: "2025 – 2050" },
                 ].map((item, i) => (
                   <div key={i} className="flex gap-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
                     <span className="text-xs w-16 shrink-0" style={{ color: '#5a7a96' }}>{item.key}</span>

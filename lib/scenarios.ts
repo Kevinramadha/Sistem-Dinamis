@@ -4,15 +4,8 @@ export interface Scenario {
   color: string;
   description: string;
   params: {
-    laju_wisnus: number;
-    laju_wisman: number;
-    laju_konstruksi_hotel: number;
-    proporsi_olah_limbah_cair: number;
-    proporsi_olah_limbah_padat: number;
-    ekstraksi_air_diizinkan: number;
-    infiltrasi_normal: number;
-    lahan_diizinkan_resort: number;
-    luas_lahan_per_unit: number;
+    insentif_kebijakan: number;
+    kebijakan_konservasi_lahan: number;
   };
 }
 
@@ -20,108 +13,88 @@ export interface OutputVariable {
   id: string;
   label: string;
   unit: string;
+  dimension: "Ekonomi" | "Lingkungan" | "Sosial" | "Skala" | "Struktur Model";
+  arah: "Maksimum" | "Minimum" | "Deskriptif" | "Dilaporkan";
+  ambang?: string;
   color?: string;
 }
 
+// Dua tuas kebijakan resmi hasil penyaringan tiga kriteria (relevansi
+// struktural, dasar kebijakan, keterkendalian) pada skripsi Bab 3.8.1, dan
+// tiga skenario definisinya sesuai Tabel 18 Bab 4.8.1. Nilai tuas merupakan
+// ketetapan peneliti, bukan target resmi pemerintah.
 export const scenarios: Record<string, Scenario> = {
-  S1_BAU: {
-    id: "S1",
-    label: "Baseline (BAU)",
+  BAU: {
+    id: "BAU",
+    label: "Business-as-Usual",
     color: "#1D5A8C",
-    description: "Skenario bisnis seperti biasa (Business as Usual) tanpa intervensi",
+    description:
+      "Tidak ada insentif investasi tambahan; kebutuhan lahan fasilitas pariwisata dipenuhi melalui konversi seperti pola historis.",
     params: {
-      laju_wisnus: 0.062,
-      laju_wisman: 0.045,
-      laju_konstruksi_hotel: 2500,
-      proporsi_olah_limbah_cair: 0.25,
-      proporsi_olah_limbah_padat: 0.30,
-      ekstraksi_air_diizinkan: 4e7,
-      infiltrasi_normal: 2.5e7,
-      lahan_diizinkan_resort: 0.15,
-      luas_lahan_per_unit: 1500,
+      insentif_kebijakan: 0,
+      kebijakan_konservasi_lahan: 0,
     },
   },
-  S2_Sustainable: {
-    id: "S2",
-    label: "Keberlanjutan",
+  SUS: {
+    id: "SUS",
+    label: "Sustainable",
     color: "#3A9C77",
-    description: "Pertumbuhan moderat dengan pengelolaan lingkungan tinggi",
+    description:
+      "Dorongan investasi terbatas disertai pemenuhan kebutuhan lahan fasilitas pariwisata tanpa konversi lahan tambahan.",
     params: {
-      laju_wisnus: 0.035,
-      laju_wisman: 0.025,
-      laju_konstruksi_hotel: 1500,
-      proporsi_olah_limbah_cair: 0.75,
-      proporsi_olah_limbah_padat: 0.70,
-      ekstraksi_air_diizinkan: 3.5e7,
-      infiltrasi_normal: 3.0e7,
-      lahan_diizinkan_resort: 0.08,
-      luas_lahan_per_unit: 2000,
+      insentif_kebijakan: 0.1,
+      kebijakan_konservasi_lahan: 1.0,
     },
   },
-  S3_Conservation: {
-    id: "S3",
-    label: "Konservasi",
-    color: "#2BB3B6",
-    description: "Konservasi ketat dengan pembatasan pertumbuhan pariwisata",
-    params: {
-      laju_wisnus: 0.015,
-      laju_wisman: 0.010,
-      laju_konstruksi_hotel: 800,
-      proporsi_olah_limbah_cair: 0.85,
-      proporsi_olah_limbah_padat: 0.80,
-      ekstraksi_air_diizinkan: 3.0e7,
-      infiltrasi_normal: 3.2e7,
-      lahan_diizinkan_resort: 0.05,
-      luas_lahan_per_unit: 2500,
-    },
-  },
-  S4_Aggressive: {
-    id: "S4",
-    label: "Pengembangan Agresif",
+  DP: {
+    id: "DP",
+    label: "Development Priority",
     color: "#E89D3E",
-    description: "Ekspansi maksimal pariwisata dengan risiko overshoot lingkungan",
+    description: "Ekspansi investasi agresif tanpa pengendalian kebutuhan lahan pariwisata.",
     params: {
-      laju_wisnus: 0.090,
-      laju_wisman: 0.075,
-      laju_konstruksi_hotel: 4000,
-      proporsi_olah_limbah_cair: 0.15,
-      proporsi_olah_limbah_padat: 0.15,
-      ekstraksi_air_diizinkan: 5.0e7,
-      infiltrasi_normal: 2.0e7,
-      lahan_diizinkan_resort: 0.25,
-      luas_lahan_per_unit: 1000,
-    },
-  },
-  S5_ClimateAdapt: {
-    id: "S5",
-    label: "Adaptasi Iklim",
-    color: "#F4CD53",
-    description: "Skenario adaptasi terhadap perubahan iklim dan resiliensi",
-    params: {
-      laju_wisnus: 0.040,
-      laju_wisman: 0.030,
-      laju_konstruksi_hotel: 1800,
-      proporsi_olah_limbah_cair: 0.80,
-      proporsi_olah_limbah_padat: 0.75,
-      ekstraksi_air_diizinkan: 3.2e7,
-      infiltrasi_normal: 3.5e7,
-      lahan_diizinkan_resort: 0.10,
-      luas_lahan_per_unit: 1800,
+      insentif_kebijakan: 0.3,
+      kebijakan_konservasi_lahan: 0,
     },
   },
 };
 
+// Indikator kinerja evaluasi skenario, dikelompokkan dalam tiga dimensi
+// keberlanjutan (ekonomi, lingkungan, sosial) ditambah satu indikator skala,
+// sesuai Tabel 19 Bab 4.8.2. Variabel struktur model (hotel, ODTW, malam
+// menginap) disertakan sebagai kelompok tambahan untuk transparansi, di luar
+// indikator kinerja formal yang dipakai untuk membandingkan skenario.
 export const outputVariables: OutputVariable[] = [
-  { id: "jumlah_wisnus", label: "Wisatawan Nusantara", unit: "orang" },
-  { id: "jumlah_wisman", label: "Wisatawan Mancanegara", unit: "orang" },
-  { id: "jumlah_akomodasi", label: "Unit Akomodasi", unit: "unit" },
-  { id: "populasi", label: "Populasi DIY", unit: "jiwa" },
-  { id: "stok_air_tanah", label: "Stok Air Tanah", unit: "juta m³" },
-  { id: "luas_area_terbangun", label: "Luas Area Terbangun", unit: "hektar" },
-  { id: "akumulasi_polusi", label: "Akumulasi Polusi", unit: "indeks" },
-  { id: "indeks_kualitas", label: "Indeks Kualitas Lingkungan", unit: "0-1" },
-  { id: "lapangan_kerja", label: "Lapangan Kerja Pariwisata", unit: "orang" },
-  { id: "rasio_demand_supply", label: "Rasio Demand-Supply Air", unit: "rasio" },
+  // Skala — dilaporkan, tidak dinilai baik/buruk
+  { id: "jumlah_wisatawan", label: "Jumlah Wisatawan", unit: "kunjungan", dimension: "Skala", arah: "Dilaporkan" },
+
+  // Ekonomi — diarahkan pada nilai maksimum, kecuali dua indikator deskriptif
+  { id: "tenaga_kerja_pariwisata", label: "Lapangan Kerja Pariwisata", unit: "jiwa", dimension: "Ekonomi", arah: "Maksimum" },
+  { id: "pdrb_sektor_pariwisata", label: "Nilai Tambah Pariwisata (PDRB)", unit: "miliar Rp", dimension: "Ekonomi", arah: "Maksimum" },
+  { id: "akumulasi_investasi", label: "Investasi Kumulatif", unit: "miliar Rp", dimension: "Ekonomi", arah: "Deskriptif" },
+  { id: "tpk", label: "Okupansi Akomodasi (TPK)", unit: "%", dimension: "Ekonomi", arah: "Deskriptif" },
+
+  // Lingkungan
+  { id: "rasio_daya_dukung_lahan", label: "Lahan Tersedia untuk Konservasi", unit: "Dmnl", dimension: "Lingkungan", arah: "Maksimum", ambang: "> 0,331" },
+  { id: "lahan_terbangun", label: "Luas Lahan Terbangun", unit: "hektar", dimension: "Lingkungan", arah: "Minimum" },
+  { id: "akumulasi_konversi_lahan_pariwisata", label: "Konversi Lahan Pariwisata Kumulatif", unit: "hektar", dimension: "Lingkungan", arah: "Minimum" },
+
+  // Sosial
+  { id: "indeks_kepadatan", label: "Indeks Kepadatan", unit: "Dmnl", dimension: "Sosial", arah: "Minimum", ambang: "< 2,0" },
+  { id: "daya_tarik_wisata", label: "Kualitas Destinasi (Daya Tarik)", unit: "Dmnl", dimension: "Sosial", arah: "Maksimum" },
+
+  // Struktur model — komponen pendukung, di luar indikator kinerja formal
+  { id: "jumlah_hotel_dan_akomodasi", label: "Jumlah Hotel dan Akomodasi", unit: "unit akomodasi", dimension: "Struktur Model", arah: "Deskriptif" },
+  { id: "jumlah_odtw", label: "Jumlah Objek Daya Tarik Wisata", unit: "unit", dimension: "Struktur Model", arah: "Deskriptif" },
+  { id: "investasi_sektor_pariwisata", label: "Investasi Sektor Pariwisata (Tahunan)", unit: "miliar Rp", dimension: "Struktur Model", arah: "Deskriptif" },
+  { id: "total_malam_menginap", label: "Total Malam Menginap", unit: "malam", dimension: "Struktur Model", arah: "Deskriptif" },
+];
+
+export const outputDimensions: OutputVariable["dimension"][] = [
+  "Skala",
+  "Ekonomi",
+  "Lingkungan",
+  "Sosial",
+  "Struktur Model",
 ];
 
 export const scenariosList = Object.values(scenarios);

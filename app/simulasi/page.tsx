@@ -2,41 +2,31 @@
 
 import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { scenarios, outputVariables, scenariosList } from "@/lib/scenarios";
+import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel, SimulationParams } from "@/lib/model";
+import { historicalYears, getHistoricalSeries } from "@/lib/historicalData";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
+// Dua tuas kebijakan resmi (Bab 3.8.1 & 4.8.1 skripsi): parameter lain sudah
+// final hasil kalibrasi dan tidak diekspos sebagai input agar sejalan dengan
+// kriteria keterkendalian yang dipakai untuk menyaring tuas kebijakan.
 const sliderConfigs = [
-  { id: "laju_wisnus", label: "Laju Wisatawan Nusantara", unit: "%", scale: 100, min: 0, max: 0.15, step: 0.005, group: "Pariwisata" },
-  { id: "laju_wisman", label: "Laju Wisatawan Mancanegara", unit: "%", scale: 100, min: 0, max: 0.15, step: 0.005, group: "Pariwisata" },
-  { id: "laju_konstruksi_hotel", label: "Konstruksi Hotel", unit: "unit/thn", scale: 1, min: 500, max: 5000, step: 100, group: "Pariwisata" },
-  { id: "proporsi_olah_limbah_cair", label: "Pengolahan Air Limbah", unit: "%", scale: 100, min: 0, max: 1, step: 0.05, group: "Lingkungan" },
-  { id: "proporsi_olah_limbah_padat", label: "Pengolahan Limbah Padat", unit: "%", scale: 100, min: 0, max: 1, step: 0.05, group: "Lingkungan" },
-  { id: "ekstraksi_air_diizinkan", label: "Ekstraksi Air Diizinkan", unit: "juta m³", scale: 1e-6, min: 2e7, max: 6e7, step: 0.5e7, group: "Lingkungan" },
-  { id: "infiltrasi_normal", label: "Normal Infiltration Rate", unit: "juta m³", scale: 1e-6, min: 1.5e7, max: 4e7, step: 0.25e7, group: "Lingkungan" },
-  { id: "lahan_diizinkan_resort", label: "Lahan untuk Resort", unit: "%", scale: 100, min: 0, max: 0.3, step: 0.01, group: "Tata Ruang" },
-  { id: "luas_lahan_per_unit", label: "Luas Lahan per Unit", unit: "m²", scale: 1, min: 800, max: 3000, step: 100, group: "Tata Ruang" },
+  { id: "insentif_kebijakan", label: "Insentif Kebijakan", unit: "%", scale: 100, min: 0, max: 0.5, step: 0.01 },
+  { id: "kebijakan_konservasi_lahan", label: "Kebijakan Konservasi Lahan", unit: "%", scale: 100, min: 0, max: 1, step: 0.05 },
 ];
-
-const sliderGroups = ["Pariwisata", "Lingkungan", "Tata Ruang"];
-const groupColors: Record<string, string> = {
-  Pariwisata: "#1D5A8C",
-  Lingkungan: "#3A9C77",
-  "Tata Ruang": "#E89D3E",
-};
+const sliderColor = "#1D5A8C";
 
 export default function SimulasiPage() {
-  const bau = scenarios.S1_BAU;
+  const bau = scenarios.BAU;
   const [params, setParams] = useState<SimulationParams>(bau.params);
   const [simulationData, setSimulationData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVariables, setSelectedVariables] = useState<string[]>([
-    "jumlah_wisnus",
-    "jumlah_akomodasi",
+    "jumlah_wisatawan",
+    "tenaga_kerja_pariwisata",
   ]);
-  const [activeGroup, setActiveGroup] = useState<string>("Pariwisata");
-  const [activePreset, setActivePreset] = useState<string>("S1");
+  const [activePreset, setActivePreset] = useState<string>("BAU");
   const [showCombinedChart, setShowCombinedChart] = useState(false);
   const [sortConfig, setSortConfig] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null);
 
@@ -58,14 +48,7 @@ export default function SimulasiPage() {
   };
 
   const loadScenario = (scenarioKey: string) => {
-    const scenarioMap: any = {
-      S1: scenarios.S1_BAU,
-      S2: scenarios.S2_Sustainable,
-      S3: scenarios.S3_Conservation,
-      S4: scenarios.S4_Aggressive,
-      S5: scenarios.S5_ClimateAdapt,
-    };
-    const scenario = scenarioMap[scenarioKey];
+    const scenario = scenariosList.find((s) => s.id === scenarioKey);
     if (scenario) {
       setParams(scenario.params);
       setActivePreset(scenarioKey);
@@ -83,20 +66,33 @@ export default function SimulasiPage() {
 
   const individualChartsData = useMemo(() => {
     if (!simulationData || selectedVariables.length === 0) return null;
+    const simYears: number[] = simulationData.years;
     return selectedVariables.map((varId) => {
       const variable = outputVariables.find((v) => v.id === varId);
-      const data: any = {};
-      data[variable?.label || varId] = (simulationData as any)[varId] || [];
-      return { varId, variable, years: simulationData.years, data };
+      const hist = getHistoricalSeries(varId);
+      const years = hist
+        ? [...historicalYears.filter((y) => !simYears.includes(y)), ...simYears]
+        : simYears;
+      const simValues: number[] = (simulationData as any)[varId] || [];
+      const data: any = {
+        [variable?.label || varId]: years.map((y) => {
+          const idx = simYears.indexOf(y);
+          return idx >= 0 ? simValues[idx] : null;
+        }),
+      };
+      if (hist) {
+        data[`${variable?.label || varId} (Aktual 2016–2025)`] = years.map((y) => {
+          const idx = historicalYears.indexOf(y);
+          return idx >= 0 ? hist[idx] : null;
+        });
+      }
+      return { varId, variable, years, data };
     });
   }, [simulationData, selectedVariables]);
-
-  const filteredSliders = sliderConfigs.filter((s) => s.group === activeGroup);
 
   const formatValue = (config: typeof sliderConfigs[0], raw: number) => {
     const v = raw * config.scale;
     if (config.unit === "%") return v.toFixed(1) + "%";
-    if (config.unit === "juta m³") return v.toFixed(1) + " jt m³";
     if (v >= 1000) return v.toLocaleString("id-ID");
     return v.toFixed(0);
   };
@@ -355,13 +351,13 @@ export default function SimulasiPage() {
           <div className="relative z-10 max-w-6xl mx-auto px-6 py-20">
             <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
               <div>
-                <p className="section-label mb-4" style={{ color: '#F4CD53' }}>Simulasi Real-Time</p>
+                <p className="section-label mb-4" style={{ color: '#F4CD53' }}>Eksplorasi Bebas</p>
                 <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight mb-4">
-                  Simulasi<br />
-                  <span style={{ color: '#2BB3B6' }}>Interaktif</span>
+                  Eksplorasi<br />
+                  <span style={{ color: '#2BB3B6' }}>Simulasi</span>
                 </h1>
                 <p className="text-blue-200 text-base max-w-lg leading-relaxed">
-                  Sesuaikan parameter kebijakan secara bebas dan lihat dampaknya terhadap sistem pariwisata DIY 2024–2050
+                  Atur bebas dua tuas kebijakan resmi — Insentif Kebijakan dan Kebijakan Konservasi Lahan — dan lihat dampaknya terhadap sistem pariwisata DIY 2025–2050
                 </p>
               </div>
             </div>
@@ -382,7 +378,7 @@ export default function SimulasiPage() {
                   <p className="section-label mb-0.5">Preset Cepat</p>
                   <h3 className="font-display font-bold text-gray-900 text-sm">Muat Skenario</h3>
                 </div>
-                <div className="p-4 grid grid-cols-5 gap-2">
+                <div className="p-4 grid grid-cols-3 gap-2">
                   {scenariosList.map((s) => (
                     <button
                       key={s.id}
@@ -411,27 +407,14 @@ export default function SimulasiPage() {
               <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
                 style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                 <div className="px-5 py-4" style={{ borderBottom: '1px solid #f0f4f8' }}>
-                  <p className="section-label mb-1">Konfigurasi</p>
+                  <p className="section-label mb-1">Tuas Kebijakan</p>
                   <h3 className="font-display font-bold text-gray-900 text-sm">Parameter Simulasi</h3>
                 </div>
 
-                <div className="group-tabs-container">
-                  {sliderGroups.map((group) => (
-                    <button
-                      key={group}
-                      onClick={() => setActiveGroup(group)}
-                      className={`group-tab ${activeGroup === group ? 'active' : ''}`}
-                    >
-                      {group}
-                    </button>
-                  ))}
-                </div>
-
                 <div className="p-4 space-y-5">
-                  {filteredSliders.map((config) => {
+                  {sliderConfigs.map((config) => {
                     const rawVal = (params as any)[config.id];
                     const pct = getSliderPercent(config, rawVal);
-                    const groupColor = groupColors[config.group];
                     return (
                       <div key={config.id}>
                         <div className="flex items-center justify-between mb-2">
@@ -451,12 +434,12 @@ export default function SimulasiPage() {
                               }
                             }}
                             className="text-xs font-bold px-2 py-1 rounded-lg border border-gray-200 w-20 text-right"
-                            style={{ color: groupColor }}
+                            style={{ color: sliderColor }}
                           />
                         </div>
                         <div style={{ position: 'relative' }}>
                           <div className="slider-track">
-                            <div className="slider-fill" style={{ width: `${pct}%`, background: groupColor + '60' }}></div>
+                            <div className="slider-fill" style={{ width: `${pct}%`, background: sliderColor + '60' }}></div>
                           </div>
                           <input
                             type="range"
@@ -465,7 +448,7 @@ export default function SimulasiPage() {
                             step={config.step}
                             value={rawVal}
                             onChange={(e) => handleParamChange(config.id, parseFloat(e.target.value))}
-                            style={{ accentColor: groupColor, marginTop: '-2px' }}
+                            style={{ accentColor: sliderColor, marginTop: '-2px' }}
                           />
                         </div>
                         <div className="flex justify-between text-[10px] text-gray-300 mt-1">
@@ -493,7 +476,7 @@ export default function SimulasiPage() {
                     <>Jalankan Simulasi</>
                   )}
                 </button>
-                <button onClick={() => { loadScenario("S1"); }} className="reset-btn">
+                <button onClick={() => { loadScenario("BAU"); }} className="reset-btn">
                   ↺ Reset ke BAU
                 </button>
               </div>
@@ -515,34 +498,41 @@ export default function SimulasiPage() {
                     {selectedVariables.length} dipilih
                   </span>
                 </div>
-                <div className="p-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1">
-                  {outputVariables.map((variable) => {
-                    const isChecked = selectedVariables.includes(variable.id);
-                    return (
-                      <label key={variable.id} className="var-check-label">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedVariables([...selectedVariables, variable.id]);
-                            } else {
-                              setSelectedVariables(selectedVariables.filter(id => id !== variable.id));
-                            }
-                          }}
-                          className="hidden"
-                        />
-                        <div className={`custom-checkbox ${isChecked ? "checked" : ""}`}>
-                          {isChecked && (
-                            <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                        </div>
-                        <span className="leading-tight">{variable.label}</span>
-                      </label>
-                    );
-                  })}
+                <div className="p-5 space-y-4">
+                  {outputDimensions.map((dim) => (
+                    <div key={dim}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">{dim}</p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
+                        {outputVariables.filter((v) => v.dimension === dim).map((variable) => {
+                          const isChecked = selectedVariables.includes(variable.id);
+                          return (
+                            <label key={variable.id} className="var-check-label" title={variable.ambang ? `Arah: ${variable.arah} · Ambang ${variable.ambang}` : `Arah: ${variable.arah}`}>
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedVariables([...selectedVariables, variable.id]);
+                                  } else {
+                                    setSelectedVariables(selectedVariables.filter(id => id !== variable.id));
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                              <div className={`custom-checkbox ${isChecked ? "checked" : ""}`}>
+                                {isChecked && (
+                                  <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                  </svg>
+                                )}
+                              </div>
+                              <span className="leading-tight">{variable.label}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -569,7 +559,7 @@ export default function SimulasiPage() {
                       <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #f0f4f8' }}>
                         <div>
                           <p className="section-label mb-0.5">Hasil Proyeksi</p>
-                          <h3 className="font-display font-bold text-gray-900 text-sm">Perbandingan Semua Variabel - 2024 – 2050</h3>
+                          <h3 className="font-display font-bold text-gray-900 text-sm">Perbandingan Semua Variabel - 2025 – 2050</h3>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-green-400"></div>
@@ -593,7 +583,7 @@ export default function SimulasiPage() {
                           <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #f0f4f8' }}>
                             <div>
                               <p className="section-label mb-0.5" style={{ color: '#1D5A8C' }}>{chartItem.variable?.label}</p>
-                              <h3 className="font-display font-bold text-gray-900 text-sm">Simulasi 2024 – 2050</h3>
+                              <h3 className="font-display font-bold text-gray-900 text-sm">Simulasi 2025 – 2050</h3>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-green-400"></div>
@@ -647,7 +637,7 @@ export default function SimulasiPage() {
                       <p className="section-label mb-0.5">Tabel Data</p>
                       <h3 className="font-display font-bold text-gray-900 text-sm">
                         Detail Output Simulasi
-                        <span className="ml-2 text-xs font-normal text-gray-400">· Proyeksi 2024–2050</span>
+                        <span className="ml-2 text-xs font-normal text-gray-400">· Proyeksi 2025–2050</span>
                       </h3>
                     </div>
                     <button
@@ -758,15 +748,14 @@ export default function SimulasiPage() {
                       : "Parameter Kustom"}
                   </h3>
                 </div>
-                <div className="p-5 grid grid-cols-3 gap-3">
+                <div className="p-5 grid grid-cols-2 gap-3">
                   {sliderConfigs.map((config) => {
                     const rawVal = (params as any)[config.id];
-                    const groupColor = groupColors[config.group];
                     return (
                       <div key={config.id} className="rounded-xl p-3"
                         style={{ background: '#f8fafc', border: '1px solid #f0f4f8' }}>
                         <div className="text-[10px] text-gray-400 mb-1 leading-tight">{config.label}</div>
-                        <div className="font-display font-bold text-sm" style={{ color: groupColor }}>
+                        <div className="font-display font-bold text-sm" style={{ color: sliderColor }}>
                           {formatValue(config, rawVal)}
                         </div>
                       </div>

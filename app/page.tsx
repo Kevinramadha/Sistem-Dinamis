@@ -38,10 +38,10 @@ const modelElements = [
 ];
 
 const sectors = [
-  { icon: "🏨", label: "Pariwisata", sub: "Wisatawan & Akomodasi" },
-  { icon: "🌱", label: "Demografis", sub: "Populasi & Migrasi" },
-  { icon: "💧", label: "Lingkungan", sub: "Air & Kualitas" },
-  { icon: "🏭", label: "Ekonomi", sub: "Lapangan Kerja" },
+  { icon: "🏖️", label: "Permintaan & Daya Tarik Wisata", sub: "Jumlah Wisatawan, Kepadatan, Daya Tarik Destinasi" },
+  { icon: "🏨", label: "Akomodasi & ODTW", sub: "Hotel, Objek Daya Tarik Wisata, Okupansi (TPK)" },
+  { icon: "💰", label: "Ekonomi & Investasi", sub: "PDRB Pariwisata, Investasi Sektor Pariwisata" },
+  { icon: "🌱", label: "Lahan & Tenaga Kerja", sub: "Daya Dukung Lahan, Tenaga Kerja Pariwisata" },
 ];
 
 export default function Home() {
@@ -172,7 +172,7 @@ export default function Home() {
                   className="font-display px-7 py-3.5 rounded-xl font-semibold text-sm border transition-all"
                   style={{ borderColor: 'rgba(255,255,255,0.25)', color: 'white', background: 'rgba(255,255,255,0.08)' }}
                 >
-                  Mulai Simulasi
+                  Mulai Eksplorasi
                 </Link>
               </div>
             </div>
@@ -203,10 +203,10 @@ export default function Home() {
           <div className="max-w-6xl mx-auto px-6">
             <div className="text-center mb-14">
               <p className="section-label mb-3">Analisis Kebijakan</p>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-gray-900">5 Skenario Kebijakan</h2>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-gray-900">3 Skenario Kebijakan</h2>
               <p className="text-gray-500 mt-3 max-w-lg mx-auto text-sm leading-relaxed">Hover pada kartu untuk melihat deskripsi skenario kebijakan yang tersedia</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {scenariosList.map((scenario, i) => (
                 <div
                   key={scenario.id}
@@ -281,7 +281,7 @@ export default function Home() {
                 {[
                   { label: "Lokasi Penelitian", value: "Daerah Istimewa Yogyakarta", icon: "📍" },
                   { label: "Peneliti", value: "Kevin Atha Fathoni Ramadha", icon: "👤" },
-                  { label: "Periode Simulasi", value: "2024 – 2050 (27 Tahun)", icon: "📅" },
+                  { label: "Periode Simulasi", value: "2025 – 2050 (26 Tahun)", icon: "📅" },
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-4 p-5 rounded-2xl" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                     <span className="text-xl mt-0.5">{item.icon}</span>
@@ -334,7 +334,7 @@ export default function Home() {
                 className="font-display px-8 py-4 rounded-xl font-bold text-sm transition-all"
                 style={{ background: '#1D5A8C', color: 'white', boxShadow: '0 6px 24px rgba(29,90,140,0.25)' }}
               >
-                Mulai Simulasi →
+                Mulai Eksplorasi →
               </Link>
               <Link
                 href="/skenario"
