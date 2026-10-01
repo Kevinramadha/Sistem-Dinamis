@@ -8,6 +8,8 @@ import { interpretSingle, describeParams, BAU_SUBJECT } from "@/lib/interpretati
 import ChartInterpretation, { InterpretationNote } from "@/components/ChartInterpretation";
 import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle } from "@/lib/summary";
+import InfoTip from "@/components/InfoTip";
+import { GLOSSARY, displayUnit } from "@/lib/glossary";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
@@ -436,6 +438,9 @@ export default function SimulasiPage() {
                         <div className="flex items-center justify-between mb-2">
                           <label className="text-xs font-semibold text-gray-600 leading-tight" style={{ maxWidth: '60%' }}>
                             {config.label}
+                            {GLOSSARY[config.id] && (
+                              <span className="ml-1 inline-block"><InfoTip text={GLOSSARY[config.id]} label={config.label} /></span>
+                            )}
                           </label>
                           <input
                             type="number"
@@ -522,7 +527,7 @@ export default function SimulasiPage() {
                         {outputVariables.filter((v) => v.dimension === dim).map((variable) => {
                           const isChecked = selectedVariables.includes(variable.id);
                           return (
-                            <label key={variable.id} className="var-check-label" title={variable.ambang ? `Arah: ${variable.arah} · Ambang ${variable.ambang}` : `Arah: ${variable.arah}`}>
+                            <label key={variable.id} className="var-check-label">
                               <input
                                 type="checkbox"
                                 checked={isChecked}
@@ -542,7 +547,12 @@ export default function SimulasiPage() {
                                   </svg>
                                 )}
                               </div>
-                              <span className="leading-tight">{variable.label}</span>
+                              <span className="leading-tight">
+                                {variable.label}
+                                {GLOSSARY[variable.id] && (
+                                  <span className="ml-1 inline-block"><InfoTip text={GLOSSARY[variable.id]} label={variable.label} /></span>
+                                )}
+                              </span>
                             </label>
                           );
                         })}
@@ -606,7 +616,7 @@ export default function SimulasiPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                              <span className="text-xs text-gray-400">{chartItem.variable?.unit}</span>
+                              <span className="text-xs text-gray-400">{displayUnit(chartItem.variable?.unit)}</span>
                             </div>
                           </div>
                           <div className="p-6">
@@ -614,7 +624,7 @@ export default function SimulasiPage() {
                               years={chartItem.years}
                               data={chartItem.data}
                               title={chartItem.variable?.label || ''}
-                              yAxisLabel={chartItem.variable?.unit || 'Nilai'}
+                              yAxisLabel={displayUnit(chartItem.variable?.unit) || 'Nilai'}
                             />
                           </div>
                           {chartItem.interpretation && <ChartInterpretation interpretation={chartItem.interpretation} />}
@@ -709,7 +719,7 @@ export default function SimulasiPage() {
                                 <div style={{ fontSize: 11, fontWeight: 600, color: 'white' }}>
                                   {variable?.label} <SortIcon colKey={varId} />
                                 </div>
-                                <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{variable?.unit}</div>
+                                <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{displayUnit(variable?.unit)}</div>
                               </th>
                             );
                           })}
