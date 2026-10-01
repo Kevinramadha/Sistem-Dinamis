@@ -6,6 +6,8 @@ import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/l
 import { runModel } from "@/lib/model";
 import { interpretSingle, interpretCompare, BAU_SUBJECT } from "@/lib/interpretation";
 import ChartInterpretation, { InterpretationNote } from "@/components/ChartInterpretation";
+import SimulationSummary from "@/components/SimulationSummary";
+import { summarizeSingle, summarizeCompare } from "@/lib/summary";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
@@ -95,6 +97,27 @@ export default function SkenarioPage() {
       return { varId, variable, years, data, interpretation };
     });
   }, [simulationData, selectedVariables, baselineData]);
+
+  const summary = useMemo(() => {
+    if (!simulationData) return null;
+    const entries = Object.entries(simulationData) as [string, any][];
+    if (entries.length === 0) return null;
+    if (entries.length > 1) {
+      const series = entries.map(([label, data]) => ({
+        id: scenariosList.find((s) => s.label === label)?.id ?? label,
+        label,
+        data,
+      }));
+      return summarizeCompare(series, entries[0][1].years);
+    }
+    const [label, data] = entries[0];
+    const isBau = label === scenarios.BAU.label;
+    return summarizeSingle(data, isBau ? null : baselineData, {
+      lead: isBau ? BAU_SUBJECT : `Pada skenario ${label},`,
+      hintWhenBaseline:
+        "Ini kondisi acuan tanpa kebijakan tambahan. Pilih skenario lain atau aktifkan \"Bandingkan Semua Skenario\" untuk melihat dampak kebijakan.",
+    });
+  }, [simulationData, baselineData]);
 
   useEffect(() => {
     if (simulationData && selectedVariables.length > 0) {
@@ -491,6 +514,8 @@ export default function SkenarioPage() {
                   </div>
                 </div>
               )}
+
+              {summary && <SimulationSummary summary={summary} />}
 
               {/* Chart or placeholder */}
               {chartData && chartData.data ? (
