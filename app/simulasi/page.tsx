@@ -4,6 +4,8 @@ import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel, SimulationParams } from "@/lib/model";
+import { interpretSingle, describeParams } from "@/lib/interpretation";
+import ChartInterpretation, { InterpretationNote } from "@/components/ChartInterpretation";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
@@ -20,6 +22,9 @@ export default function SimulasiPage() {
   const bau = scenarios.BAU;
   const [params, setParams] = useState<SimulationParams>(bau.params);
   const [simulationData, setSimulationData] = useState<any>(null);
+  // Parameter saat simulasi terakhir dijalankan dan hasil BAU sebagai pembanding interpretasi.
+  const [runParams, setRunParams] = useState<SimulationParams | null>(null);
+  const [baselineData, setBaselineData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVariables, setSelectedVariables] = useState<string[]>([
     "jumlah_wisatawan",
@@ -37,8 +42,14 @@ export default function SimulasiPage() {
   const runSimulation = async () => {
     setIsLoading(true);
     try {
+      const isBau =
+        params.insentif_kebijakan === bau.params.insentif_kebijakan &&
+        params.kebijakan_konservasi_lahan === bau.params.kebijakan_konservasi_lahan;
       const data = await runModel(params);
+      const baseline = isBau ? null : await runModel(bau.params);
       setSimulationData(data);
+      setRunParams(params);
+      setBaselineData(baseline);
     } catch (error) {
       console.error("Simulation error:", error);
     } finally {
@@ -73,9 +84,16 @@ export default function SimulasiPage() {
       const data: any = {
         [variable?.label || varId]: simValues,
       };
-      return { varId, variable, years, data };
+      const interpretation =
+        variable && runParams
+          ? interpretSingle(variable, years, simValues, {
+              subject: baselineData ? describeParams(runParams) : "Pada skenario Business-as-Usual (tanpa intervensi)",
+              baseline: baselineData?.[varId] ?? null,
+            })
+          : null;
+      return { varId, variable, years, data, interpretation };
     });
-  }, [simulationData, selectedVariables]);
+  }, [simulationData, selectedVariables, runParams, baselineData]);
 
   const formatValue = (config: typeof sliderConfigs[0], raw: number) => {
     const v = raw * config.scale;
@@ -564,6 +582,7 @@ export default function SimulasiPage() {
                     </div>
                   ) : (
                     <div className="space-y-5">
+                      <InterpretationNote />
                       {individualChartsData?.map((chartItem) => (
                         <div key={chartItem.varId} className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
                           style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
@@ -585,6 +604,7 @@ export default function SimulasiPage() {
                               yAxisLabel={chartItem.variable?.unit || 'Nilai'}
                             />
                           </div>
+                          {chartItem.interpretation && <ChartInterpretation interpretation={chartItem.interpretation} />}
                         </div>
                       ))}
                     </div>
