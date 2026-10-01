@@ -4,6 +4,8 @@ import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel } from "@/lib/model";
+import { interpretSingle, interpretCompare, BAU_SUBJECT } from "@/lib/interpretation";
+import ChartInterpretation, { InterpretationNote } from "@/components/ChartInterpretation";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
@@ -15,6 +17,8 @@ export default function SkenarioPage() {
   ]);
   const [compareAll, setCompareAll] = useState(false);
   const [simulationData, setSimulationData] = useState<any>(null);
+  // Hasil BAU sebagai pembanding interpretasi saat hanya satu skenario non-BAU dijalankan.
+  const [baselineData, setBaselineData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showCombinedChart, setShowCombinedChart] = useState(false);
   const [activeTableVariable, setActiveTableVariable] = useState<string>("");
@@ -30,11 +34,14 @@ export default function SkenarioPage() {
           allData[scenario.label] = data;
         }
         setSimulationData(allData);
+        setBaselineData(null);
       } else {
         const activeScenarioObj = scenariosList.find((s) => s.id === activeScenario);
         if (activeScenarioObj) {
           const data = await runModel(activeScenarioObj.params);
+          const baseline = activeScenarioObj.id === "BAU" ? null : await runModel(scenarios.BAU.params);
           setSimulationData({ [activeScenarioObj.label]: data });
+          setBaselineData(baseline);
         }
       }
     } catch (error) {
@@ -70,9 +77,24 @@ export default function SkenarioPage() {
         const key = `${variable?.label} (${scenarioName})`;
         data[key] = scenarioData?.[varId] || [];
       });
-      return { varId, variable, years, data };
+      let interpretation = null;
+      if (variable) {
+        const series = Object.entries(simulationData).map(([label, scenarioData]: any) => ({
+          id: scenariosList.find((s) => s.label === label)?.id ?? label,
+          label,
+          values: (scenarioData?.[varId] || []) as number[],
+        }));
+        interpretation =
+          series.length > 1
+            ? interpretCompare(variable, years, series)
+            : interpretSingle(variable, years, series[0].values, {
+                subject: series[0].id === "BAU" ? BAU_SUBJECT : `Pada skenario ${series[0].label},`,
+                baseline: baselineData?.[varId] ?? null,
+              });
+      }
+      return { varId, variable, years, data, interpretation };
     });
-  }, [simulationData, selectedVariables]);
+  }, [simulationData, selectedVariables, baselineData]);
 
   useEffect(() => {
     if (simulationData && selectedVariables.length > 0) {
@@ -513,6 +535,7 @@ export default function SkenarioPage() {
                     </div>
                   ) : (
                     <div className="space-y-5">
+                      <InterpretationNote compare={Object.keys(simulationData).length > 1} />
                       {individualChartsData?.map((chartItem) => (
                         <div key={chartItem.varId} className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
                           style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.05)' }}>
@@ -536,6 +559,7 @@ export default function SkenarioPage() {
                               yAxisLabel={chartItem.variable?.unit || 'Nilai'}
                             />
                           </div>
+                          {chartItem.interpretation && <ChartInterpretation interpretation={chartItem.interpretation} />}
                         </div>
                       ))}
                     </div>
