@@ -8,6 +8,8 @@ import { interpretSingle, interpretCompare, BAU_SUBJECT } from "@/lib/interpreta
 import ChartInterpretation, { InterpretationNote } from "@/components/ChartInterpretation";
 import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle, summarizeCompare } from "@/lib/summary";
+import InfoTip from "@/components/InfoTip";
+import { GLOSSARY, displayUnit } from "@/lib/glossary";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
@@ -421,7 +423,7 @@ export default function SkenarioPage() {
                         {outputVariables.filter((v) => v.dimension === dim).map((variable) => {
                       const isChecked = selectedVariables.includes(variable.id);
                       return (
-                        <label key={variable.id} className="var-checkbox" title={variable.ambang ? `Arah: ${variable.arah} · Ambang ${variable.ambang}` : `Arah: ${variable.arah}`}>
+                        <label key={variable.id} className="var-checkbox">
                           <input
                             type="checkbox"
                             checked={isChecked}
@@ -441,8 +443,13 @@ export default function SkenarioPage() {
                               </svg>
                             )}
                           </div>
-                          <span className="text-xs text-gray-700 leading-tight">{variable.label}</span>
-                          <span className="ml-auto text-[10px] text-gray-400">{variable.unit}</span>
+                          <span className="text-xs text-gray-700 leading-tight">
+                            {variable.label}
+                            {GLOSSARY[variable.id] && (
+                              <span className="ml-1 inline-block"><InfoTip text={GLOSSARY[variable.id]} label={variable.label} /></span>
+                            )}
+                          </span>
+                          <span className="ml-auto text-[10px] text-gray-400">{displayUnit(variable.unit)}</span>
                         </label>
                       );
                         })}
@@ -573,7 +580,7 @@ export default function SkenarioPage() {
                             </div>
                             <div className="flex items-center gap-1.5">
                               <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                              <span className="text-xs text-gray-400">{chartItem.variable?.unit}</span>
+                              <span className="text-xs text-gray-400">{displayUnit(chartItem.variable?.unit)}</span>
                             </div>
                           </div>
                           <div className="p-6">
@@ -581,7 +588,7 @@ export default function SkenarioPage() {
                               years={chartItem.years}
                               data={chartItem.data}
                               title={chartItem.variable?.label || ''}
-                              yAxisLabel={chartItem.variable?.unit || 'Nilai'}
+                              yAxisLabel={displayUnit(chartItem.variable?.unit) || 'Nilai'}
                             />
                           </div>
                           {chartItem.interpretation && <ChartInterpretation interpretation={chartItem.interpretation} />}
@@ -695,7 +702,7 @@ export default function SkenarioPage() {
                                         <div style={{ fontSize: 11, fontWeight: 600, color: 'white' }}>
                                           {variable?.label} <SortIcon colKey={varId} />
                                         </div>
-                                        <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{variable?.unit}</div>
+                                        <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{displayUnit(variable?.unit)}</div>
                                       </th>
                                     );
                                   })}
@@ -816,7 +823,7 @@ export default function SkenarioPage() {
                                   {currentVar?.label}
                                 </div>
                                 <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
-                                  ({currentVar?.unit}) · {currentIdx + 1} dari {selectedVariables.length}
+                                  ({displayUnit(currentVar?.unit)}) · {currentIdx + 1} dari {selectedVariables.length}
                                 </div>
                                 <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 6 }}>
                                   {selectedVariables.map((id, i) => (
@@ -873,7 +880,7 @@ export default function SkenarioPage() {
                                       <div style={{ fontSize: 11, fontWeight: 600, color: 'white' }}>
                                         {scenarioName} <SortIcon colKey={scenarioName} />
                                       </div>
-                                      <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{currentVar?.unit}</div>
+                                      <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{displayUnit(currentVar?.unit)}</div>
                                     </th>
                                   ))}
                                 </tr>
