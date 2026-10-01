@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel, SimulationParams } from "@/lib/model";
-import { interpretSingle, describeParams } from "@/lib/interpretation";
+import { interpretSingle, describeParams, BAU_SUBJECT } from "@/lib/interpretation";
 import ChartInterpretation, { InterpretationNote } from "@/components/ChartInterpretation";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
@@ -87,7 +87,7 @@ export default function SimulasiPage() {
       const interpretation =
         variable && runParams
           ? interpretSingle(variable, years, simValues, {
-              subject: baselineData ? describeParams(runParams) : "Pada skenario Business-as-Usual (tanpa intervensi)",
+              subject: baselineData ? describeParams(runParams) : BAU_SUBJECT,
               baseline: baselineData?.[varId] ?? null,
             })
           : null;

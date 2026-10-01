@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel } from "@/lib/model";
-import { interpretSingle, interpretCompare } from "@/lib/interpretation";
+import { interpretSingle, interpretCompare, BAU_SUBJECT } from "@/lib/interpretation";
 import ChartInterpretation, { InterpretationNote } from "@/components/ChartInterpretation";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
@@ -88,7 +88,7 @@ export default function SkenarioPage() {
           series.length > 1
             ? interpretCompare(variable, years, series)
             : interpretSingle(variable, years, series[0].values, {
-                subject: `Pada skenario ${series[0].label}`,
+                subject: series[0].id === "BAU" ? BAU_SUBJECT : `Pada skenario ${series[0].label},`,
                 baseline: baselineData?.[varId] ?? null,
               });
       }
