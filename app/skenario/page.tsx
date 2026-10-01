@@ -292,8 +292,8 @@ export default function SkenarioPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
             {/* ── CONTROL PANEL ────────────────────────────── */}
-            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
-              style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.05)', position: 'sticky', top: '88px' }}>
+            <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden lg:sticky lg:top-[88px]"
+              style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.05)' }}>
 
               <div className="px-6 py-5" style={{ borderBottom: '1px solid #f0f4f8' }}>
                 <p className="section-label mb-1">Pengaturan Simulasi</p>
