@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel, SimulationParams } from "@/lib/model";
-import { historicalYears, getHistoricalSeries } from "@/lib/historicalData";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
@@ -69,23 +68,11 @@ export default function SimulasiPage() {
     const simYears: number[] = simulationData.years;
     return selectedVariables.map((varId) => {
       const variable = outputVariables.find((v) => v.id === varId);
-      const hist = getHistoricalSeries(varId);
-      const years = hist
-        ? [...historicalYears.filter((y) => !simYears.includes(y)), ...simYears]
-        : simYears;
+      const years = simYears;
       const simValues: number[] = (simulationData as any)[varId] || [];
       const data: any = {
-        [variable?.label || varId]: years.map((y) => {
-          const idx = simYears.indexOf(y);
-          return idx >= 0 ? simValues[idx] : null;
-        }),
+        [variable?.label || varId]: simValues,
       };
-      if (hist) {
-        data[`${variable?.label || varId} (Aktual 2016–2025)`] = years.map((y) => {
-          const idx = historicalYears.indexOf(y);
-          return idx >= 0 ? hist[idx] : null;
-        });
-      }
       return { varId, variable, years, data };
     });
   }, [simulationData, selectedVariables]);

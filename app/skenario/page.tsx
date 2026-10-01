@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel } from "@/lib/model";
-import { historicalYears, getHistoricalSeries } from "@/lib/historicalData";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
@@ -65,25 +64,12 @@ export default function SkenarioPage() {
     const simYears: number[] = (Object.values(simulationData)[0] as any)?.years ?? [];
     return selectedVariables.map((varId) => {
       const variable = outputVariables.find((v) => v.id === varId);
-      const hist = getHistoricalSeries(varId);
-      const years = hist
-        ? [...historicalYears.filter((y) => !simYears.includes(y)), ...simYears]
-        : simYears;
+      const years = simYears;
       const data: any = {};
       Object.entries(simulationData).forEach(([scenarioName, scenarioData]: any) => {
         const key = `${variable?.label} (${scenarioName})`;
-        const values: number[] = scenarioData?.[varId] || [];
-        data[key] = years.map((y) => {
-          const idx = simYears.indexOf(y);
-          return idx >= 0 ? values[idx] : null;
-        });
+        data[key] = scenarioData?.[varId] || [];
       });
-      if (hist) {
-        data[`${variable?.label || varId} (Aktual 2016–2025)`] = years.map((y) => {
-          const idx = historicalYears.indexOf(y);
-          return idx >= 0 ? hist[idx] : null;
-        });
-      }
       return { varId, variable, years, data };
     });
   }, [simulationData, selectedVariables]);
