@@ -204,7 +204,7 @@ export default function Home() {
             <div className="text-center mb-14">
               <p className="section-label mb-3">Analisis Kebijakan</p>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-gray-900">3 Skenario Kebijakan</h2>
-              <p className="text-gray-500 mt-3 max-w-lg mx-auto text-sm leading-relaxed">Hover pada kartu untuk melihat deskripsi skenario kebijakan yang tersedia</p>
+              <p className="text-gray-500 mt-3 max-w-lg mx-auto text-sm leading-relaxed">Arahkan kursor atau ketuk kartu untuk melihat deskripsi skenario kebijakan yang tersedia</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {scenariosList.map((scenario, i) => (
@@ -212,6 +212,11 @@ export default function Home() {
                   key={scenario.id}
                   onMouseEnter={() => setHoveredScenario(scenario.id)}
                   onMouseLeave={() => setHoveredScenario(null)}
+                  onClick={() => setHoveredScenario(scenario.id)}
+                  onFocus={() => setHoveredScenario(scenario.id)}
+                  onBlur={() => setHoveredScenario(null)}
+                  tabIndex={0}
+                  aria-expanded={hoveredScenario === scenario.id}
                   className="scenario-card bg-white rounded-2xl overflow-hidden border border-gray-100"
                   style={{
                     boxShadow: hoveredScenario === scenario.id ? `0 16px 40px ${scenario.color}22` : '0 2px 12px rgba(0,0,0,0.04)',
