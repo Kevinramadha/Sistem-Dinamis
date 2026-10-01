@@ -75,14 +75,14 @@ export const VARIABLE_CONTEXT: Record<string, string> = {
 };
 
 const CUMULATIVE = new Set(["akumulasi_investasi", "akumulasi_konversi_lahan_pariwisata"]);
-const SMALL_PCT = 0.5; // selisih (%) di bawah ini dianggap praktis sama
-const RASIO_BATAS = 0.331; // Perda DIY No. 6/2021 (KP2B) terhadap luas DIY
-const KEPADATAN_BATAS = 2.0; // ketetapan peneliti
+export const SMALL_PCT = 0.5; // selisih (%) di bawah ini dianggap praktis sama
+export const RASIO_BATAS = 0.331; // Perda DIY No. 6/2021 (KP2B) terhadap luas DIY
+export const KEPADATAN_BATAS = 2.0; // ketetapan peneliti
 
-const nf = (v: number, digits: number) =>
+export const nf = (v: number, digits: number) =>
   v.toLocaleString("id-ID", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
-const pct = (p: number) => `${nf(Math.abs(p), Math.abs(p) < 10 ? 1 : 0)}%`;
+export const pct = (p: number) => `${nf(Math.abs(p), Math.abs(p) < 10 ? 1 : 0)}%`;
 
 const sisi = (v: OutputVariable) => `sisi ${v.dimension.toLowerCase()}`;
 
@@ -105,7 +105,7 @@ export function formatValue(v: number, unit: string, id = ""): string {
 
 const fv = (v: OutputVariable, x: number) => formatValue(x, v.unit, v.id);
 
-function pctChange(from: number, to: number): number | null {
+export function pctChange(from: number, to: number): number | null {
   if (!isFinite(from) || Math.abs(from) < 1e-9) return null;
   return ((to - from) / Math.abs(from)) * 100;
 }

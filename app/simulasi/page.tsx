@@ -6,6 +6,8 @@ import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/l
 import { runModel, SimulationParams } from "@/lib/model";
 import { interpretSingle, describeParams, BAU_SUBJECT } from "@/lib/interpretation";
 import ChartInterpretation, { InterpretationNote } from "@/components/ChartInterpretation";
+import SimulationSummary from "@/components/SimulationSummary";
+import { summarizeSingle } from "@/lib/summary";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
@@ -94,6 +96,15 @@ export default function SimulasiPage() {
       return { varId, variable, years, data, interpretation };
     });
   }, [simulationData, selectedVariables, runParams, baselineData]);
+
+  const summary = useMemo(() => {
+    if (!simulationData || !runParams) return null;
+    return summarizeSingle(simulationData, baselineData, {
+      lead: baselineData ? describeParams(runParams) : BAU_SUBJECT,
+      hintWhenBaseline:
+        "Ini kondisi acuan tanpa kebijakan tambahan. Ubah tuas kebijakan atau pilih preset SUS/DP, lalu jalankan simulasi untuk melihat dampaknya.",
+    });
+  }, [simulationData, baselineData, runParams]);
 
   const formatValue = (config: typeof sliderConfigs[0], raw: number) => {
     const v = raw * config.scale;
@@ -540,6 +551,8 @@ export default function SimulasiPage() {
                   ))}
                 </div>
               </div>
+
+              {summary && <SimulationSummary summary={summary} />}
 
               {/* Chart */}
               {chartData && chartData.data ? (
