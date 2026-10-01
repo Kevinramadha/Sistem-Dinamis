@@ -13,6 +13,7 @@ const navLinks = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const isSimulasiPage = pathname === "/simulasi";
 
   return (
     <>
@@ -96,9 +97,11 @@ export default function Navbar() {
 
           {/* CTA + Mobile Toggle */}
           <div className="flex items-center gap-4">
-            <Link href="/simulasi" className="nav-cta hidden md:inline-flex">
-              Mulai Eksplorasi →
-            </Link>
+            {!isSimulasiPage && (
+              <Link href="/simulasi" className="nav-cta hidden md:inline-flex">
+                Mulai Eksplorasi →
+              </Link>
+            )}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="md:hidden p-2 rounded-lg transition-colors"
@@ -133,14 +136,16 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                href="/simulasi"
-                onClick={() => setIsOpen(false)}
-                className="mt-2 text-center py-3 rounded-xl text-sm font-semibold"
-                style={{ background: '#1D5A8C', color: 'white', fontFamily: 'Sora, sans-serif' }}
-              >
-                Mulai Eksplorasi →
-              </Link>
+              {!isSimulasiPage && (
+                <Link
+                  href="/simulasi"
+                  onClick={() => setIsOpen(false)}
+                  className="mt-2 text-center py-3 rounded-xl text-sm font-semibold"
+                  style={{ background: '#1D5A8C', color: 'white', fontFamily: 'Sora, sans-serif' }}
+                >
+                  Mulai Eksplorasi →
+                </Link>
+              )}
             </div>
           </div>
         )}
