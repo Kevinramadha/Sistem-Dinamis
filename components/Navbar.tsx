@@ -28,6 +28,9 @@ export default function Navbar() {
           padding: 6px 0;
           transition: color 0.2s;
           text-decoration: none;
+          display: inline-flex;
+          flex-direction: column;
+          align-items: center;
         }
         .nav-link::after {
           content: '';
@@ -37,6 +40,14 @@ export default function Navbar() {
           border-radius: 2px;
           background: #E89D3E;
           transition: width 0.25s ease;
+        }
+        /* Cadangkan lebar versi tebal agar menu aktif tidak menggeser menu lain */
+        .nav-link::before {
+          content: attr(data-label);
+          font-weight: 600;
+          height: 0;
+          overflow: hidden;
+          visibility: hidden;
         }
         .nav-link:hover { color: #1D5A8C; }
         .nav-link:hover::after { width: 100%; }
@@ -89,6 +100,7 @@ export default function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={`nav-link ${pathname === link.href ? "active" : ""}`}
+                data-label={link.label}
               >
                 {link.label}
               </Link>
@@ -97,11 +109,15 @@ export default function Navbar() {
 
           {/* CTA + Mobile Toggle */}
           <div className="flex items-center gap-4">
-            {!isSimulasiPage && (
-              <Link href="/simulasi" className="nav-cta hidden md:inline-flex">
-                Mulai Eksplorasi →
-              </Link>
-            )}
+            {/* Tetap dirender (tak terlihat) di /simulasi agar posisi menu tidak bergeser */}
+            <Link
+              href="/simulasi"
+              className={`nav-cta hidden md:inline-flex ${isSimulasiPage ? "invisible" : ""}`}
+              aria-hidden={isSimulasiPage}
+              tabIndex={isSimulasiPage ? -1 : undefined}
+            >
+              Mulai Eksplorasi →
+            </Link>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="md:hidden p-2 rounded-lg transition-colors"
