@@ -356,7 +356,7 @@ export default function SimulasiPage() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
 
             {/* ── LEFT PANEL ───────────────────────────────── */}
-            <div className="lg:col-span-1 space-y-4" style={{ position: 'sticky', top: '88px' }}>
+            <div className="lg:col-span-1 space-y-4 lg:sticky lg:top-[88px]">
 
               {/* Preset Scenarios */}
               <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
