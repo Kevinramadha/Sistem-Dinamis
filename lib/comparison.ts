@@ -1,13 +1,19 @@
 import type { OutputVariable } from "./scenarios";
 
 // Grafik perbandingan menggabungkan variabel dengan satuan dan besaran yang
-// sangat berbeda (puluhan juta kunjungan vs ribuan hotel vs rasio < 1).
-// Pada sumbu biasa variabel kecil menjadi garis datar di dasar grafik, jadi
-// grafik ini secara bawaan menampilkan indeks pertumbuhan (tahun dasar = 100)
-// dan beralih ke sumbu logaritmik bila laju pertumbuhan antarvariabel masih
-// terlalu jauh berbeda (mis. variabel kumulatif yang tumbuh puluhan kali lipat).
+// sangat berbeda (puluhan juta kunjungan vs ribuan hotel vs rasio < 1). Pada
+// sumbu nilai asli variabel kecil menjadi garis datar di dasar grafik, jadi
+// setiap variabel ditampilkan sebagai indeks pertumbuhan (tahun dasar = 100).
 
-export type CompareMode = "indeks" | "asli";
+/**
+ * Variabel kumulatif dimulai dari jumlah satu tahun saja, sehingga indeksnya
+ * melonjak puluhan kali lipat dan membuat garis lain tampak datar. Variabel
+ * ini tidak digabung ke grafik perbandingan; grafik individualnya tetap ada.
+ */
+export const CUMULATIVE_IDS = new Set(["akumulasi_investasi", "akumulasi_konversi_lahan_pariwisata"]);
+
+/** Selisih indeks maksimum (poin) agar dua garis dianggap berimpit. */
+export const OVERLAP_TOLERANCE = 1;
 
 export interface CompareInput {
   label: string;
@@ -18,22 +24,19 @@ export interface CompareInput {
 }
 
 export interface CompareLine extends CompareInput {
-  /** Nilai yang digambar (indeks atau nilai asli). */
+  /** Indeks pertumbuhan (tahun dasar = 100). */
   plotted: number[];
 }
 
 export interface ComparisonResult {
   lines: CompareLine[];
+  /** Variabel kumulatif yang tidak digabung ke grafik ini. */
+  cumulative: string[];
   /** Variabel yang tidak dapat diindeks karena nilai tahun dasarnya 0. */
-  skipped: string[];
-  /** true bila garis-garisnya berbeda besaran sangat jauh sehingga sumbu log lebih terbaca. */
-  suggestLog: boolean;
-  /** true bila ada nilai ≤ 0, yang tidak dapat digambar pada sumbu log. */
-  hasNonPositive: boolean;
+  zeroBase: string[];
+  /** Pasangan variabel yang garisnya berimpit (tumbuh dengan laju sama). */
+  overlaps: [string, string][];
 }
-
-/** Rasio puncak garis tertinggi terhadap puncak garis terendah yang masih nyaman dibaca pada sumbu biasa. */
-export const LOG_THRESHOLD = 10;
 
 /**
  * Nilai acuan indeks per variabel: nilai tahun dasar skenario BAU bila ada,
@@ -48,36 +51,40 @@ function referenceValues(inputs: CompareInput[]): Map<string, number> {
   return ref;
 }
 
-export function buildComparison(inputs: CompareInput[], mode: CompareMode): ComparisonResult {
+const addOnce = (list: string[], label: string) => {
+  if (!list.includes(label)) list.push(label);
+};
+
+export function buildComparison(inputs: CompareInput[]): ComparisonResult {
   const ref = referenceValues(inputs);
-  const skipped: string[] = [];
+  const cumulative: string[] = [];
+  const zeroBase: string[] = [];
   const lines: CompareLine[] = [];
 
   for (const s of inputs) {
-    if (mode === "asli") {
-      lines.push({ ...s, plotted: s.values });
+    if (CUMULATIVE_IDS.has(s.variable.id)) {
+      addOnce(cumulative, s.variable.label);
       continue;
     }
     const r = ref.get(s.variable.id) ?? NaN;
     if (!(r > 0)) {
-      if (!skipped.includes(s.variable.label)) skipped.push(s.variable.label);
+      addOnce(zeroBase, s.variable.label);
       continue;
     }
     lines.push({ ...s, plotted: s.values.map((v) => (v / r) * 100) });
   }
 
-  const peaks = lines
-    .map((l) => Math.max(...l.plotted.map((v) => Math.abs(v)).filter(Number.isFinite)))
-    .filter((p) => p > 0);
-  const suggestLog = peaks.length > 1 && Math.max(...peaks) / Math.min(...peaks) > LOG_THRESHOLD;
-  const hasNonPositive = lines.some((l) => l.plotted.some((v) => !(v > 0)));
+  const overlaps: [string, string][] = [];
+  for (let i = 0; i < lines.length; i++) {
+    for (let j = i + 1; j < lines.length; j++) {
+      const a = lines[i];
+      const b = lines[j];
+      if (a.variable.id === b.variable.id || a.scenarioId !== b.scenarioId) continue;
+      const close = a.plotted.every((v, k) => Math.abs(v - b.plotted[k]) <= OVERLAP_TOLERANCE);
+      const pair: [string, string] = [a.variable.label, b.variable.label];
+      if (close && !overlaps.some(([x, y]) => x === pair[0] && y === pair[1])) overlaps.push(pair);
+    }
+  }
 
-  return { lines, skipped, suggestLog, hasNonPositive };
-}
-
-/** Pada sumbu log hanya kelipatan 1, 2, dan 5 yang diberi label agar tidak berdesakan. */
-export function isNiceLogTick(v: number): boolean {
-  if (!(v > 0)) return false;
-  const m = v / 10 ** Math.floor(Math.log10(v) + 1e-9);
-  return [1, 2, 5].some((n) => Math.abs(m - n) < 1e-6);
+  return { lines, cumulative, zeroBase, overlaps };
 }

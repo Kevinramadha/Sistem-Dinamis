@@ -1,62 +1,47 @@
 import { describe, expect, it } from "vitest";
-import { buildComparison, isNiceLogTick, type CompareInput } from "@/lib/comparison";
+import { buildComparison, type CompareInput } from "@/lib/comparison";
 import { outputVariables } from "@/lib/scenarios";
 
 const v = (id: string) => outputVariables.find((o) => o.id === id)!;
 
 describe("buildComparison", () => {
   it("mengindeks setiap variabel terhadap tahun dasar = 100", () => {
-    const r = buildComparison(
-      [
-        { label: "W", variable: v("jumlah_wisatawan"), values: [40e6, 60e6, 80e6] },
-        { label: "H", variable: v("jumlah_hotel_dan_akomodasi"), values: [2000, 2500, 3000] },
-      ],
-      "indeks"
-    );
+    const r = buildComparison([
+      { label: "W", variable: v("jumlah_wisatawan"), values: [40e6, 60e6, 80e6] },
+      { label: "H", variable: v("jumlah_hotel_dan_akomodasi"), values: [2000, 2500, 3000] },
+    ]);
     expect(r.lines[0].plotted).toEqual([100, 150, 200]);
     expect(r.lines[1].plotted).toEqual([100, 125, 150]);
-    expect(r.suggestLog).toBe(false);
-    expect(r.skipped).toEqual([]);
+    expect(r.overlaps).toEqual([]);
   });
 
   it("memakai nilai tahun dasar BAU sebagai patokan semua skenario", () => {
-    const inv = v("akumulasi_investasi");
+    const w = v("jumlah_wisatawan");
     const inputs: CompareInput[] = [
-      { label: "SUS", variable: inv, scenarioId: "SUS", values: [110, 220] },
-      { label: "BAU", variable: inv, scenarioId: "BAU", values: [100, 200] },
-      { label: "DP", variable: inv, scenarioId: "DP", values: [150, 300] },
+      { label: "SUS", variable: w, scenarioId: "SUS", values: [110, 220] },
+      { label: "BAU", variable: w, scenarioId: "BAU", values: [100, 200] },
+      { label: "DP", variable: w, scenarioId: "DP", values: [150, 300] },
     ];
-    const r = buildComparison(inputs, "indeks");
-    expect(r.lines.map((l) => Math.round(l.plotted[0]))).toEqual([110, 100, 150]);
+    expect(buildComparison(inputs).lines.map((l) => Math.round(l.plotted[0]))).toEqual([110, 100, 150]);
   });
 
-  it("melewatkan variabel bernilai nol di tahun dasar dan menandai nilai nol", () => {
-    const kon = v("akumulasi_konversi_lahan_pariwisata");
-    const r = buildComparison([{ label: "K", variable: kon, values: [0, 0, 0] }], "indeks");
-    expect(r.lines).toHaveLength(0);
-    expect(r.skipped).toEqual([kon.label]);
-    const asli = buildComparison([{ label: "K", variable: kon, values: [0, 0, 0] }], "asli");
-    expect(asli.lines[0].plotted).toEqual([0, 0, 0]);
-    expect(asli.hasNonPositive).toBe(true);
+  it("tidak menggabungkan variabel kumulatif dan variabel bernilai nol di tahun dasar", () => {
+    const r = buildComparison([
+      { label: "I", variable: v("akumulasi_investasi"), values: [800, 37000] },
+      { label: "T", variable: v("investasi_sektor_pariwisata"), values: [0, 10] },
+      { label: "W", variable: v("jumlah_wisatawan"), values: [40e6, 96e6] },
+    ]);
+    expect(r.lines.map((l) => l.variable.id)).toEqual(["jumlah_wisatawan"]);
+    expect(r.cumulative).toEqual([v("akumulasi_investasi").label]);
+    expect(r.zeroBase).toEqual([v("investasi_sektor_pariwisata").label]);
   });
 
-  it("menyarankan sumbu log bila besaran garis berbeda jauh", () => {
-    const r = buildComparison(
-      [
-        { label: "W", variable: v("jumlah_wisatawan"), values: [40e6, 96e6] },
-        { label: "H", variable: v("jumlah_hotel_dan_akomodasi"), values: [2291, 5404] },
-      ],
-      "asli"
-    );
-    expect(r.suggestLog).toBe(true);
-    // Setelah diindeks, laju keduanya sebanding sehingga sumbu biasa cukup.
-    expect(buildComparison(r.lines, "indeks").suggestLog).toBe(false);
-  });
-});
-
-describe("isNiceLogTick", () => {
-  it("hanya kelipatan 1, 2, 5", () => {
-    expect([1, 2, 5, 10, 20, 50, 100, 200, 500, 0.5].every(isNiceLogTick)).toBe(true);
-    expect([3, 4, 30, 700, 0, -10].some(isNiceLogTick)).toBe(false);
+  it("menandai garis yang berimpit pada skenario yang sama", () => {
+    const r = buildComparison([
+      { label: "W", variable: v("jumlah_wisatawan"), scenarioId: "BAU", values: [40e6, 96e6] },
+      { label: "P", variable: v("pdrb_sektor_pariwisata"), scenarioId: "BAU", values: [17000, 40800] },
+      { label: "H", variable: v("jumlah_hotel_dan_akomodasi"), scenarioId: "BAU", values: [2291, 5404] },
+    ]);
+    expect(r.overlaps).toEqual([[v("jumlah_wisatawan").label, v("pdrb_sektor_pariwisata").label]]);
   });
 });
