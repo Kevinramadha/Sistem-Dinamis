@@ -208,7 +208,7 @@ export default function PembaruanDataPage() {
 
           {/* ── STATUS ─────────────────────────────────────── */}
           <div className="card p-5 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
+            <div className="max-w-2xl">
               <p className="section-label mb-1">Data dasar yang dipakai sekarang</p>
               <p className="font-display text-xl font-bold text-gray-900">
                 Tahun {baseYear}{" "}
@@ -216,21 +216,31 @@ export default function PembaruanDataPage() {
                   {isCustom ? "pembaruan pengguna" : "data penelitian"}
                 </span>
               </p>
-              <p className="text-sm text-gray-500 mt-1">
-                Seri {activeRows[0].tahun}–{activeRows[activeRows.length - 1].tahun} · simulasi {baseYear}–2050
-                {config && ` · diterapkan ${new Date(config.appliedAt).toLocaleString("id-ID")}`}
+              <p className="text-sm text-gray-600 mt-2 leading-relaxed">
+                {isCustom ? (
+                  <>
+                    Simulasi memakai data sampai tahun {baseYear} yang Anda terapkan
+                    {config && ` pada ${new Date(config.appliedAt).toLocaleString("id-ID")}`}, sehingga proyeksi berjalan {baseYear}–2050.
+                    Data ini hanya tersimpan di peramban ini.
+                  </>
+                ) : (
+                  <>
+                    Simulasi memakai data asli penelitian (seri 2015–{RESEARCH_BASE_YEAR}), sehingga proyeksi berjalan {RESEARCH_BASE_YEAR}–2050.
+                    Untuk memakai data tahun yang lebih baru, ikuti langkah di bawah.
+                  </>
+                )}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button className="btn btn-outline" onClick={onExport} disabled={!isCustom} title={isCustom ? "" : "Data penelitian selalu tersedia, tidak perlu diekspor"}>
-                Ekspor konfigurasi (.json)
-              </button>
-              <button className="btn btn-outline" onClick={() => jsonRef.current?.click()}>Impor konfigurasi (.json)</button>
-              <input ref={jsonRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => onImportJson(e.target.files?.[0])} aria-label="Impor konfigurasi JSON" />
-              <button className="btn btn-danger" onClick={onReset} disabled={!isCustom}>
-                Kembalikan ke data penelitian ({RESEARCH_BASE_YEAR})
-              </button>
-            </div>
+            {isCustom && (
+              <div className="shrink-0 md:text-right">
+                <button className="btn btn-danger" onClick={onReset}>
+                  Kembali ke data penelitian ({RESEARCH_BASE_YEAR})
+                </button>
+                <p className="text-[11px] text-gray-400 mt-1.5 md:max-w-[16rem] md:ml-auto">
+                  Menghapus data hasil pembaruan dan memakai lagi data asli penelitian.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* ── LANGKAH 1–2 ─────────────────────────────────── */}
@@ -320,6 +330,40 @@ export default function PembaruanDataPage() {
               onCancel={() => setCandidate(null)}
             />
           )}
+
+          {/* ── SIMPAN / PINDAHKAN ──────────────────────────── */}
+          <div className="card overflow-hidden">
+            <div className="px-5 sm:px-6 py-4" style={{ borderBottom: "1px solid #f0f4f8" }}>
+              <p className="section-label mb-0.5">Opsional</p>
+              <h2 className="font-display font-bold text-gray-900">Simpan atau pindahkan data dasar</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Data hasil pembaruan hanya tersimpan di peramban ini. Simpan ke berkas sebagai cadangan, atau untuk dibuka di perangkat lain.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              <div className="p-5 sm:p-6 md:border-r" style={{ borderColor: "#f0f4f8" }}>
+                <p className="font-semibold text-gray-900 text-sm mb-1">Simpan ke berkas</p>
+                <p className="text-sm text-gray-500 mb-3">
+                  Mengunduh data dasar yang sedang dipakai beserta parameternya sebagai berkas <code>.json</code>.
+                </p>
+                {isCustom ? (
+                  <button className="btn btn-outline" onClick={onExport}>Simpan ke berkas</button>
+                ) : (
+                  <p className="text-xs rounded-lg px-3 py-2 inline-block" style={{ background: "#f1f5f9", color: "#64748b" }}>
+                    Tersedia setelah Anda menerapkan data tahun baru. Data penelitian selalu tersedia tanpa perlu disimpan.
+                  </p>
+                )}
+              </div>
+              <div className="p-5 sm:p-6 border-t md:border-t-0" style={{ borderColor: "#f0f4f8" }}>
+                <p className="font-semibold text-gray-900 text-sm mb-1">Buka berkas tersimpan</p>
+                <p className="text-sm text-gray-500 mb-3">
+                  Memakai kembali data dasar dari berkas <code>.json</code> yang pernah disimpan. Datanya diperiksa dan dipratinjau dulu sebelum diterapkan.
+                </p>
+                <button className="btn btn-outline" onClick={() => jsonRef.current?.click()}>Buka berkas tersimpan</button>
+                <input ref={jsonRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => onImportJson(e.target.files?.[0])} aria-label="Impor konfigurasi JSON" />
+              </div>
+            </div>
+          </div>
 
           {/* ── PARAMETER TETAP ─────────────────────────────── */}
           <details className="card overflow-hidden">

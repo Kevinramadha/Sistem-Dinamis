@@ -15,7 +15,7 @@ terbaru yang dirilis BPS sehingga simulasi dijalankan dari tahun dasar terbaru s
 | `lib/parameterUpdate.ts` | Rumus kelompok B, aturan pembulatan, validasi, daftar parameter kelompok C. |
 | `lib/templateIO.ts` | Membuat dan membaca template `.xlsx` (ExcelJS) dan `.csv`. |
 | `components/BaseDataProvider.tsx`, `components/BaseDataBanner.tsx` | Status data dasar global, penyimpanan `localStorage`, penanda data dasar di setiap halaman. |
-| `app/pembaruan-data/page.tsx` | Halaman baru: unduh template, unggah atau isi form, validasi, pratinjau, terapkan, ekspor/impor `.json`, kembalikan ke data penelitian. |
+| `app/pembaruan-data/page.tsx` | Halaman baru: unduh template, unggah atau isi form, validasi, pratinjau, terapkan, simpan ke berkas / buka berkas tersimpan (`.json`), kembali ke data penelitian. |
 | Halaman Skenario dan Simulasi | Simulasi memakai data dasar aktif; judul periode menjadi dinamis (`t0–2050`); hasil lama disembunyikan bila data dasar berubah. |
 | Pengujian | Vitest: 57 tes (unit, regression, template). ESLint flat config (`npm run lint`). |
 
@@ -138,11 +138,11 @@ cp build/*.js lib/model-final.js
 | BB-19 | Simulasi dari tahun dasar baru | Jalankan simulasi di Eksplorasi Simulasi dan Skenario | Grafik dan tabel dimulai 2026 dan berakhir 2050; ringkasan menyebut "… kali lipat 2026" | Sesuai |
 | BB-20 | Penyimpanan | Muat ulang halaman | Data dasar 2026 tetap dipakai | Sesuai |
 | BB-21 | Hasil lama tidak tercampur | Jalankan simulasi, lalu terapkan data dasar lain dan buka kembali halaman simulasi | Hasil lama tidak ditampilkan sampai simulasi dijalankan ulang | Sesuai |
-| BB-22 | Ekspor konfigurasi | Klik "Ekspor konfigurasi (.json)" | Berkas `konfigurasi-data-dasar-simdiy-2026.json` terunduh | Sesuai |
-| BB-23 | Impor konfigurasi valid | Impor `.json` hasil ekspor, lalu Terapkan | Pratinjau tampil; setelah diterapkan penanda menjadi tahun 2026 | Sesuai |
-| BB-24 | Impor konfigurasi rusak | Impor `.json` yang datanya tidak lengkap | Pesan "Konfigurasi tidak dapat diimpor …"; data dasar tidak berubah | Sesuai |
-| BB-25 | Kembalikan ke data penelitian | Klik "Kembalikan ke data penelitian (2025)" lalu konfirmasi | Penanda kembali "2025 (data penelitian)"; data tersimpan dihapus | Sesuai |
-| BB-26 | Tombol saat data penelitian | Buka halaman tanpa pembaruan data | Tombol Ekspor dan Kembalikan nonaktif | Sesuai |
+| BB-22 | Simpan ke berkas | Klik "Simpan ke berkas" di bagian "Simpan atau pindahkan data dasar" | Berkas `konfigurasi-data-dasar-simdiy-2026.json` terunduh | Sesuai |
+| BB-23 | Buka berkas tersimpan (valid) | Klik "Buka berkas tersimpan", pilih `.json` hasil BB-22, lalu Terapkan | Pratinjau tampil; setelah diterapkan penanda menjadi tahun 2026 | Sesuai |
+| BB-24 | Buka berkas tersimpan (rusak) | Pilih `.json` yang datanya tidak lengkap | Pesan "Konfigurasi tidak dapat diimpor …"; data dasar tidak berubah | Sesuai |
+| BB-25 | Kembali ke data penelitian | Klik "Kembali ke data penelitian (2025)" lalu konfirmasi | Penanda kembali "2025 (data penelitian)"; data tersimpan dihapus | Sesuai |
+| BB-26 | Tampilan saat data penelitian | Buka halaman tanpa pembaruan data | Kartu status menjelaskan bahwa data asli penelitian dipakai; tombol "Kembali ke data penelitian" tidak ditampilkan; bagian "Simpan ke berkas" berisi keterangan bahwa fitur tersedia setelah data tahun baru diterapkan | Sesuai |
 | BB-27 | Informasi kelompok C | Buka panel "Parameter yang tidak diubah aplikasi" | Daftar parameter tetap dan keterangan perlu diturunkan ulang peneliti tampil | Sesuai |
 | BB-28 | Penyimpanan tidak tersedia | `localStorage` diblokir peramban, lalu terapkan data 2026 | Aplikasi tetap berjalan; data dasar 2026 berlaku selama halaman terbuka | Sesuai |
 | BB-29 | Fitur lama tetap berjalan | Buka Beranda dan Model; jalankan 3 skenario dengan data penelitian | Halaman tampil normal; hasil 2025–2050 identik dengan sebelum fitur ditambahkan | Sesuai |
