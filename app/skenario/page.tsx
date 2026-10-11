@@ -11,8 +11,10 @@ import { summarizeSingle, summarizeCompare } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
+import type { CompareInput } from "@/lib/comparison";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
+const ComparisonChart = dynamic(() => import("@/components/ComparisonChart"), { ssr: false });
 
 export default function SkenarioPage() {
   const { override, baseYear } = useBaseData();
@@ -77,6 +79,20 @@ export default function SkenarioPage() {
       });
     });
     return { years: yearReference, data: result };
+  }, [simulationData, selectedVariables]);
+
+  const comparisonInputs = useMemo<CompareInput[]>(() => {
+    if (!simulationData) return [];
+    return selectedVariables.flatMap((varId) => {
+      const variable = outputVariables.find((v) => v.id === varId);
+      if (!variable) return [];
+      return Object.entries(simulationData as Record<string, Record<string, number[]>>).map(([scenarioName, data]) => ({
+        label: `${variable.label} (${scenarioName})`,
+        variable,
+        scenarioId: scenariosList.find((s) => s.label === scenarioName)?.id,
+        values: data?.[varId] || [],
+      }));
+    });
   }, [simulationData, selectedVariables]);
 
   const individualChartsData = useMemo(() => {
@@ -566,11 +582,10 @@ export default function SkenarioPage() {
                         </div>
                       </div>
                       <div className="p-6">
-                        <LineChart
+                        <ComparisonChart
                           years={chartData.years}
-                          data={chartData.data}
+                          inputs={comparisonInputs}
                           title={compareAll ? 'Perbandingan 3 Skenario - Semua Variabel' : 'Perbandingan Variabel'}
-                          yAxisLabel="Nilai"
                         />
                       </div>
                     </div>

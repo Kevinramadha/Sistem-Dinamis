@@ -11,8 +11,10 @@ import { summarizeSingle } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
+import type { CompareInput } from "@/lib/comparison";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
+const ComparisonChart = dynamic(() => import("@/components/ComparisonChart"), { ssr: false });
 
 // Dua tuas kebijakan resmi (Bab 3.8.1 & 4.8.1 skripsi): parameter lain sudah
 // final hasil kalibrasi dan tidak diekspos sebagai input agar sejalan dengan
@@ -85,6 +87,14 @@ export default function SimulasiPage() {
       result[varId] = (simulationData as any)[varId] || [];
     });
     return { years: simulationData.years, data: result };
+  }, [simulationData, selectedVariables]);
+
+  const comparisonInputs = useMemo<CompareInput[]>(() => {
+    if (!simulationData) return [];
+    return selectedVariables.flatMap((varId) => {
+      const variable = outputVariables.find((v) => v.id === varId);
+      return variable ? [{ label: variable.label, variable, values: (simulationData as unknown as Record<string, number[]>)[varId] || [] }] : [];
+    });
   }, [simulationData, selectedVariables]);
 
   const individualChartsData = useMemo(() => {
@@ -604,11 +614,10 @@ export default function SimulasiPage() {
                         </div>
                       </div>
                       <div className="p-6">
-                        <LineChart
+                        <ComparisonChart
                           years={chartData.years}
-                          data={chartData.data}
+                          inputs={comparisonInputs}
                           title="Perbandingan Semua Variabel"
-                          yAxisLabel="Nilai"
                         />
                       </div>
                     </div>
