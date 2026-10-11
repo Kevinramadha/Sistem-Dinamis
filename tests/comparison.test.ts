@@ -45,3 +45,31 @@ describe("buildComparison", () => {
     expect(r.overlaps).toEqual([[v("jumlah_wisatawan").label, v("pdrb_sektor_pariwisata").label]]);
   });
 });
+
+describe("buildComparison mode ln", () => {
+  it("menggambar ln(nilai) untuk semua variabel termasuk kumulatif", () => {
+    const r = buildComparison(
+      [
+        { label: "I", variable: v("akumulasi_investasi"), values: [Math.E, Math.E ** 3] },
+        { label: "W", variable: v("jumlah_wisatawan"), values: [1, Math.E] },
+      ],
+      "ln"
+    );
+    expect(r.lines.map((l) => l.plotted.map((x) => Math.round(x * 1e9) / 1e9))).toEqual([[1, 3], [0, 1]]);
+    expect(r.cumulative).toEqual([]);
+  });
+
+  it("menandai garis bernilai nol dan melewatkan garis yang seluruhnya nol", () => {
+    const kon = v("akumulasi_konversi_lahan_pariwisata");
+    const r = buildComparison(
+      [
+        { label: "K (SUS)", variable: kon, values: [0, 0] },
+        { label: "T", variable: v("investasi_sektor_pariwisata"), values: [0, 5] },
+      ],
+      "ln"
+    );
+    expect(r.lines.map((l) => l.label)).toEqual(["T"]);
+    expect(r.lines[0].plotted[0]).toBeNaN();
+    expect(r.zeroBase).toEqual(["K (SUS)", "T"]);
+  });
+});

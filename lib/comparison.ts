@@ -3,7 +3,13 @@ import type { OutputVariable } from "./scenarios";
 // Grafik perbandingan menggabungkan variabel dengan satuan dan besaran yang
 // sangat berbeda (puluhan juta kunjungan vs ribuan hotel vs rasio < 1). Pada
 // sumbu nilai asli variabel kecil menjadi garis datar di dasar grafik, jadi
-// setiap variabel ditampilkan sebagai indeks pertumbuhan (tahun dasar = 100).
+// tersedia dua cara tampil:
+// - "indeks": nilai dibagi nilai tahun dasar × 100 (bawaan, mudah dibaca awam);
+// - "ln": logaritma natural nilai. Semua variabel (termasuk kumulatif) tampak,
+//   dan kemiringan garis menunjukkan laju pertumbuhan relatif
+//   (selisih ln 0,1 ≈ naik 10%; selisih ln 0,69 = dua kali lipat).
+
+export type CompareMode = "indeks" | "ln";
 
 /**
  * Variabel kumulatif dimulai dari jumlah satu tahun saja, sehingga indeksnya
@@ -24,7 +30,7 @@ export interface CompareInput {
 }
 
 export interface CompareLine extends CompareInput {
-  /** Indeks pertumbuhan (tahun dasar = 100). */
+  /** Nilai yang digambar: indeks (tahun dasar = 100) atau ln(nilai); NaN = tidak dapat digambar. */
   plotted: number[];
 }
 
@@ -32,7 +38,7 @@ export interface ComparisonResult {
   lines: CompareLine[];
   /** Variabel kumulatif yang tidak digabung ke grafik ini. */
   cumulative: string[];
-  /** Variabel yang tidak dapat diindeks karena nilai tahun dasarnya 0. */
+  /** Indeks: variabel yang nilai tahun dasarnya 0. ln: garis yang memuat nilai ≤ 0. */
   zeroBase: string[];
   /** Pasangan variabel yang garisnya berimpit (tumbuh dengan laju sama). */
   overlaps: [string, string][];
@@ -55,11 +61,21 @@ const addOnce = (list: string[], label: string) => {
   if (!list.includes(label)) list.push(label);
 };
 
-export function buildComparison(inputs: CompareInput[]): ComparisonResult {
+export function buildComparison(inputs: CompareInput[], mode: CompareMode = "indeks"): ComparisonResult {
   const ref = referenceValues(inputs);
   const cumulative: string[] = [];
   const zeroBase: string[] = [];
   const lines: CompareLine[] = [];
+
+  if (mode === "ln") {
+    for (const s of inputs) {
+      const plotted = s.values.map((v) => (v > 0 ? Math.log(v) : NaN));
+      if (plotted.some(Number.isNaN)) addOnce(zeroBase, s.label);
+      if (plotted.every(Number.isNaN)) continue;
+      lines.push({ ...s, plotted });
+    }
+    return { lines, cumulative, zeroBase, overlaps: [] };
+  }
 
   for (const s of inputs) {
     if (CUMULATIVE_IDS.has(s.variable.id)) {

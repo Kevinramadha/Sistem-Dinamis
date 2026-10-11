@@ -14,7 +14,7 @@ import {
   type ChartOptions,
   type TooltipItem,
 } from "chart.js";
-import { buildComparison, type CompareInput } from "@/lib/comparison";
+import { buildComparison, type CompareInput, type CompareMode } from "@/lib/comparison";
 import { formatValue, nf } from "@/lib/interpretation";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
@@ -37,10 +37,11 @@ interface Props {
 
 export default function ComparisonChart({ years, inputs, title, heightPx = 450 }: Props) {
   const baseYear = years[0];
+  const [mode, setMode] = useState<CompareMode>("indeks");
 
   // Variabel yang disembunyikan lewat legenda.
   const [hidden, setHidden] = useState<Set<string>>(new Set());
-  const result = useMemo(() => buildComparison(inputs), [inputs]);
+  const result = useMemo(() => buildComparison(inputs, mode), [inputs, mode]);
   const visibleLines = result.lines.filter((l) => !hidden.has(l.variable.id));
 
   const variables = useMemo(
@@ -61,7 +62,7 @@ export default function ComparisonChart({ years, inputs, title, heightPx = 450 }
     const color = colorOf(l.variable.id);
     return {
       label: l.label,
-      data: l.plotted,
+      data: l.plotted.map((v) => (Number.isNaN(v) ? null : v)),
       borderColor: color,
       backgroundColor: color,
       borderWidth: 2,
@@ -91,7 +92,10 @@ export default function ComparisonChart({ years, inputs, title, heightPx = 450 }
           label: (ctx: TooltipItem<"line">) => {
             const line = visibleLines[ctx.datasetIndex];
             const asli = formatValue(line.values[ctx.dataIndex], line.variable.unit, line.variable.id);
-            return `${line.label}: ${asli} (indeks ${nf(line.plotted[ctx.dataIndex], 0)})`;
+            const p = line.plotted[ctx.dataIndex];
+            return mode === "ln"
+              ? `${line.label}: ${asli} (ln = ${nf(p, 2)})`
+              : `${line.label}: ${asli} (indeks ${nf(p, 0)})`;
           },
         },
       },
@@ -100,14 +104,14 @@ export default function ComparisonChart({ years, inputs, title, heightPx = 450 }
       y: {
         title: {
           display: true,
-          text: `Indeks (${baseYear} = 100)`,
+          text: mode === "ln" ? "ln(nilai)" : `Indeks (${baseYear} = 100)`,
           font: { size: 13, weight: 600 },
         },
-        ticks: { font: { size: 12 }, callback: (value) => nf(Number(value), 0) },
+        ticks: { font: { size: 12 }, callback: (value) => nf(Number(value), mode === "ln" ? 1 : 0) },
         grid: {
           // Garis 100 = kondisi tahun dasar, dipertegas sebagai patokan.
-          color: (ctx) => (ctx.tick?.value === 100 ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.08)"),
-          lineWidth: (ctx) => (ctx.tick?.value === 100 ? 1.5 : 1),
+          color: (ctx) => (mode === "indeks" && ctx.tick?.value === 100 ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.08)"),
+          lineWidth: (ctx) => (mode === "indeks" && ctx.tick?.value === 100 ? 1.5 : 1),
         },
       },
       x: { ticks: { font: { size: 12 } }, grid: { display: false } },
@@ -125,15 +129,41 @@ export default function ComparisonChart({ years, inputs, title, heightPx = 450 }
     );
   if (result.zeroBase.length)
     notes.push(
-      `${result.zeroBase.join(" dan ")} tidak dimasukkan karena nilainya di tahun ${baseYear} nol, sehingga tidak bisa dijadikan patokan. Lihat grafik individualnya.`
+      mode === "ln"
+        ? `ln dari nol tidak terdefinisi, jadi garis berikut tidak tampak (seluruhnya atau sebagian): ${result.zeroBase.join(", ")}.`
+        : `${result.zeroBase.join(" dan ")} tidak dimasukkan karena nilainya di tahun ${baseYear} nol, sehingga tidak bisa dijadikan patokan. Lihat grafik individualnya.`
     );
+
+  const tab = (m: CompareMode) =>
+    `px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+      mode === m ? "bg-[#1D5A8C] text-white" : "text-[#1D5A8C] hover:bg-blue-50"
+    }`;
 
   return (
     <div className="space-y-4">
+      <div role="group" aria-label="Cara menampilkan nilai" className="inline-flex rounded-lg border border-[#1D5A8C]/30 p-0.5 bg-white">
+        <button type="button" className={tab("indeks")} aria-pressed={mode === "indeks"} onClick={() => setMode("indeks")}>
+          Indeks pertumbuhan
+        </button>
+        <button type="button" className={tab("ln")} aria-pressed={mode === "ln"} onClick={() => setMode("ln")}>
+          Log natural (ln)
+        </button>
+      </div>
+
       <p className="text-xs text-gray-600 leading-relaxed rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
-        Grafik ini membandingkan <strong>seberapa cepat</strong> setiap variabel berubah. Nilai tahun {baseYear} dianggap{" "}
-        <strong>100</strong> (garis tebal): angka 150 berarti naik 50%, angka 80 berarti turun 20%. Arahkan kursor atau
-        ketuk grafik untuk melihat angka sebenarnya.
+        {mode === "indeks" ? (
+          <>
+            Grafik ini membandingkan <strong>seberapa cepat</strong> setiap variabel berubah. Nilai tahun {baseYear} dianggap{" "}
+            <strong>100</strong> (garis tebal): angka 150 berarti naik 50%, angka 80 berarti turun 20%.
+          </>
+        ) : (
+          <>
+            Setiap nilai diubah menjadi logaritma natural (ln) agar variabel bernilai puluhan juta dan bernilai kecil bisa
+            tampil bersama. <strong>Tinggi garis tidak untuk dibandingkan</strong> antarvariabel karena satuannya berbeda;
+            yang dibandingkan adalah <strong>kemiringannya</strong>: naik 0,1 ≈ tumbuh 10%, naik 0,69 = dua kali lipat.
+          </>
+        )}{" "}
+        Arahkan kursor atau ketuk grafik untuk melihat angka sebenarnya.
       </p>
 
       {result.lines.length > 0 ? (
