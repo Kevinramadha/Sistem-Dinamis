@@ -15,7 +15,7 @@ import {
   type TooltipItem,
 } from "chart.js";
 import { buildComparison, type CompareInput, type CompareMode } from "@/lib/comparison";
-import { formatValue, nf } from "@/lib/interpretation";
+import { formatValue, nf, pct, pctChange } from "@/lib/interpretation";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -92,10 +92,13 @@ export default function ComparisonChart({ years, inputs, title, heightPx = 450 }
           label: (ctx: TooltipItem<"line">) => {
             const line = visibleLines[ctx.datasetIndex];
             const asli = formatValue(line.values[ctx.dataIndex], line.variable.unit, line.variable.id);
-            const p = line.plotted[ctx.dataIndex];
-            return mode === "ln"
-              ? `${line.label}: ${asli} (ln = ${nf(p, 2)})`
-              : `${line.label}: ${asli} (indeks ${nf(p, 0)})`;
+            const change =
+              mode === "indeks"
+                ? line.plotted[ctx.dataIndex] - 100
+                : pctChange(line.values[0], line.values[ctx.dataIndex]);
+            if (change === null || ctx.dataIndex === 0) return `${line.label}: ${asli}`;
+            const arah = Math.abs(change) < 0.05 ? "tetap" : change > 0 ? `naik ${pct(change)}` : `turun ${pct(change)}`;
+            return `${line.label}: ${asli} (${arah} dari ${baseYear})`;
           },
         },
       },
@@ -104,7 +107,7 @@ export default function ComparisonChart({ years, inputs, title, heightPx = 450 }
       y: {
         title: {
           display: true,
-          text: mode === "ln" ? "ln(nilai)" : `Indeks (${baseYear} = 100)`,
+          text: mode === "ln" ? "Skala logaritma natural (ln)" : `Nilai ${baseYear} = 100`,
           font: { size: 13, weight: 600 },
         },
         ticks: { font: { size: 12 }, callback: (value) => nf(Number(value), mode === "ln" ? 1 : 0) },
@@ -121,17 +124,17 @@ export default function ComparisonChart({ years, inputs, title, heightPx = 450 }
   const notes: string[] = [];
   if (result.overlaps.length)
     notes.push(
-      `Garis ${result.overlaps.map(([a, b]) => `${a} dan ${b}`).join("; ")} saling menumpuk karena keduanya tumbuh dengan laju yang sama.`
+      `Garis ${result.overlaps.map(([a, b]) => `${a} dan ${b}`).join("; ")} bertumpuk (terlihat seperti satu garis) karena kenaikannya persis sama cepat.`
     );
   if (result.cumulative.length)
     notes.push(
-      `${result.cumulative.join(" dan ")} tidak dimasukkan ke grafik ini karena berupa jumlah yang terus ditambahkan setiap tahun, sehingga angkanya melonjak puluhan kali lipat dan membuat garis lain tampak datar. Lihat grafik individualnya.`
+      `${result.cumulative.join(" dan ")} tidak ditampilkan di sini karena angkanya dijumlahkan terus dari tahun ke tahun, sehingga melonjak sangat tinggi dan membuat garis lain tampak datar. Pilih “Skala logaritma (ln)” atau lihat grafiknya sendiri lewat tombol “Kembali ke Individual”.`
     );
   if (result.zeroBase.length)
     notes.push(
       mode === "ln"
-        ? `ln dari nol tidak terdefinisi, jadi garis berikut tidak tampak (seluruhnya atau sebagian): ${result.zeroBase.join(", ")}.`
-        : `${result.zeroBase.join(" dan ")} tidak dimasukkan karena nilainya di tahun ${baseYear} nol, sehingga tidak bisa dijadikan patokan. Lihat grafik individualnya.`
+        ? `Garis ${result.zeroBase.join(", ")} tidak terlihat (seluruhnya atau sebagian) karena nilainya nol, dan nol tidak bisa ditampilkan dengan skala logaritma.`
+        : `${result.zeroBase.join(" dan ")} tidak ditampilkan karena nilainya di tahun ${baseYear} nol, sehingga perubahannya tidak bisa dihitung. Lihat grafiknya sendiri lewat tombol “Kembali ke Individual”.`
     );
 
   const tab = (m: CompareMode) =>
@@ -143,27 +146,28 @@ export default function ComparisonChart({ years, inputs, title, heightPx = 450 }
     <div className="space-y-4">
       <div role="group" aria-label="Cara menampilkan nilai" className="inline-flex rounded-lg border border-[#1D5A8C]/30 p-0.5 bg-white">
         <button type="button" className={tab("indeks")} aria-pressed={mode === "indeks"} onClick={() => setMode("indeks")}>
-          Indeks pertumbuhan
+          Perubahan sejak {baseYear}
         </button>
         <button type="button" className={tab("ln")} aria-pressed={mode === "ln"} onClick={() => setMode("ln")}>
-          Log natural (ln)
+          Skala logaritma (ln)
         </button>
       </div>
 
       <p className="text-xs text-gray-600 leading-relaxed rounded-lg bg-slate-50 border border-slate-100 px-4 py-3">
         {mode === "indeks" ? (
           <>
-            Grafik ini membandingkan <strong>seberapa cepat</strong> setiap variabel berubah. Nilai tahun {baseYear} dianggap{" "}
-            <strong>100</strong> (garis tebal): angka 150 berarti naik 50%, angka 80 berarti turun 20%.
+            Semua garis berangkat dari angka <strong>100</strong> di tahun {baseYear}. Makin tinggi garisnya, makin besar
+            kenaikannya. Contoh: angka <strong>150</strong> berarti naik 50% dibanding {baseYear}, angka <strong>80</strong>{" "}
+            berarti turun 20%.
           </>
         ) : (
           <>
-            Setiap nilai diubah menjadi logaritma natural (ln) agar variabel bernilai puluhan juta dan bernilai kecil bisa
-            tampil bersama. <strong>Tinggi garis tidak untuk dibandingkan</strong> antarvariabel karena satuannya berbeda;
-            yang dibandingkan adalah <strong>kemiringannya</strong>: naik 0,1 ≈ tumbuh 10%, naik 0,69 = dua kali lipat.
+            Angka asli diringkas dengan logaritma natural (ln) supaya angka puluhan juta dan angka kecil muat dalam satu
+            grafik. Posisi garis (atas atau bawah) hanya menunjukkan besar-kecilnya angka, bukan mana yang lebih baik.{" "}
+            <strong>Perhatikan kemiringannya:</strong> garis yang lebih menanjak berarti tumbuh lebih cepat.
           </>
         )}{" "}
-        Arahkan kursor atau ketuk grafik untuk melihat angka sebenarnya.
+        Sentuh atau arahkan kursor ke grafik untuk melihat angka sebenarnya.
       </p>
 
       {result.lines.length > 0 ? (
@@ -202,7 +206,7 @@ export default function ComparisonChart({ years, inputs, title, heightPx = 450 }
           </p>
         ))}
         <p className="text-[11px] text-gray-400 px-1">
-          Klik nama variabel untuk menyembunyikan atau menampilkan garisnya.
+          Klik nama variabel di atas untuk menyembunyikan atau memunculkan garisnya.
           {scenarioIds.length > 1 && " Warna menunjukkan variabel, jenis garis menunjukkan skenario:"}
         </p>
         {scenarioIds.length > 1 && (
