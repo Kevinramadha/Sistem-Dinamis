@@ -223,14 +223,14 @@ export interface FixedParam {
 export const FIXED_PARAMS: { kategori: string; penjelasan: string; items: FixedParam[] }[] = [
   {
     kategori: "Luas wilayah",
-    penjelasan: "Batas lahan yang dapat dibangun di DIY.",
+    penjelasan: "Batas lahan yang bisa dibangun.",
     items: [
       { nama: "Luas Lahan Tersedia", label: "Luas wilayah DIY", nilai: LUAS_LAHAN_TERSEDIA, satuan: "Hektar", tampil: "317.036 ha", keterangan: "Luas wilayah administratif DIY, dipakai sebagai batas maksimum lahan yang bisa terbangun." },
     ],
   },
   {
-    kategori: "Laju perilaku sistem",
-    penjelasan: "Dihitung peneliti dari pola data historis 2015–2025.",
+    kategori: "Kecepatan perubahan",
+    penjelasan: "Dihitung dari data 2015–2025.",
     items: [
       { nama: "Laju Pertumbuhan Eksternal", label: "Laju datangnya wisatawan baru", nilai: 0.27726, satuan: "1/Tahun", tampil: "27,7% per tahun", keterangan: "Seberapa cepat kunjungan baru bertambah setiap tahun, sebelum dipengaruhi daya tarik destinasi." },
       { nama: "Laju Penurunan Dasar", label: "Laju berkurangnya kunjungan", nilai: 0.207945, satuan: "1/Tahun", tampil: "20,8% per tahun", keterangan: "Bagian kunjungan yang berkurang secara alami setiap tahun." },
@@ -243,16 +243,16 @@ export const FIXED_PARAMS: { kategori: string; penjelasan: string; items: FixedP
     ],
   },
   {
-    kategori: "Ketentuan umum",
-    penjelasan: "Ditetapkan dari peraturan dan acuan umum.",
+    kategori: "Aturan umum",
+    penjelasan: "Diambil dari peraturan dan acuan umum.",
     items: [
       { nama: "Laju Demolisi Dasar", label: "Laju tutupnya hotel dan akomodasi", nilai: 0.05, satuan: "1/Tahun", tampil: "5% per tahun", keterangan: "Bagian hotel dan akomodasi yang tutup atau dibongkar setiap tahun." },
       { nama: "Laju Keluar Dasar Tenaga Kerja", label: "Laju keluarnya tenaga kerja", nilai: 0.03, satuan: "1/Tahun", tampil: "3% per tahun", keterangan: "Bagian pekerja pariwisata yang berhenti setiap tahun, misalnya pensiun atau pindah sektor." },
     ],
   },
   {
-    kategori: "Asumsi model",
-    penjelasan: "Ditetapkan peneliti dan diuji lewat analisis sensitivitas.",
+    kategori: "Perkiraan peneliti",
+    penjelasan: "Ditentukan peneliti, lalu diuji pengaruhnya terhadap hasil.",
     items: [
       { nama: "Bobot ODTW", label: "Peran objek wisata dalam daya tarik", nilai: 0.4, satuan: "Dmnl", tampil: "40%", keterangan: "Porsi jumlah objek wisata dalam menentukan daya tarik destinasi." },
       { nama: "Bobot Kepadatan", label: "Peran kepadatan dalam daya tarik", nilai: 0.35, satuan: "Dmnl", tampil: "35%", keterangan: "Porsi tingkat kepadatan wisatawan dalam menentukan daya tarik destinasi." },
@@ -262,14 +262,6 @@ export const FIXED_PARAMS: { kategori: string; penjelasan: string; items: FixedP
       { nama: "Lahan per Hotel dan Akomodasi", label: "Lahan untuk satu hotel baru", nilai: 0.1, satuan: "Hektar/Unit", tampil: "0,1 ha", keterangan: "Rata-rata luas lahan yang dipakai satu hotel atau akomodasi baru." },
       { nama: "Lahan per ODTW", label: "Lahan untuk satu objek wisata baru", nilai: 0.5, satuan: "Hektar/Unit", tampil: "0,5 ha", keterangan: "Rata-rata luas lahan yang dipakai satu objek wisata baru." },
       { nama: "Waktu Penyesuaian Tenaga Kerja", label: "Waktu mengisi kebutuhan pekerja", nilai: 1, satuan: "Tahun", tampil: "1 tahun", keterangan: "Waktu yang dibutuhkan sektor pariwisata untuk memenuhi kebutuhan tenaga kerja." },
-    ],
-  },
-  {
-    kategori: "Pilihan kebijakan",
-    penjelasan: "Tidak diatur di sini, tetapi di halaman Skenario dan Eksplorasi Simulasi.",
-    items: [
-      { nama: "Insentif Kebijakan", label: "Insentif investasi", nilai: 0, satuan: "Dmnl", tampil: "diatur per skenario", keterangan: "Tambahan dorongan investasi pariwisata." },
-      { nama: "Kebijakan Konservasi Lahan", label: "Konservasi lahan", nilai: 0, satuan: "Dmnl", tampil: "diatur per skenario", keterangan: "Bagian kebutuhan lahan pariwisata yang dipenuhi tanpa membuka lahan baru." },
     ],
   },
 ];

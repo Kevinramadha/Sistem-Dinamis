@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { BaseDataProvider } from "@/components/BaseDataProvider";
 import BaseDataBanner from "@/components/BaseDataBanner";
+import RouteProgress from "@/components/RouteProgress";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -23,6 +24,7 @@ export default function RootLayout({
     <html lang="id">
       <body className={`${inter.className} bg-gray-50`}>
         <BaseDataProvider>
+          <RouteProgress />
           <Navbar />
           <BaseDataBanner />
           <main className="min-h-screen">{children}</main>

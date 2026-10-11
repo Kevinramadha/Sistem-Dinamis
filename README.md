@@ -14,6 +14,7 @@ dummy — sehingga proyeksi 2025–2050 di situs ini benar-benar hasil simulasi 
 | Model | `/model` | Tab **Struktur Model** (CLD, SFD, 6 feedback loop) dan tab **Evaluasi Model** (hasil uji struktural, perilaku, kondisi ekstrem, dan sensitivitas) |
 | Skenario | `/skenario` | Perbandingan 3 skenario kebijakan resmi, dengan interpretasi dan ringkasan hasil otomatis |
 | Eksplorasi Simulasi | `/simulasi` | Simulasi bebas dengan 2 tuas kebijakan resmi |
+| Pencarian Target | `/pencarian-target` | Goal seeking: tentukan target indikator, aplikasi mencari nilai tuas dengan intervensi terkecil dari BAU. Lihat [docs/pencarian-target.md](docs/pencarian-target.md) |
 | Pembaruan Data | `/pembaruan-data` | Memasukkan data tahun baru (template .xlsx/.csv atau form) sehingga simulasi berjalan dari tahun dasar terbaru. Lihat [docs/pembaruan-data.md](docs/pembaruan-data.md) |
 
 ## Model sistem dinamis
@@ -82,6 +83,7 @@ app/
   skenario/page.tsx       Skenario
   simulasi/page.tsx       Eksplorasi Simulasi
   pembaruan-data/page.tsx  Pembaruan Data tahunan
+  pencarian-target/page.tsx Pencarian Target (goal seeking)
 components/
   ModelEvaluation.tsx    Konten tab Evaluasi Model
   LineChart.tsx          Wrapper Chart.js
@@ -96,8 +98,12 @@ lib/
   baseData.ts              Seri data 2015-2025 untuk pembaruan data tahunan
   parameterUpdate.ts       Rumus hitung ulang parameter, pembulatan, validasi
   templateIO.ts            Template .xlsx/.csv pembaruan data
+  goalSeek.ts              Mesin Pencarian Target (grid + bisection, LHS, evaluasi target)
+  goalSeek.worker.ts       Web Worker untuk Pencarian Target
 tests/                     Vitest (rumus, regression model, template)
 docs/pembaruan-data.md     Dokumentasi fitur Pembaruan Data + kasus uji black-box
+docs/pencarian-target.md   Dokumentasi fitur Pencarian Target + kasus uji black-box
+docs/status-sistem.md      Perbaikan visibilitas status sistem + kasus uji black-box
 public/
   CLD.png, SFD.png         Diagram model final
   diy-boundary.geojson      Batas Provinsi DIY untuk peta beranda

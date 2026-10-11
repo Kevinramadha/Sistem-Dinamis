@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel } from "@/lib/model";
@@ -10,6 +10,7 @@ import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle, summarizeCompare } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
+import { StaleHint, Toast, revealElement, toastError, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
 import type { CompareInput } from "@/lib/comparison";
 
@@ -33,34 +34,55 @@ export default function SkenarioPage() {
   const simulationData = fresh ? simulationDataRaw : null;
   const baselineData = fresh ? baselineDataRaw : null;
   const [isLoading, setIsLoading] = useState(false);
+  // Umpan balik status: pesan selesai, gulir ke hasil, dan penanda hasil lama.
+  const [runConfig, setRunConfig] = useState<{ activeScenario: string; compareAll: boolean } | null>(null);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const closeToast = useCallback(() => setToast(null), []);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const [revealTick, setRevealTick] = useState(0);
+  useEffect(() => {
+    if (revealTick) revealElement(resultsRef.current);
+  }, [revealTick]);
+  const stale =
+    !!simulationData &&
+    !!runConfig &&
+    (compareAll !== runConfig.compareAll || (!compareAll && activeScenario !== runConfig.activeScenario));
   const [showCombinedChart, setShowCombinedChart] = useState(false);
   const [activeTableVariable, setActiveTableVariable] = useState<string>("");
   const [sortConfig, setSortConfig] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null);
 
   const runSimulation = async () => {
     setIsLoading(true);
+    setToast(null);
     try {
       if (compareAll) {
+        const results = await withMinDuration(Promise.all(scenariosList.map((sc) => runModel(sc.params, override))));
         const allData: any = {};
-        for (const scenario of scenariosList) {
-          const data = await runModel(scenario.params, override);
-          allData[scenario.label] = data;
-        }
+        scenariosList.forEach((sc, i) => (allData[sc.label] = results[i]));
         setSimulationData(allData);
         setBaselineData(null);
         setResultBase(override);
+        setToast(toastOk(`3 skenario dibandingkan · ${baseYear}–2050.`, "Simulasi selesai"));
       } else {
         const activeScenarioObj = scenariosList.find((s) => s.id === activeScenario);
         if (activeScenarioObj) {
-          const data = await runModel(activeScenarioObj.params, override);
-          const baseline = activeScenarioObj.id === "BAU" ? null : await runModel(scenarios.BAU.params, override);
+          const [data, baseline] = await withMinDuration(
+            Promise.all([
+              runModel(activeScenarioObj.params, override),
+              activeScenarioObj.id === "BAU" ? Promise.resolve(null) : runModel(scenarios.BAU.params, override),
+            ])
+          );
           setSimulationData({ [activeScenarioObj.label]: data });
           setBaselineData(baseline);
           setResultBase(override);
+          setToast(toastOk(`Skenario ${activeScenarioObj.label} · ${baseYear}–2050.`, "Simulasi selesai"));
         }
       }
+      setRunConfig({ activeScenario, compareAll });
+      setRevealTick((t) => t + 1);
     } catch (error) {
       console.error("Simulation error:", error);
+      setToast(toastError("Muat ulang halaman, lalu coba lagi.", "Simulasi gagal"));
     } finally {
       setIsLoading(false);
     }
@@ -361,6 +383,8 @@ export default function SkenarioPage() {
 
         {/* ── MAIN CONTENT ─────────────────────────────────── */}
         <div className="max-w-6xl mx-auto px-6 py-12">
+          <Toast toast={stale ? null : toast} onClose={closeToast} />
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
             {/* ── CONTROL PANEL ────────────────────────────── */}
@@ -383,7 +407,10 @@ export default function SkenarioPage() {
                       return (
                         <button
                           key={scenario.id}
-                          onClick={() => { setActiveScenario(scenario.id); setCompareAll(false); }}
+                          onClick={() => {
+                            setActiveScenario(scenario.id);
+                            setCompareAll(false);
+                          }}
                           className={`scenario-btn ${isActive ? "active" : "inactive"}`}
                           style={isActive ? { background: scenario.color, color: 'white' } : { color: '#374151' }}
                         >
@@ -412,7 +439,9 @@ export default function SkenarioPage() {
                 {/* Compare toggle */}
                 <div>
                   <button
-                    onClick={() => setCompareAll(!compareAll)}
+                    onClick={() => {
+                      setCompareAll(!compareAll);
+                    }}
                     className="compare-toggle"
                     style={compareAll
                       ? { background: '#E89D3E', borderColor: '#E89D3E', color: 'white' }
@@ -505,6 +534,7 @@ export default function SkenarioPage() {
                   )}
                 </button>
 
+                <StaleHint show={stale && !isLoading} />
                 {selectedVariables.length === 0 && (
                   <p className="text-[11px] text-center" style={{ color: '#E89D3E' }}>
                     ⚠ Pilih minimal 1 variabel output
@@ -547,6 +577,7 @@ export default function SkenarioPage() {
                 </div>
               )}
 
+              <div ref={resultsRef} className="space-y-5 scroll-mt-28">
               {summary && <SimulationSummary summary={summary} />}
 
               {/* Chart or placeholder */}
@@ -688,6 +719,7 @@ export default function SkenarioPage() {
                                 const blob = new Blob([csv], { type: "text/csv" });
                                 const url = URL.createObjectURL(blob);
                                 const a = document.createElement("a"); a.href = url; a.download = "skenario.csv"; a.click();
+                                setToast(toastOk("skenario.csv tersimpan di folder unduhan.", "Tabel diunduh"));
                               }}
                               style={{
                                 display: 'flex', alignItems: 'center', gap: 6,
@@ -809,6 +841,7 @@ export default function SkenarioPage() {
                                   const blob = new Blob([csv], { type: "text/csv" });
                                   const url = URL.createObjectURL(blob);
                                   const a = document.createElement("a"); a.href = url; a.download = "skenario-komparasi.csv"; a.click();
+                                  setToast(toastOk("skenario-komparasi.csv tersimpan di folder unduhan.", "Tabel diunduh"));
                                 }}
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: 6,
@@ -953,6 +986,7 @@ export default function SkenarioPage() {
                   })()}
                 </div>
               )}
+              </div>
 
               {/* Parameter preview */}
               {!compareAll && activeScenarioObj && (

@@ -173,7 +173,17 @@ function generateFallbackData(params: SimulationParams): SimulationData {
   return data;
 }
 
-export async function runModel(params: SimulationParams, base?: BaseOverride | null): Promise<SimulationData> {
+/** Konstanta model tambahan (nama Vensim → nilai), dipakai hanya oleh Pencarian Target saat "Asumsi tambahan" aktif. */
+export interface ExtraConstant {
+  varName: string;
+  value: number;
+}
+
+export async function runModel(
+  params: SimulationParams,
+  base?: BaseOverride | null,
+  extra: readonly ExtraConstant[] = []
+): Promise<SimulationData> {
   try {
     const runner = await getRunner(base?.baseYear);
     const outputs = runner.createOutputs();
@@ -183,6 +193,7 @@ export async function runModel(params: SimulationParams, base?: BaseOverride | n
       ...(Object.keys(params) as (keyof SimulationParams)[]).map((key) =>
         createConstantDef({ varName: PARAM_TO_VENSIM_NAME[key] }, params[key])
       ),
+      ...extra.map((c) => createConstantDef({ varName: c.varName }, c.value)),
     ];
 
     const result = await runner.runModel([], outputs, { constants });
@@ -216,7 +227,7 @@ export async function runModel(params: SimulationParams, base?: BaseOverride | n
   } catch (error) {
     // Data cadangan hanya mewakili data penelitian; untuk data dasar pengguna
     // galat diteruskan agar tidak menampilkan hasil yang menyesatkan.
-    if (base) throw error;
+    if (base || extra.length) throw error;
     console.error("Model execution error, using fallback data:", error);
     return generateFallbackData(params);
   }
