@@ -368,30 +368,32 @@ export default function PembaruanDataPage() {
           {/* ── PARAMETER TETAP ─────────────────────────────── */}
           <details className="card overflow-hidden">
             <summary className="px-5 sm:px-6 py-4 cursor-pointer select-none">
-              <span className="section-label">Parameter yang tidak diubah aplikasi</span>
-              <span className="block font-display font-bold text-gray-900 mt-0.5">Kelompok C: ditetapkan peneliti</span>
+              <span className="section-label">Tidak ikut berubah saat data diperbarui</span>
+              <span className="block font-display font-bold text-gray-900 mt-0.5">Angka tetap yang dipakai model</span>
             </summary>
             <div className="px-5 sm:px-6 pb-6">
-              <p className="text-sm rounded-xl px-4 py-3 mb-4" style={{ background: "#fff8eb", color: "#8a5300", border: "1px solid #fde3b0" }}>
-                Parameter berikut ditetapkan peneliti dari identitas stock-flow, regulasi, dan asumsi model, sehingga tidak dihitung ulang
-                oleh aplikasi. Bila struktur data berubah (misalnya definisi atau cakupan pendataan BPS berganti), parameter ini perlu
-                diturunkan ulang secara terpisah oleh peneliti.
+              <p className="text-sm rounded-xl px-4 py-3 mb-5 leading-relaxed" style={{ background: "#fff8eb", color: "#8a5300", border: "1px solid #fde3b0" }}>
+                Selain data tahunan yang Anda masukkan, model memakai angka-angka tetap berikut, misalnya seberapa cepat hotel tutup
+                atau seberapa besar peran objek wisata terhadap daya tarik. Angka ini ditetapkan peneliti dan tidak dihitung dari data
+                tahunan, jadi tidak ikut berubah. Bila BPS mengubah cara atau cakupan pendataannya, angka ini perlu dihitung ulang oleh peneliti.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-6">
                 {FIXED_PARAMS.map((g) => (
                   <div key={g.kategori}>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">{g.kategori}</p>
-                    <table className="w-full">
-                      <tbody>
-                        {g.items.map((it) => (
-                          <tr key={it.nama} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                            <td className="text-gray-700" style={{ whiteSpace: "normal" }}>{it.nama}</td>
-                            <td className="text-right font-semibold text-gray-900">{fmtParam(it.nilai)}</td>
-                            <td className="text-gray-400">{it.satuan}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <p className="text-sm font-semibold text-gray-900">{g.kategori}</p>
+                    <p className="text-xs text-gray-400 mb-2">{g.penjelasan}</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                      {g.items.map((it) => (
+                        <div key={it.nama} className="flex items-start justify-between gap-4 py-2.5" style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <div className="min-w-0">
+                            <p className="text-sm text-gray-800">{it.label}</p>
+                            <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{it.keterangan}</p>
+                            <p className="text-[11px] text-gray-400 mt-0.5">Nama di model: {it.nama}</p>
+                          </div>
+                          <p className="text-sm font-semibold text-gray-900 text-right shrink-0 whitespace-nowrap">{it.tampil}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>

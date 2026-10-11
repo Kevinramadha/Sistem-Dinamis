@@ -208,49 +208,68 @@ export function computeParameters(rows: readonly YearRow[]): ComputedParameters 
 
 // ── Parameter kelompok C (tetap, hanya ditampilkan) ─────────────────────────
 
-export const FIXED_PARAMS: { kategori: string; items: { nama: string; nilai: number; satuan: string }[] }[] = [
+export interface FixedParam {
+  /** Nama variabel di model (dipakai di skripsi). */
+  nama: string;
+  /** Nama dalam bahasa sehari-hari. */
+  label: string;
+  nilai: number;
+  satuan: string;
+  /** Nilai siap tampil untuk pengguna awam. */
+  tampil: string;
+  keterangan: string;
+}
+
+export const FIXED_PARAMS: { kategori: string; penjelasan: string; items: FixedParam[] }[] = [
   {
-    kategori: "Konstanta wilayah",
-    items: [{ nama: "Luas Lahan Tersedia", nilai: LUAS_LAHAN_TERSEDIA, satuan: "Hektar" }],
-  },
-  {
-    kategori: "Hasil identitas stock-flow",
+    kategori: "Luas wilayah",
+    penjelasan: "Batas lahan yang dapat dibangun di DIY.",
     items: [
-      { nama: "Laju Pertumbuhan Eksternal", nilai: 0.27726, satuan: "1/Tahun" },
-      { nama: "Laju Penurunan Dasar", nilai: 0.207945, satuan: "1/Tahun" },
-      { nama: "Sensitivitas Konstruksi terhadap TPK", nilai: 2.31385, satuan: "Unit/(Miliar Rp·Tahun)" },
-      { nama: "TPK Ambang", nilai: 0.275, satuan: "Dmnl" },
-      { nama: "Sensitivitas ODTW terhadap Investasi", nilai: 0.01052, satuan: "Unit/(Miliar Rp·Tahun)" },
-      { nama: "Laju Pembangunan ODTW Non Investasi", nilai: 5.427, satuan: "Unit/Tahun" },
-      { nama: "Laju Penutupan Dasar ODTW", nilai: 0.0499327, satuan: "1/Tahun" },
-      { nama: "Laju Konversi Dasar", nilai: 0.0436052, satuan: "1/Tahun" },
+      { nama: "Luas Lahan Tersedia", label: "Luas wilayah DIY", nilai: LUAS_LAHAN_TERSEDIA, satuan: "Hektar", tampil: "317.036 ha", keterangan: "Luas wilayah administratif DIY, dipakai sebagai batas maksimum lahan yang bisa terbangun." },
     ],
   },
   {
-    kategori: "Parameter regulasi",
+    kategori: "Laju perilaku sistem",
+    penjelasan: "Dihitung peneliti dari pola data historis 2015–2025.",
     items: [
-      { nama: "Laju Demolisi Dasar", nilai: 0.05, satuan: "1/Tahun" },
-      { nama: "Laju Keluar Dasar Tenaga Kerja", nilai: 0.03, satuan: "1/Tahun" },
+      { nama: "Laju Pertumbuhan Eksternal", label: "Laju datangnya wisatawan baru", nilai: 0.27726, satuan: "1/Tahun", tampil: "27,7% per tahun", keterangan: "Seberapa cepat kunjungan baru bertambah setiap tahun, sebelum dipengaruhi daya tarik destinasi." },
+      { nama: "Laju Penurunan Dasar", label: "Laju berkurangnya kunjungan", nilai: 0.207945, satuan: "1/Tahun", tampil: "20,8% per tahun", keterangan: "Bagian kunjungan yang berkurang secara alami setiap tahun." },
+      { nama: "Sensitivitas Konstruksi terhadap TPK", label: "Respons pembangunan hotel", nilai: 2.31385, satuan: "Unit/(Miliar Rp·Tahun)", tampil: "2,31 unit per miliar Rp", keterangan: "Jumlah hotel baru yang dibangun per miliar rupiah investasi per tahun ketika kamar hotel ramai terisi." },
+      { nama: "TPK Ambang", label: "Batas hunian kamar untuk membangun hotel", nilai: 0.275, satuan: "Dmnl", tampil: "27,5%", keterangan: "Hotel baru hanya dibangun bila tingkat hunian kamar di atas angka ini." },
+      { nama: "Sensitivitas ODTW terhadap Investasi", label: "Respons pembangunan objek wisata", nilai: 0.01052, satuan: "Unit/(Miliar Rp·Tahun)", tampil: "0,0105 unit per miliar Rp", keterangan: "Jumlah objek wisata baru per miliar rupiah investasi per tahun (sekitar 1 objek per 95 miliar rupiah)." },
+      { nama: "Laju Pembangunan ODTW Non Investasi", label: "Objek wisata baru dari pemerintah dan masyarakat", nilai: 5.427, satuan: "Unit/Tahun", tampil: "5,4 unit per tahun", keterangan: "Objek wisata baru di luar investasi tercatat, misalnya dibangun pemerintah, desa, atau kelompok masyarakat." },
+      { nama: "Laju Penutupan Dasar ODTW", label: "Laju tutupnya objek wisata", nilai: 0.0499327, satuan: "1/Tahun", tampil: "5,0% per tahun", keterangan: "Bagian objek wisata yang berhenti beroperasi setiap tahun." },
+      { nama: "Laju Konversi Dasar", label: "Laju pembangunan lahan di luar pariwisata", nilai: 0.0436052, satuan: "1/Tahun", tampil: "4,4% per tahun", keterangan: "Seberapa cepat lahan terbangun bertambah untuk permukiman dan kegiatan selain pariwisata." },
     ],
   },
   {
-    kategori: "Parameter asumsi",
+    kategori: "Ketentuan umum",
+    penjelasan: "Ditetapkan dari peraturan dan acuan umum.",
     items: [
-      { nama: "Bobot ODTW", nilai: 0.4, satuan: "Dmnl" },
-      { nama: "Bobot Kepadatan", nilai: 0.35, satuan: "Dmnl" },
-      { nama: "Bobot Daya Dukung Lahan", nilai: 0.25, satuan: "Dmnl" },
-      { nama: "Elastisitas Daya Tarik ODTW", nilai: 0.3, satuan: "Dmnl" },
-      { nama: "Batas Maksimum Efek ODTW", nilai: 1.5, satuan: "Dmnl" },
-      { nama: "Lahan per Hotel dan Akomodasi", nilai: 0.1, satuan: "Hektar/Unit" },
-      { nama: "Lahan per ODTW", nilai: 0.5, satuan: "Hektar/Unit" },
-      { nama: "Waktu Penyesuaian Tenaga Kerja", nilai: 1, satuan: "Tahun" },
+      { nama: "Laju Demolisi Dasar", label: "Laju tutupnya hotel dan akomodasi", nilai: 0.05, satuan: "1/Tahun", tampil: "5% per tahun", keterangan: "Bagian hotel dan akomodasi yang tutup atau dibongkar setiap tahun." },
+      { nama: "Laju Keluar Dasar Tenaga Kerja", label: "Laju keluarnya tenaga kerja", nilai: 0.03, satuan: "1/Tahun", tampil: "3% per tahun", keterangan: "Bagian pekerja pariwisata yang berhenti setiap tahun, misalnya pensiun atau pindah sektor." },
     ],
   },
   {
-    kategori: "Tuas kebijakan (diatur di halaman Skenario/Simulasi)",
+    kategori: "Asumsi model",
+    penjelasan: "Ditetapkan peneliti dan diuji lewat analisis sensitivitas.",
     items: [
-      { nama: "Insentif Kebijakan", nilai: 0, satuan: "Dmnl" },
-      { nama: "Kebijakan Konservasi Lahan", nilai: 0, satuan: "Dmnl" },
+      { nama: "Bobot ODTW", label: "Peran objek wisata dalam daya tarik", nilai: 0.4, satuan: "Dmnl", tampil: "40%", keterangan: "Porsi jumlah objek wisata dalam menentukan daya tarik destinasi." },
+      { nama: "Bobot Kepadatan", label: "Peran kepadatan dalam daya tarik", nilai: 0.35, satuan: "Dmnl", tampil: "35%", keterangan: "Porsi tingkat kepadatan wisatawan dalam menentukan daya tarik destinasi." },
+      { nama: "Bobot Daya Dukung Lahan", label: "Peran ketersediaan lahan dalam daya tarik", nilai: 0.25, satuan: "Dmnl", tampil: "25%", keterangan: "Porsi lahan yang belum terbangun dalam menentukan daya tarik destinasi. Ketiga porsi berjumlah 100%." },
+      { nama: "Elastisitas Daya Tarik ODTW", label: "Tingkat kejenuhan objek wisata", nilai: 0.3, satuan: "Dmnl", tampil: "0,3", keterangan: "Makin banyak objek wisata, tambahan daya tariknya makin kecil. Nilai di bawah 1 berarti ada efek jenuh." },
+      { nama: "Batas Maksimum Efek ODTW", label: "Batas pengaruh objek wisata", nilai: 1.5, satuan: "Dmnl", tampil: "1,5 kali", keterangan: "Pengaruh jumlah objek wisata terhadap daya tarik paling besar 1,5 kali kondisi tahun dasar." },
+      { nama: "Lahan per Hotel dan Akomodasi", label: "Lahan untuk satu hotel baru", nilai: 0.1, satuan: "Hektar/Unit", tampil: "0,1 ha", keterangan: "Rata-rata luas lahan yang dipakai satu hotel atau akomodasi baru." },
+      { nama: "Lahan per ODTW", label: "Lahan untuk satu objek wisata baru", nilai: 0.5, satuan: "Hektar/Unit", tampil: "0,5 ha", keterangan: "Rata-rata luas lahan yang dipakai satu objek wisata baru." },
+      { nama: "Waktu Penyesuaian Tenaga Kerja", label: "Waktu mengisi kebutuhan pekerja", nilai: 1, satuan: "Tahun", tampil: "1 tahun", keterangan: "Waktu yang dibutuhkan sektor pariwisata untuk memenuhi kebutuhan tenaga kerja." },
+    ],
+  },
+  {
+    kategori: "Pilihan kebijakan",
+    penjelasan: "Tidak diatur di sini, tetapi di halaman Skenario dan Eksplorasi Simulasi.",
+    items: [
+      { nama: "Insentif Kebijakan", label: "Insentif investasi", nilai: 0, satuan: "Dmnl", tampil: "diatur per skenario", keterangan: "Tambahan dorongan investasi pariwisata." },
+      { nama: "Kebijakan Konservasi Lahan", label: "Konservasi lahan", nilai: 0, satuan: "Dmnl", tampil: "diatur per skenario", keterangan: "Bagian kebutuhan lahan pariwisata yang dipenuhi tanpa membuka lahan baru." },
     ],
   },
 ];
