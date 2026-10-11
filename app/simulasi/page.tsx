@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel, SimulationParams } from "@/lib/model";
@@ -10,6 +10,7 @@ import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
+import { DoneToast, StaleNotice, resultsClass, revealElement, withMinDuration } from "@/components/RunFeedback";
 import ApplyLeversFromUrl, { type AssumptionChanges } from "@/components/ApplyLeversFromUrl";
 import { ASSUMPTIONS, assumptionBaseValues, assumptionConstants, describeAssumptionChanges } from "@/lib/goalSeek";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
@@ -47,6 +48,22 @@ export default function SimulasiPage() {
   const [assumptions, setAssumptions] = useState<AssumptionChanges>({});
   const [runAssumptionsRaw, setRunAssumptions] = useState<AssumptionChanges>({});
   const runAssumptions = fresh ? runAssumptionsRaw : {};
+  // Umpan balik status: pesan selesai, gulir ke hasil, dan penanda hasil lama.
+  const [doneMessage, setDoneMessage] = useState<string | null>(null);
+  const [runError, setRunError] = useState<string | null>(null);
+  const closeDone = useCallback(() => setDoneMessage(null), []);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const [revealTick, setRevealTick] = useState(0);
+  useEffect(() => {
+    if (revealTick) revealElement(resultsRef.current);
+  }, [revealTick]);
+  const stale =
+    !!runParams &&
+    (params.insentif_kebijakan !== runParams.insentif_kebijakan ||
+      params.kebijakan_konservasi_lahan !== runParams.kebijakan_konservasi_lahan ||
+      JSON.stringify(assumptions) !== JSON.stringify(runAssumptions));
+  const staleWhat = "Nilai tuas kebijakan";
+
   const describeRun = (p: SimulationParams, a: AssumptionChanges) => {
     const note = describeAssumptionChanges(a);
     const lead = describeParams(p);
@@ -67,21 +84,36 @@ export default function SimulasiPage() {
 
   const runSimulation = async () => {
     setIsLoading(true);
+    setRunError(null);
+    setDoneMessage(null);
     try {
       const isBau =
         params.insentif_kebijakan === bau.params.insentif_kebijakan &&
         params.kebijakan_konservasi_lahan === bau.params.kebijakan_konservasi_lahan;
       const extras = assumptionConstants(assumptions, baseConfig?.params);
-      const data = await runModel(params, override, extras);
-      // Pembanding selalu BAU dengan asumsi dasar.
-      const baseline = isBau && extras.length === 0 ? null : await runModel(bau.params, override);
+      const [data, baseline] = await withMinDuration(
+        Promise.all([
+          runModel(params, override, extras),
+          // Pembanding selalu BAU dengan asumsi dasar.
+          isBau && extras.length === 0 ? Promise.resolve(null) : runModel(bau.params, override),
+        ])
+      );
       setSimulationData(data);
       setResultBase(override);
       setRunParams(params);
       setRunAssumptions(assumptions);
+      const note = describeAssumptionChanges(assumptions);
+      setDoneMessage(
+        `Simulasi selesai: Insentif ${(params.insentif_kebijakan * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%, ` +
+          `Konservasi ${(params.kebijakan_konservasi_lahan * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%` +
+          `${note ? `, ${note}` : ""} · ${baseYear}–2050.`
+      );
+      setRevealTick((t) => t + 1);
       setBaselineData(baseline);
     } catch (error) {
       console.error("Simulation error:", error);
+      setDoneMessage(null);
+      setRunError("Simulasi gagal dijalankan. Muat ulang halaman lalu coba lagi.");
     } finally {
       setIsLoading(false);
     }
@@ -429,6 +461,12 @@ export default function SimulasiPage() {
               }}
             />
           </Suspense>
+          <DoneToast message={stale ? null : doneMessage} onClose={closeDone} />
+          {runError && (
+            <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {runError}
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
 
             {/* ── LEFT PANEL ───────────────────────────────── */}
@@ -632,6 +670,8 @@ export default function SimulasiPage() {
                 </div>
               </div>
 
+              {simulationData && stale && <StaleNotice onRun={runSimulation} busy={isLoading} what={staleWhat} />}
+              <div ref={resultsRef} className={resultsClass(stale)}>
               {summary && <SimulationSummary summary={summary} />}
 
               {/* Chart */}
@@ -835,6 +875,7 @@ export default function SimulasiPage() {
                   </div>
                 </div>
               )}
+              </div>
 
               {/* Current params summary */}
               <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden"

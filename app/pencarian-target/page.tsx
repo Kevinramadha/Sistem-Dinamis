@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useBaseData } from "@/components/BaseDataProvider";
 import InfoTip from "@/components/InfoTip";
 import TargetHeatmap from "@/components/TargetHeatmap";
+import { DoneToast, revealElement, withMinDuration } from "@/components/RunFeedback";
 import { ASSUMPTION_QUERY } from "@/components/ApplyLeversFromUrl";
 import {
   ASSUMPTIONS,
@@ -93,6 +94,13 @@ export default function PencarianTargetPage() {
   const [runRaw, setRun] = useState<RunState | null>(null);
   // Hasil disembunyikan bila data dasar berubah setelah pencarian dijalankan.
   const run = runRaw && runRaw.base === override ? runRaw : null;
+  const [doneMessage, setDoneMessage] = useState<string | null>(null);
+  const closeDone = useCallback(() => setDoneMessage(null), []);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const [revealTick, setRevealTick] = useState(0);
+  useEffect(() => {
+    if (revealTick) revealElement(resultsRef.current);
+  }, [revealTick]);
 
   // Kondisi tanpa kebijakan tambahan sebagai gambaran pada isian target.
   const [bauRef, setBauRef] = useState<{ base: BaseOverride | null; data: SimulationData } | null>(null);
@@ -129,9 +137,16 @@ export default function PencarianTargetPage() {
     const dims = dimsFor(withAssumptions);
     setRunning(true);
     setProgress(0);
+    setDoneMessage(null);
     try {
-      const { result, ms } = await searchTargets(nextTargets, dims, override, setProgress);
+      const { result, ms } = await withMinDuration(searchTargets(nextTargets, dims, override, setProgress));
       setRun({ targets: nextTargets, dims, result, ms, base: override });
+      setDoneMessage(
+        result.status === "tercapai"
+          ? "Pencarian selesai: target bisa dicapai. Lihat saran kebijakan di bawah."
+          : "Pencarian selesai: target belum bisa dicapai. Lihat saran perbaikan di bawah."
+      );
+      setRevealTick((t) => t + 1);
     } catch (err) {
       if (!(err instanceof SearchCancelled)) setErrors([`Pencarian gagal: ${err instanceof Error ? err.message : String(err)}`]);
     } finally {
@@ -285,6 +300,8 @@ export default function PencarianTargetPage() {
             )}
           </section>
 
+          <DoneToast message={doneMessage} onClose={closeDone} />
+          <div ref={resultsRef} className="scroll-mt-28">
           {run && (
             <Results
               run={run}
@@ -293,6 +310,7 @@ export default function PencarianTargetPage() {
               onRetry={(nextTargets, withAssumptions) => start(nextTargets, withAssumptions ?? useAssumptions)}
             />
           )}
+          </div>
 
           <p className="text-xs text-gray-500 leading-relaxed px-1">
             <strong>Catatan:</strong> hasil ini adalah gambaran, bukan ramalan. Angka dibandingkan dengan kondisi {TANPA} pada

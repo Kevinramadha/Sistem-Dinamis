@@ -103,6 +103,7 @@ lib/
 tests/                     Vitest (rumus, regression model, template)
 docs/pembaruan-data.md     Dokumentasi fitur Pembaruan Data + kasus uji black-box
 docs/pencarian-target.md   Dokumentasi fitur Pencarian Target + kasus uji black-box
+docs/status-sistem.md      Perbaikan visibilitas status sistem + kasus uji black-box
 public/
   CLD.png, SFD.png         Diagram model final
   diy-boundary.geojson      Batas Provinsi DIY untuk peta beranda
