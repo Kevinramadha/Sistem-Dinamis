@@ -10,7 +10,8 @@ import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
-import ApplyLeversFromUrl from "@/components/ApplyLeversFromUrl";
+import ApplyLeversFromUrl, { type AssumptionChanges } from "@/components/ApplyLeversFromUrl";
+import { ASSUMPTIONS, assumptionBaseValues, assumptionConstants, describeAssumptionChanges } from "@/lib/goalSeek";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
 import type { CompareInput } from "@/lib/comparison";
 
@@ -28,7 +29,7 @@ const sliderColor = "#1D5A8C";
 
 export default function SimulasiPage() {
   const bau = scenarios.BAU;
-  const { override, baseYear } = useBaseData();
+  const { override, baseYear, config: baseConfig } = useBaseData();
   const [params, setParams] = useState<SimulationParams>(bau.params);
   const [simulationDataRaw, setSimulationData] = useState<any>(null);
   // Parameter saat simulasi terakhir dijalankan dan hasil BAU sebagai pembanding interpretasi.
@@ -41,6 +42,16 @@ export default function SimulasiPage() {
   const baselineData = fresh ? baselineDataRaw : null;
   const runParams = fresh ? runParamsRaw : null;
   const [isLoading, setIsLoading] = useState(false);
+  // Perubahan asumsi model (persen dari nilai dasar) yang dibawa dari Pencarian Target.
+  // Bukan tuas kebijakan; kosong pada pemakaian biasa.
+  const [assumptions, setAssumptions] = useState<AssumptionChanges>({});
+  const [runAssumptionsRaw, setRunAssumptions] = useState<AssumptionChanges>({});
+  const runAssumptions = fresh ? runAssumptionsRaw : {};
+  const describeRun = (p: SimulationParams, a: AssumptionChanges) => {
+    const note = describeAssumptionChanges(a);
+    const lead = describeParams(p);
+    return note ? `${lead.slice(0, -1)} serta perubahan kondisi lain (${note}),` : lead;
+  };
   const [selectedVariables, setSelectedVariables] = useState<string[]>([
     "jumlah_wisatawan",
     "tenaga_kerja_pariwisata",
@@ -60,11 +71,14 @@ export default function SimulasiPage() {
       const isBau =
         params.insentif_kebijakan === bau.params.insentif_kebijakan &&
         params.kebijakan_konservasi_lahan === bau.params.kebijakan_konservasi_lahan;
-      const data = await runModel(params, override);
-      const baseline = isBau ? null : await runModel(bau.params, override);
+      const extras = assumptionConstants(assumptions, baseConfig?.params);
+      const data = await runModel(params, override, extras);
+      // Pembanding selalu BAU dengan asumsi dasar.
+      const baseline = isBau && extras.length === 0 ? null : await runModel(bau.params, override);
       setSimulationData(data);
       setResultBase(override);
       setRunParams(params);
+      setRunAssumptions(assumptions);
       setBaselineData(baseline);
     } catch (error) {
       console.error("Simulation error:", error);
@@ -111,22 +125,24 @@ export default function SimulasiPage() {
       const interpretation =
         variable && runParams
           ? interpretSingle(variable, years, simValues, {
-              subject: baselineData ? describeParams(runParams) : BAU_SUBJECT,
+              subject: baselineData ? describeRun(runParams, runAssumptions) : BAU_SUBJECT,
               baseline: baselineData?.[varId] ?? null,
             })
           : null;
       return { varId, variable, years, data, interpretation };
     });
-  }, [simulationData, selectedVariables, runParams, baselineData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simulationData, selectedVariables, runParams, baselineData, runAssumptionsRaw]);
 
   const summary = useMemo(() => {
     if (!simulationData || !runParams) return null;
     return summarizeSingle(simulationData, baselineData, {
-      lead: baselineData ? describeParams(runParams) : BAU_SUBJECT,
+      lead: baselineData ? describeRun(runParams, runAssumptions) : BAU_SUBJECT,
       hintWhenBaseline:
         "Ini kondisi acuan tanpa kebijakan tambahan. Ubah tuas kebijakan atau pilih preset SUS/DP, lalu jalankan simulasi untuk melihat dampaknya.",
     });
-  }, [simulationData, baselineData, runParams]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [simulationData, baselineData, runParams, runAssumptionsRaw]);
 
   const formatValue = (config: typeof sliderConfigs[0], raw: number) => {
     const v = raw * config.scale;
@@ -406,8 +422,9 @@ export default function SimulasiPage() {
         <div className="max-w-6xl mx-auto px-6 py-10">
           <Suspense fallback={null}>
             <ApplyLeversFromUrl
-              onApply={(p) => {
-                setParams(p);
+              onApply={(applied) => {
+                setParams(applied.levers);
+                setAssumptions(applied.assumptions);
                 setActivePreset("");
               }}
             />
@@ -510,6 +527,31 @@ export default function SimulasiPage() {
                 </div>
               </div>
 
+              {Object.keys(assumptions).length > 0 && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-amber-900">
+                  <p className="text-xs font-semibold uppercase tracking-wide mb-1">Kondisi lain yang diubah</p>
+                  <ul className="text-sm space-y-0.5">
+                    {ASSUMPTIONS.filter((a) => assumptions[a.key] !== undefined).map((a) => {
+                      const pct = assumptions[a.key]!;
+                      const base = assumptionBaseValues(baseConfig?.params)[a.key];
+                      return (
+                        <li key={a.key}>
+                          {a.plain}: <strong>{pct >= 0 ? "+" : "−"}{Math.abs(pct).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%</strong>{" "}
+                          <span className="text-xs">(menjadi {a.show(base * (1 + pct / 100))})</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <p className="text-xs mt-2 leading-relaxed">
+                    Dibawa dari Pencarian Target. Ini <strong>bukan kebijakan</strong>, melainkan pengandaian bila kondisi tersebut
+                    berbeda dari data. Hasil tetap dibandingkan dengan kondisi tanpa kebijakan pada data asli.
+                  </p>
+                  <button type="button" onClick={() => setAssumptions({})} className="mt-2 text-xs font-semibold underline">
+                    Kembalikan ke kondisi dasar
+                  </button>
+                </div>
+              )}
+
               {/* Action buttons */}
               <div className="space-y-2">
                 <button onClick={runSimulation} disabled={isLoading} className="run-btn">
@@ -525,7 +567,7 @@ export default function SimulasiPage() {
                     <>Jalankan Simulasi</>
                   )}
                 </button>
-                <button onClick={() => { loadScenario("BAU"); }} className="reset-btn">
+                <button onClick={() => { loadScenario("BAU"); setAssumptions({}); }} className="reset-btn">
                   ↺ Reset ke BAU
                 </button>
               </div>

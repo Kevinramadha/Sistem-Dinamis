@@ -1,4 +1,5 @@
-import { runModel, type BaseOverride, type SimulationData } from "./model";
+import { runModel, type BaseOverride, type ExtraConstant, type SimulationData } from "./model";
+import { FIXED_PARAMS, RESEARCH_PARAMS, type ParamValues } from "./parameterUpdate";
 
 // Pencarian Target (goal seeking): membalik arah simulasi. Pengguna menentukan
 // target indikator, lalu dicari kombinasi tuas kebijakan (dan, bila diizinkan,
@@ -8,15 +9,17 @@ import { runModel, type BaseOverride, type SimulationData } from "./model";
 
 // ── Indikator dan target ────────────────────────────────────────────────────
 
+// `unit` dan `scale` dipakai pada isian nilai absolut: nilai yang diketik
+// pengguna = nilai model × scale (mis. rasio 0,66 diketik sebagai 66% wilayah).
 export const INDICATORS = [
-  { id: "pdrb_sektor_pariwisata", label: "PDRB Sektor Pariwisata", unit: "miliar Rp" },
-  { id: "jumlah_wisatawan", label: "Jumlah Wisatawan", unit: "kunjungan" },
-  { id: "tenaga_kerja_pariwisata", label: "Tenaga Kerja Pariwisata", unit: "jiwa" },
-  { id: "jumlah_hotel_dan_akomodasi", label: "Jumlah Hotel dan Akomodasi", unit: "unit akomodasi" },
-  { id: "jumlah_odtw", label: "Jumlah ODTW", unit: "unit" },
-  { id: "lahan_terbangun", label: "Lahan Terbangun", unit: "hektar" },
-  { id: "rasio_daya_dukung_lahan", label: "Rasio Daya Dukung Lahan", unit: "rasio (0–1)" },
-  { id: "indeks_kepadatan", label: "Indeks Kepadatan Wisatawan", unit: "indeks (2025 = 1)" },
+  { id: "pdrb_sektor_pariwisata", label: "PDRB Sektor Pariwisata", unit: "miliar Rp", scale: 1 },
+  { id: "jumlah_wisatawan", label: "Jumlah Wisatawan", unit: "kunjungan", scale: 1 },
+  { id: "tenaga_kerja_pariwisata", label: "Tenaga Kerja Pariwisata", unit: "jiwa", scale: 1 },
+  { id: "jumlah_hotel_dan_akomodasi", label: "Jumlah Hotel dan Akomodasi", unit: "unit akomodasi", scale: 1 },
+  { id: "jumlah_odtw", label: "Jumlah Objek Wisata (ODTW)", unit: "unit", scale: 1 },
+  { id: "lahan_terbangun", label: "Luas Lahan Terbangun", unit: "hektar", scale: 1 },
+  { id: "rasio_daya_dukung_lahan", label: "Lahan Tersedia untuk Konservasi", unit: "% luas wilayah", scale: 100 },
+  { id: "indeks_kepadatan", label: "Kepadatan Wisatawan", unit: "kali kepadatan 2025", scale: 1 },
 ] as const;
 
 export type IndicatorId = (typeof INDICATORS)[number]["id"];
@@ -38,11 +41,11 @@ export const IMPACT_IDS: IndicatorId[] = [
 export type TargetMode = "naik_min" | "turun_min" | "naik_maks" | "abs_min" | "abs_maks";
 
 export const TARGET_MODES: { id: TargetMode; label: string; relatif: boolean }[] = [
-  { id: "naik_min", label: "Naik minimal … % dibanding BAU", relatif: true },
-  { id: "turun_min", label: "Turun minimal … % dibanding BAU", relatif: true },
-  { id: "naik_maks", label: "Naik paling banyak … % dibanding BAU", relatif: true },
-  { id: "abs_min", label: "Nilai minimal …", relatif: false },
-  { id: "abs_maks", label: "Nilai maksimal …", relatif: false },
+  { id: "naik_min", label: "Lebih tinggi minimal …% dari tanpa kebijakan", relatif: true },
+  { id: "turun_min", label: "Lebih rendah minimal …% dari tanpa kebijakan", relatif: true },
+  { id: "naik_maks", label: "Naik paling banyak …% dari tanpa kebijakan", relatif: true },
+  { id: "abs_min", label: "Paling sedikit … (angka)", relatif: false },
+  { id: "abs_maks", label: "Paling banyak … (angka)", relatif: false },
 ];
 
 export interface Target {
@@ -88,6 +91,31 @@ export function targetRule(t: Target): { op: ">=" | "<="; threshold: number } {
   }
 }
 
+/**
+ * Kebalikan `targetRule`: nilai isian target untuk ambang tertentu, dibulatkan
+ * ke arah yang tetap dapat dicapai (2 desimal untuk persen, 4 angka penting
+ * untuk nilai absolut). null bila hasilnya tidak valid untuk jenis target itu.
+ */
+export function valueForThreshold(mode: TargetMode, threshold: number): number | null {
+  const op = targetRule({ indicator: "pdrb_sektor_pariwisata", year: 0, mode, value: 0 }).op;
+  const round = (v: number, digits: number, up: boolean) => {
+    const f = 10 ** digits;
+    return (up ? Math.ceil(v * f - 1e-9) : Math.floor(v * f + 1e-9)) / f;
+  };
+  let v: number;
+  if (isRelative(mode)) {
+    // Ambang ">=" dibulatkan ke bawah, "<=" ke atas, agar target hasil saran tetap terpenuhi.
+    const thr = round(threshold, 2, op === "<=");
+    v = mode === "turun_min" ? -thr : thr;
+  } else {
+    const digits = Math.max(0, 3 - Math.floor(Math.log10(Math.abs(threshold) || 1)));
+    v = round(threshold, digits, op === "<=");
+  }
+  if (!Number.isFinite(v) || v < 0) return null;
+  if (mode === "turun_min" && v >= 100) return null;
+  return v;
+}
+
 /** Toleransi numerik agar titik tepat di ambang (mis. uji balik) dihitung terpenuhi. */
 const tolerance = (threshold: number) => 1e-9 * Math.max(1, Math.abs(threshold));
 
@@ -111,17 +139,17 @@ export function evaluateTargets(targets: Target[], run: Outputs, bau: Outputs): 
 export function validateTargets(targets: Target[], baseYear: number, finalYear = 2050): string[] {
   const errors: string[] = [];
   if (targets.length === 0) errors.push("Tentukan minimal satu target.");
-  if (targets.length > 3) errors.push("Maksimal tiga target (satu target utama dan dua batasan).");
+  if (targets.length > 3) errors.push("Maksimal tiga target (satu hasil yang dicari dan dua syarat tambahan).");
   targets.forEach((t, i) => {
-    const nama = i === 0 ? "Target utama" : `Batasan ${i}`;
-    if (!Number.isFinite(t.value)) errors.push(`${nama}: nilai target belum diisi atau bukan angka.`);
+    const nama = i === 0 ? "Hasil yang dicari" : `Syarat tambahan ${i}`;
+    if (!Number.isFinite(t.value)) errors.push(`${nama}: angka target belum diisi.`);
     if (!Number.isInteger(t.year) || t.year <= baseYear || t.year > finalYear)
       errors.push(`${nama}: tahun target harus antara ${baseYear + 1} dan ${finalYear}.`);
     if (isRelative(t.mode) && t.value < 0) errors.push(`${nama}: persentase tidak boleh negatif.`);
     if (t.mode === "turun_min" && t.value >= 100) errors.push(`${nama}: penurunan harus kurang dari 100%.`);
-    if (!isRelative(t.mode) && t.value < 0) errors.push(`${nama}: nilai absolut tidak boleh negatif.`);
+    if (!isRelative(t.mode) && t.value < 0) errors.push(`${nama}: angka tidak boleh negatif.`);
     if (t.indicator === "rasio_daya_dukung_lahan" && !isRelative(t.mode) && t.value > 1)
-      errors.push(`${nama}: Rasio Daya Dukung Lahan bernilai antara 0 dan 1.`);
+      errors.push(`${nama}: lahan tersedia untuk konservasi harus antara 0% dan 100% luas wilayah.`);
   });
   return errors;
 }
@@ -151,11 +179,35 @@ export const LEVER_DIMS: Dim[] = [
 /** Rentang asumsi tambahan: ±10% dari nilai dasar, sama dengan analisis sensitivitas skripsi. */
 export const ASSUMPTION_RANGE = 0.1;
 
+const fmt = (v: number, digits: number) =>
+  v.toLocaleString("id-ID", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+// `label` = nama parameter di model; `plain` dan `show` = nama dan format untuk pengguna awam.
 export const ASSUMPTIONS = [
-  { key: "lama_menginap", vensim: '"Rata-rata Lama Menginap Tamu"', label: "Rata-rata Lama Menginap Tamu" },
-  { key: "pengeluaran_per_kunjungan", vensim: "Pengeluaran per Kunjungan", label: "Pengeluaran per Kunjungan" },
-  { key: "laju_odtw_non_investasi", vensim: "Laju Pembangunan ODTW Non Investasi", label: "Laju Pembangunan ODTW Non Investasi" },
+  {
+    key: "lama_menginap",
+    vensim: '"Rata-rata Lama Menginap Tamu"',
+    label: "Rata-rata Lama Menginap Tamu",
+    plain: "Lama menginap rata-rata",
+    show: (v: number) => `${fmt(v, 2)} malam`,
+  },
+  {
+    key: "pengeluaran_per_kunjungan",
+    vensim: "Pengeluaran per Kunjungan",
+    label: "Pengeluaran per Kunjungan",
+    plain: "Belanja wisatawan per kunjungan",
+    show: (v: number) => `Rp${fmt(v * 1000, 2)} juta`,
+  },
+  {
+    key: "laju_odtw_non_investasi",
+    vensim: "Laju Pembangunan ODTW Non Investasi",
+    label: "Laju Pembangunan ODTW Non Investasi",
+    plain: "Objek wisata baru dari pemerintah/masyarakat",
+    show: (v: number) => `${fmt(v, 1)} unit per tahun`,
+  },
 ] as const;
+
+export const assumptionOf = (key: AssumptionKey) => ASSUMPTIONS.find((a) => a.key === key)!;
 
 export type AssumptionKey = (typeof ASSUMPTIONS)[number]["key"];
 
@@ -164,6 +216,16 @@ export function assumptionDims(baseValues: Record<AssumptionKey, number>): Dim[]
     const b = baseValues[a.key];
     return { key: a.key, label: a.label, vensim: a.vensim, kind: "asumsi", base: b, min: b * (1 - ASSUMPTION_RANGE), max: b * (1 + ASSUMPTION_RANGE) };
   });
+}
+
+/** Nilai dasar ketiga asumsi: dari data dasar aktif bila ada, selain itu nilai penelitian. */
+export function assumptionBaseValues(params?: Partial<ParamValues> | null): Record<AssumptionKey, number> {
+  return {
+    lama_menginap: params?.lama_menginap ?? RESEARCH_PARAMS.lama_menginap,
+    pengeluaran_per_kunjungan: params?.pengeluaran_per_kunjungan ?? RESEARCH_PARAMS.pengeluaran_per_kunjungan,
+    laju_odtw_non_investasi:
+      FIXED_PARAMS.flatMap((k) => k.items).find((i) => i.nama === "Laju Pembangunan ODTW Non Investasi")?.nilai ?? 5.427,
+  };
 }
 
 export const basePoint = (dims: Dim[]): Point => Object.fromEntries(dims.map((d) => [d.key, d.base]));
@@ -218,6 +280,13 @@ export interface SearchResult {
   unreachable: number[];
   /** Bila tidak tercapai: apakah ada titik yang memenuhi semua batasan (target ke-2 dan ke-3). */
   constraintsMetSomewhere: boolean;
+  /**
+   * Bila target utama dan batasan bertentangan: ambang batasan ke-k yang perlu
+   * dipakai agar target utama tercapai (dalam besaran target: persen atau nilai).
+   */
+  relaxations: { index: number; threshold: number }[];
+  /** Bila target utama tidak tercapai di tahunnya: tahun paling awal target itu tercapai dengan kombinasi terbaik. */
+  earliestYear: number | null;
   grid?: GridResult;
 }
 
@@ -430,6 +499,27 @@ export async function goalSeek(
   }
 
   const unreachable = targets.map((_, k) => k).filter((k) => !all.some((c) => c.evals[k].satisfied));
+
+  // Saran pelonggaran batasan: di antara titik yang memenuhi target utama dan
+  // batasan lain, cari yang paling sedikit melanggar batasan ke-k.
+  const relaxations: { index: number; threshold: number }[] = [];
+  if (!recommendation) {
+    for (let k = 1; k < targets.length; k++) {
+      const pool = all.filter((c) => c.evals.every((e, m) => m === k || e.satisfied));
+      if (!pool.length) continue;
+      const least = pool.reduce((a, b) => (b.evals[k].margin > a.evals[k].margin ? b : a));
+      relaxations.push({ index: k, threshold: least.evals[k].metric });
+    }
+  }
+
+  // Saran tahun: dengan kombinasi terbaik, tahun paling awal target utama tercapai.
+  let earliestYear: number | null = null;
+  if (!recommendation && best && unreachable.includes(0)) {
+    const out = await evaluate(best.point);
+    tick();
+    const primary = targets[0];
+    earliestYear = out.years.find((y) => y > primary.year && evaluateTarget({ ...primary, year: y }, out, bau).satisfied) ?? null;
+  }
   onProgress?.(total, total);
 
   return {
@@ -441,6 +531,8 @@ export async function goalSeek(
     best,
     unreachable,
     constraintsMetSomewhere,
+    relaxations,
+    earliestYear,
     grid,
   };
 }
@@ -456,4 +548,28 @@ export function modelEvaluator(dims: Dim[], base: BaseOverride | null): Evaluate
       base,
       asumsi.map((d) => ({ varName: d.vensim!, value: p[d.key] }))
     );
+}
+
+// ── Asumsi yang dibawa ke halaman Simulasi ──────────────────────────────────
+
+/** Konstanta model untuk perubahan asumsi (persen terhadap nilai dasar). */
+export function assumptionConstants(
+  changesPct: Partial<Record<AssumptionKey, number>>,
+  params?: Partial<ParamValues> | null
+): ExtraConstant[] {
+  const base = assumptionBaseValues(params);
+  return ASSUMPTIONS.filter((a) => changesPct[a.key] !== undefined).map((a) => ({
+    varName: a.vensim,
+    value: base[a.key] * (1 + changesPct[a.key]! / 100),
+  }));
+}
+
+/** "pengeluaran per kunjungan +4,8%, lama menginap −2,0%" */
+export function describeAssumptionChanges(changesPct: Partial<Record<AssumptionKey, number>>): string {
+  return ASSUMPTIONS.filter((a) => changesPct[a.key] !== undefined)
+    .map((a) => {
+      const p = changesPct[a.key]!;
+      return `${a.plain.toLowerCase()} ${p >= 0 ? "+" : "−"}${Math.abs(p).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
+    })
+    .join(", ");
 }

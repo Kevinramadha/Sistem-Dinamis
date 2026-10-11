@@ -59,7 +59,7 @@ export default function TargetHeatmap({
         viewBox={`0 0 ${W} ${H}`}
         className="w-full h-auto max-w-[620px]"
         role="img"
-        aria-label="Peta ruang tuas kebijakan: wilayah hijau memenuhi semua target"
+        aria-label="Peta kombinasi kebijakan: kotak hijau memenuhi semua target"
       >
         {cells.map((c, k) => {
           const i = k % xs.length;
@@ -126,24 +126,33 @@ export default function TargetHeatmap({
       <figcaption className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-gray-600">
         <span className="inline-flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm" style={{ background: COLORS.semua }} />
-          Memenuhi {hasConstraints ? "semua target" : "target"}
+          {hasConstraints ? "Semua target terpenuhi" : "Target terpenuhi"}
         </span>
         {hasConstraints && (
           <span className="inline-flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-sm" style={{ background: COLORS.utama }} />
-            Target utama tercapai, tetapi batasan dilanggar
+            Hasil yang dicari tercapai, tetapi syarat tambahan dilanggar
           </span>
         )}
         <span className="inline-flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm border border-gray-300" style={{ background: COLORS.tidak }} />
-          Target utama belum tercapai
+          Hasil yang dicari belum tercapai
         </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded-full border-2 border-[#b42318] bg-white" /> R = rekomendasi
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="w-3.5 h-3.5 rounded-full border-2 border-[#1D5A8C] bg-white" /> 1–4 = alternatif
-        </span>
+        {markers.some((m) => m.label === "R") && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-full border-2 border-[#b42318] bg-white" /> R = saran utama
+          </span>
+        )}
+        {markers.some((m) => m.label === "★") && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-full border-2 border-[#b42318] bg-white" /> ★ = kombinasi terbaik yang ada
+          </span>
+        )}
+        {markers.some((m) => !m.primary) && (
+          <span className="inline-flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded-full border-2 border-[#1D5A8C] bg-white" /> 1–4 = pilihan lain
+          </span>
+        )}
       </figcaption>
     </figure>
   );

@@ -13,10 +13,10 @@ target tersebut dengan intervensi sekecil mungkin dari kondisi Business-as-Usual
 | `lib/goalSeek.worker.ts`, `lib/goalSeekClient.ts` | Pencarian dijalankan di Web Worker dengan laporan progres dan tombol batal; cadangan di thread utama bila browser tidak mendukung Worker. |
 | `app/pencarian-target/page.tsx` | Halaman baru: isian 1–3 target, pilihan asumsi tambahan, progress bar, status, rekomendasi, peta ruang tuas, tabel alternatif, tombol "Terapkan ke Simulasi", catatan tetap tentang sifat hasil. |
 | `components/TargetHeatmap.tsx` | Peta (heatmap) 41 × 41 ruang dua tuas: wilayah yang memenuhi semua target, wilayah yang hanya memenuhi target utama, dan titik rekomendasi/alternatif. |
-| `components/ApplyLeversFromUrl.tsx`, `app/simulasi/page.tsx` | Halaman Simulasi membaca `?insentif=…&konservasi=…` dari tombol "Terapkan ke Simulasi" dan memuat nilai tuas tersebut ke panel. |
+| `components/ApplyLeversFromUrl.tsx`, `app/simulasi/page.tsx` | Halaman Simulasi membaca `?insentif=…&konservasi=…` (dan, bila ada, perubahan asumsi `a_lama`, `a_pengeluaran`, `a_odtw` dalam persen, dibatasi ±10%) dari tombol "Coba di halaman Simulasi". Nilai tuas dimuat ke panel; perubahan asumsi ditampilkan pada kotak kuning "Kondisi lain yang diubah" dengan tombol "Kembalikan ke kondisi dasar", ikut dipakai saat simulasi dijalankan, dan disebut dalam ringkasan serta interpretasi. Pembanding tetap BAU dengan asumsi dasar. |
 | `lib/model.ts` | `runModel` menerima daftar konstanta tambahan opsional (dipakai hanya untuk asumsi tambahan). Pemanggilan lama tidak berubah. |
 | `components/Navbar.tsx` | Menu baru "Pencarian Target". |
-| `tests/goalSeek.test.ts` | 15 tes: evaluasi target, validasi, LHS, uji balik SUS dan DP, target mustahil, constraint kepadatan, batasan yang tidak terpenuhi di titik mana pun, target yang sudah dipenuhi BAU, pencarian dengan asumsi tambahan. |
+| `tests/goalSeek.test.ts` | 19 tes: evaluasi target, validasi, pembulatan saran, LHS, uji balik SUS dan DP, target mustahil, saran tahun, constraint kepadatan dan saran pelonggarannya, batasan yang tidak terpenuhi di titik mana pun, target yang sudah dipenuhi BAU, pencarian dengan asumsi tambahan, kesamaan hasil asumsi yang dibawa ke Simulasi. |
 
 Persamaan model dan nilai parameter tidak diubah. Pencarian hanya menjalankan model
 berulang kali dengan nilai input yang berbeda.
@@ -48,15 +48,39 @@ atau target utama dan batasan saling bertentangan. Satu pencarian membutuhkan se
 simulasi. Satu simulasi berlangsung 0,1–0,3 ms, sehingga seluruh pencarian selesai sekitar
 0,2–0,4 detik di peramban.
 
+### Bila target tidak tercapai
+
+Halaman tidak berhenti pada status "Target belum bisa dicapai". Aplikasi menjelaskan
+penyebabnya dan memberi saran yang masing-masing dapat langsung dicoba dengan satu tombol
+(pencarian diulang otomatis):
+
+| Saran | Cara menghitung |
+|---|---|
+| Sesuaikan target | Angka terbaik target utama yang masih bisa dicapai (tanpa melanggar syarat tambahan bila memungkinkan), dibulatkan ke arah yang tetap tercapai. |
+| Beri waktu lebih panjang | Dengan kombinasi terbaik, dicari tahun paling awal setelah tahun target ketika target yang sama tercapai. |
+| Longgarkan syarat tambahan | Di antara kombinasi yang memenuhi hasil yang dicari dan syarat lain, diambil yang paling sedikit melanggar syarat tersebut; nilainya menjadi batas baru yang disarankan. |
+| Hapus syarat | Untuk syarat yang tidak terpenuhi oleh kombinasi mana pun (mis. kepadatan ≤ 2,0 setelah 2043). |
+| Ikut ubah kondisi lain | Bila asumsi tambahan belum dicentang; ditegaskan sebagai pengandaian, bukan kebijakan. |
+
+### Bahasa pada halaman
+
+Istilah teknis diganti bahasa sehari-hari: "target utama" menjadi **hasil yang dicari**,
+"batasan/constraint" menjadi **syarat tambahan**, "dibanding BAU" menjadi **dibanding tanpa
+kebijakan tambahan**, "rekomendasi intervensi terkecil" menjadi **perubahan paling kecil yang
+sudah cukup**, dan "asumsi tambahan" menjadi **ikut ubah kondisi lain (bukan kebijakan)**.
+Setiap baris target menampilkan kalimat "Artinya: …". Nilai absolut lahan konservasi diketik
+dalam persen luas wilayah. Penjelasan metode untuk peneliti tersedia di panel lipat "Cara
+kerja pencarian".
+
 ## 3. Pilihan pada fitur
 
 | Pilihan | Isi |
 |---|---|
-| Indikator | PDRB Sektor Pariwisata, Jumlah Wisatawan, Tenaga Kerja Pariwisata, Jumlah Hotel dan Akomodasi, Jumlah ODTW, Lahan Terbangun, Rasio Daya Dukung Lahan, Indeks Kepadatan Wisatawan (2025 = 1, ambang 2,0) |
+| Indikator | PDRB Sektor Pariwisata, Jumlah Wisatawan, Tenaga Kerja Pariwisata, Jumlah Hotel dan Akomodasi, Jumlah Objek Wisata (ODTW), Luas Lahan Terbangun, Lahan Tersedia untuk Konservasi (Rasio Daya Dukung Lahan; diketik dalam % luas wilayah), Kepadatan Wisatawan (Indeks Kepadatan, kali kepadatan 2025, ambang 2,0) |
 | Tahun target | tahun dasar + 1 sampai 2050 (2026–2050 dengan data penelitian) |
-| Jenis target | Naik minimal X% dibanding BAU (bawaan) · Turun minimal X% dibanding BAU · Naik paling banyak X% dibanding BAU · Nilai minimal Y · Nilai maksimal Y |
-| Jumlah target | 1 target utama + paling banyak 2 batasan |
-| Asumsi tambahan (nonaktif) | Rata-rata Lama Menginap Tamu, Pengeluaran per Kunjungan, Laju Pembangunan ODTW Non Investasi; masing-masing ±10% dari nilai dasar, sama dengan rentang analisis sensitivitas skripsi. Bila Pembaruan Data aktif, nilai dasar dua parameter pertama mengikuti data dasar tersebut. |
+| Bentuk target | Lebih tinggi minimal X% dari tanpa kebijakan (bawaan) · Lebih rendah minimal X% dari tanpa kebijakan · Naik paling banyak X% dari tanpa kebijakan · Paling sedikit Y · Paling banyak Y |
+| Jumlah target | 1 hasil yang dicari + paling banyak 2 syarat tambahan |
+| Ikut ubah kondisi lain (nonaktif) | Lama menginap rata-rata (Rata-rata Lama Menginap Tamu), belanja wisatawan per kunjungan (Pengeluaran per Kunjungan), objek wisata baru dari pemerintah/masyarakat (Laju Pembangunan ODTW Non Investasi); masing-masing ±10% dari nilai dasar, sama dengan rentang analisis sensitivitas skripsi. Bila Pembaruan Data aktif, nilai dasar dua parameter pertama mengikuti data dasar tersebut. |
 
 Catatan dari struktur model yang relevan untuk pembacaan hasil:
 
@@ -79,38 +103,47 @@ Catatan dari struktur model yang relevan untuk pembacaan hasil:
 | Constraint longgar | PDRB 2045 naik minimal 5%; Indeks Kepadatan 2045 maksimal 1,06 × BAU | TERCAPAI; semua titik yang direkomendasikan memenuhi batas kepadatan |
 | Contoh bawaan halaman | PDRB 2045 naik minimal 5%; Rasio Daya Dukung Lahan 2045 tidak lebih rendah dari BAU | TERCAPAI; Insentif 28,8%, Konservasi 12,5%; 1.986 simulasi, sekitar 0,2 detik |
 | Asumsi tambahan (LHS) | PDRB 2035 naik minimal 5% dengan asumsi tambahan aktif | TERCAPAI; Pengeluaran per Kunjungan +4,8% dari nilai dasar, kedua tuas 0; 2.015 simulasi, sekitar 0,2 detik |
+| Saran tahun | PDRB 2035 naik minimal 10% | TIDAK TERCAPAI; saran tahun 2047; pencarian ulang dengan tahun 2047 TERCAPAI, dengan 2046 tetap tidak tercapai |
+| Saran pelonggaran syarat | PDRB 2045 naik minimal 5%; kepadatan naik paling banyak 3% | Saran: kepadatan naik paling banyak 5,01%; pencarian ulang TERCAPAI |
+| Asumsi dibawa ke Simulasi | Rekomendasi uji LHS dibuka di halaman Simulasi | Perubahan PDRB 2035 di Simulasi sama dengan hasil pencarian (selisih < 0,05 poin persen) |
 
-Pemeriksaan lain: `npm test` (78 tes) lulus, `next build` tanpa galat TypeScript, dan
+Pemeriksaan lain: `npm test` (82 tes) lulus, `next build` tanpa galat TypeScript, dan
 `npm run lint` tidak menambah temuan baru (33 temuan lama di berkas lain tetap). Pengujian
-end-to-end dengan Playwright mencakup pencarian di Web Worker, tombol Terapkan ke Simulasi,
+end-to-end dengan Playwright mencakup pencarian di Web Worker, tombol Coba di halaman Simulasi (termasuk perubahan
+kondisi lain dan tombol mengembalikannya), tombol-tombol saran saat target tidak tercapai,
 validasi isian kosong, dan tampilan ponsel tanpa geser horizontal.
 
 ## 5. Kasus uji black-box
 
 | No | Fungsi | Masukan | Hasil yang diharapkan |
 |---|---|---|---|
-| BT-01 | Membuka halaman | Klik menu "Pencarian Target" | Halaman tampil dengan target utama bawaan (PDRB 2045 naik minimal 5%) dan satu batasan (Rasio Daya Dukung Lahan 2045 tidak lebih rendah dari BAU) |
-| BT-02 | Menampilkan acuan BAU | Ganti indikator atau tahun pada satu baris target | Di bawah baris tampil nilai BAU untuk indikator dan tahun tersebut |
-| BT-03 | Menambah batasan | Klik "+ Tambah batasan" hingga 3 baris | Baris batasan bertambah; tombol hilang setelah 3 target |
-| BT-04 | Menghapus batasan | Klik "Hapus" pada baris batasan | Baris terhapus; target utama tidak memiliki tombol Hapus |
-| BT-05 | Validasi nilai kosong | Kosongkan nilai target utama, klik "Cari kombinasi tuas" | Pesan "Target utama: nilai target belum diisi atau bukan angka."; pencarian tidak berjalan |
-| BT-06 | Validasi persentase negatif | Isi −5 pada target "Naik minimal … %" | Pesan persentase tidak boleh negatif |
-| BT-07 | Validasi penurunan ≥ 100% | Pilih "Turun minimal", isi 100 | Pesan penurunan harus kurang dari 100% |
-| BT-08 | Validasi rasio | Rasio Daya Dukung Lahan, "Nilai minimal", isi 2 | Pesan Rasio Daya Dukung Lahan bernilai antara 0 dan 1 |
-| BT-09 | Pencarian dua tuas | Klik "Cari kombinasi tuas" dengan target bawaan | Progress bar tampil; status TERCAPAI; rekomendasi Insentif ≈ 28,8% dan Konservasi ≈ 12,5%; jumlah simulasi dan waktu tampil |
+| BT-01 | Membuka halaman | Klik menu "Pencarian Target" | Halaman "Cari Nilai Kebijakan yang Dibutuhkan" tampil dengan hasil yang dicari bawaan (PDRB 2045 lebih tinggi minimal 5% dari tanpa kebijakan) dan satu syarat tambahan (Lahan Tersedia untuk Konservasi 2045 tidak lebih rendah daripada tanpa kebijakan) |
+| BT-02 | Kalimat "Artinya" dan gambaran | Ganti indikator, bentuk target, angka, atau tahun pada satu baris | Kalimat "Artinya: …" dan nilai "bila tanpa kebijakan tambahan" ikut berubah |
+| BT-03 | Menambah syarat | Klik "+ Tambah syarat" hingga 3 baris | Baris syarat bertambah; tombol hilang setelah 3 target |
+| BT-04 | Menghapus syarat | Klik "Hapus" pada baris syarat tambahan | Baris terhapus; baris hasil yang dicari tidak memiliki tombol Hapus |
+| BT-05 | Validasi angka kosong | Kosongkan angka hasil yang dicari, klik "Cari kombinasi kebijakan" | Pesan "Hasil yang dicari: angka target belum diisi."; pencarian tidak berjalan |
+| BT-06 | Validasi persentase negatif | Isi −5 pada bentuk "Lebih tinggi minimal …%" | Pesan persentase tidak boleh negatif |
+| BT-07 | Validasi penurunan ≥ 100% | Pilih "Lebih rendah minimal …%", isi 100 | Pesan penurunan harus kurang dari 100% |
+| BT-08 | Validasi lahan konservasi | Lahan Tersedia untuk Konservasi, "Paling sedikit … (angka)", isi 150 | Pesan lahan tersedia harus antara 0% dan 100% luas wilayah |
+| BT-09 | Pencarian dua kebijakan | Klik "Cari kombinasi kebijakan" dengan target bawaan | Progress bar tampil; "✓ Target bisa dicapai"; saran Insentif ≈ 28,8% dan Konservasi ≈ 12,5% |
 | BT-10 | Antarmuka tidak membeku | Gulir halaman selama pencarian berjalan | Halaman tetap responsif (pencarian berjalan di Web Worker) |
 | BT-11 | Membatalkan pencarian | Klik "Batalkan" saat pencarian berjalan | Pencarian berhenti, tidak ada hasil baru dan tidak ada pesan galat |
-| BT-12 | Peta ruang tuas | Lihat bagian "Peta ruang tuas" setelah pencarian dua tuas | Heatmap 41 × 41 dengan wilayah hijau (semua target), kuning (target utama saja), abu-abu (belum tercapai), penanda R dan 1–4 |
-| BT-13 | Tabel alternatif | Lihat bagian "Alternatif" | 3–5 baris (R dan alternatif) dengan nilai tuas dan dampak (%) pada PDRB, wisatawan, lahan terbangun, kepadatan, tenaga kerja |
-| BT-14 | Terapkan ke Simulasi | Klik "Terapkan ke Simulasi →" pada rekomendasi | Halaman Simulasi terbuka, pemberitahuan nilai tuas tampil, input Insentif dan Konservasi berisi nilai rekomendasi |
-| BT-15 | Terapkan alternatif | Klik "Terapkan →" pada salah satu baris alternatif | Halaman Simulasi memuat nilai tuas baris tersebut |
-| BT-16 | Uji balik skenario SUS | Target: PDRB 2040 naik minimal 1,1271%; batasan Rasio Daya Dukung Lahan 2040 minimal 0,713845 | TERCAPAI; Insentif ≈ 10%, Konservasi ≈ 100% |
-| BT-17 | Uji balik skenario DP | Target: PDRB 2040 naik minimal 3,0967%; batasan Rasio Daya Dukung Lahan 2040 minimal 0,711667 | TERCAPAI; Insentif ≈ 30%, Konservasi ≈ 0% |
-| BT-18 | Target mustahil | PDRB 2035 naik minimal 500%, tanpa batasan | TIDAK TERCAPAI; tampil nilai terbaik (+2,45% dibanding BAU) dan kombinasi tuasnya (Insentif 50%, Konservasi 100%) |
-| BT-19 | Constraint dilanggar | PDRB 2045 naik minimal 5%; batasan Indeks Kepadatan 2045 naik paling banyak 3% | TIDAK TERCAPAI; penjelasan bahwa target utama dan batasan bertentangan; peta tanpa wilayah hijau; tidak ada rekomendasi yang melanggar batas kepadatan |
-| BT-20 | Target sudah dipenuhi BAU | PDRB 2040 naik minimal 0% | TERCAPAI; pesan bahwa tidak dibutuhkan kebijakan tambahan; rekomendasi Insentif 0% dan Konservasi 0% |
-| BT-21 | Batasan tak terpenuhi | Batasan Indeks Kepadatan 2045 nilai maksimal 2 | TIDAK TERCAPAI; batasan tercantum sebagai tidak terpenuhi di kombinasi mana pun (BAU sudah > 2,0 sejak 2043) |
-| BT-22 | Asumsi tambahan | Centang "Ikutkan asumsi tambahan"; PDRB 2035 naik minimal 5% | Metode LHS; TERCAPAI; kartu asumsi berwarna kuning dengan label "asumsi model, bukan tuas kebijakan"; peringatan bahwa Terapkan hanya membawa nilai tuas |
-| BT-23 | Data dasar berubah | Jalankan pencarian, lalu terapkan data dasar baru di Pembaruan Data dan kembali | Hasil lama disembunyikan; pilihan tahun dimulai dari tahun dasar baru + 1 |
-| BT-24 | Tampilan ponsel | Buka halaman pada lebar layar 390 px dan jalankan pencarian | Semua bagian terbaca tanpa geser horizontal halaman; tabel lebar dapat digeser di dalam kartunya |
-| BT-25 | Catatan tetap | Buka halaman | Catatan bahwa hasil bersifat indikatif, relatif terhadap BAU, bukan ramalan nilai absolut, dan hanya mencakup variabel model selalu tampil |
+| BT-12 | Peta kombinasi | Lihat bagian "Peta kombinasi" | Heatmap 41 × 41: hijau (semua target terpenuhi), kuning (hasil tercapai, syarat dilanggar), abu-abu (belum tercapai); penanda R dan 1–4 |
+| BT-13 | Pilihan lain | Lihat tabel "Kombinasi lain yang juga memenuhi target" | 3–5 baris (R dan pilihan lain) dengan nilai kebijakan dan perubahan (%) PDRB, wisatawan, lahan terbangun, kepadatan, tenaga kerja |
+| BT-14 | Coba di Simulasi | Klik "Coba di halaman Simulasi →" pada saran kebijakan | Halaman Simulasi terbuka, pemberitahuan tampil, input Insentif dan Konservasi berisi nilai saran |
+| BT-15 | Coba pilihan lain | Klik "Coba →" pada salah satu baris pilihan lain | Halaman Simulasi memuat nilai kebijakan baris tersebut |
+| BT-16 | Uji balik skenario SUS | Hasil yang dicari: PDRB 2040 lebih tinggi minimal 1,1271%; syarat: Lahan Tersedia 2040 paling sedikit 71,3845% luas wilayah | Target bisa dicapai; Insentif ≈ 10%, Konservasi ≈ 100% |
+| BT-17 | Uji balik skenario DP | PDRB 2040 lebih tinggi minimal 3,0967%; syarat: Lahan Tersedia 2040 paling sedikit 71,1667% luas wilayah | Target bisa dicapai; Insentif ≈ 30%, Konservasi ≈ 0% |
+| BT-18 | Target mustahil | PDRB 2035 lebih tinggi minimal 500%, tanpa syarat | "✗ Target belum bisa dicapai"; kalimat bahwa kombinasi terbaik (Insentif 50%, Konservasi 100%) hanya mencapai +2,45%; kotak "Apa yang bisa dilakukan?" dengan saran sesuaikan target (2,44%) |
+| BT-19 | Saran sesuaikan target | Pada BT-18 klik "Cari ulang dengan target ini" | Angka target berubah menjadi 2,44 dan hasil menjadi "✓ Target bisa dicapai" |
+| BT-20 | Saran tahun | PDRB 2035 lebih tinggi minimal 10%, lalu klik "Ganti tahun ke 2047" | Saran tahun 2047 tampil; setelah diklik tahun berubah menjadi 2047 dan target bisa dicapai |
+| BT-21 | Syarat bertentangan | PDRB 2045 lebih tinggi minimal 5%; syarat Kepadatan Wisatawan 2045 naik paling banyak 3% | Target belum bisa dicapai; penjelasan bahwa setiap kombinasi yang mencapai hasil melanggar syarat; peta tanpa kotak hijau; tidak ada saran yang melanggar batas kepadatan |
+| BT-22 | Saran longgarkan syarat | Pada BT-21 klik "Cari ulang dengan syarat ini" | Angka syarat berubah menjadi 5,01 dan target bisa dicapai |
+| BT-23 | Syarat yang tidak mungkin | Syarat Kepadatan Wisatawan 2045 paling banyak 2 (angka) | Kalimat bahwa syarat tidak bisa dipenuhi dengan kebijakan apa pun dan tombol "Hapus syarat dan cari ulang" |
+| BT-24 | Target sudah dipenuhi tanpa kebijakan | PDRB 2040 lebih tinggi minimal 0% | Target bisa dicapai; kalimat "Target sudah tercapai walaupun tanpa kebijakan tambahan"; saran Insentif 0% dan Konservasi 0% |
+| BT-25 | Ikut ubah kondisi lain | PDRB 2035 lebih tinggi minimal 5%, lalu klik "Centang dan cari ulang" | Kotak dicentang otomatis; target bisa dicapai "tanpa kebijakan tambahan, asalkan … belanja wisatawan per kunjungan +4,8%"; kartu kondisi lain berwarna kuning dengan label "bukan kebijakan" |
+| BT-26 | Membawa kondisi lain ke Simulasi | Pada BT-25 klik "Coba di halaman Simulasi →", lalu "Jalankan Simulasi" | Kotak "Kondisi lain yang diubah" tampil di panel kiri (belanja per kunjungan +4,8%, menjadi Rp2,85 juta); ringkasan hasil menyebut "serta perubahan kondisi lain"; PDRB 2035 sama dengan hasil pencarian |
+| BT-27 | Mengembalikan kondisi dasar | Pada BT-26 klik "Kembalikan ke kondisi dasar" atau "Reset ke BAU" | Kotak kondisi lain hilang; simulasi berikutnya memakai asumsi dasar |
+| BT-28 | Data dasar berubah | Jalankan pencarian, lalu terapkan data dasar baru di Pembaruan Data dan kembali | Hasil lama disembunyikan; pilihan tahun dimulai dari tahun dasar baru + 1 |
+| BT-29 | Tampilan ponsel | Buka halaman pada lebar layar 390 px dan jalankan pencarian | Semua bagian terbaca tanpa geser horizontal halaman; tabel lebar dapat digeser di dalam kartunya |
+| BT-30 | Catatan tetap | Buka halaman | Catatan bahwa hasil adalah gambaran, bukan ramalan, dibandingkan dengan kondisi tanpa kebijakan tambahan, dan hanya memperhitungkan hal di dalam model selalu tampil |

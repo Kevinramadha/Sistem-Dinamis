@@ -5,14 +5,20 @@ import { useEffect, useState } from "react";
 import { useBaseData } from "@/components/BaseDataProvider";
 import InfoTip from "@/components/InfoTip";
 import TargetHeatmap from "@/components/TargetHeatmap";
+import { ASSUMPTION_QUERY } from "@/components/ApplyLeversFromUrl";
 import {
   ASSUMPTIONS,
   INDICATORS,
   LEVER_DIMS,
   TARGET_MODES,
+  assumptionBaseValues,
   assumptionDims,
+  assumptionOf,
+  describeAssumptionChanges,
   indicatorOf,
   validateTargets,
+  valueForThreshold,
+  type AssumptionKey,
   type Candidate,
   type Dim,
   type IndicatorId,
@@ -25,39 +31,38 @@ import { SearchCancelled, cancelSearch, searchTargets } from "@/lib/goalSeekClie
 import { GLOSSARY } from "@/lib/glossary";
 import { formatValue, nf } from "@/lib/interpretation";
 import { runModel, type BaseOverride, type SimulationData } from "@/lib/model";
-import { FIXED_PARAMS, RESEARCH_PARAMS } from "@/lib/parameterUpdate";
 import { FINAL_YEAR } from "@/lib/baseData";
 import { outputVariables } from "@/lib/scenarios";
 
 const MAX_TARGETS = 3;
+const TANPA = "tanpa kebijakan tambahan";
 
-const LAJU_ODTW_DASAR =
-  FIXED_PARAMS.flatMap((k) => k.items).find((i) => i.nama === "Laju Pembangunan ODTW Non Investasi")?.nilai ?? 5.427;
-
-/** Nilai indikator dalam bahasa sehari-hari (memakai format yang sama dengan halaman lain). */
+/** Nilai indikator dalam bahasa sehari-hari (format yang sama dengan halaman lain). */
 const showValue = (id: IndicatorId, v: number) => formatValue(v, outputVariables.find((o) => o.id === id)?.unit ?? "", id);
-const rawValue = (v: number) => v.toLocaleString("id-ID", { maximumSignificantDigits: 6 });
 const signedPct = (p: number) =>
-  Math.abs(p) < 0.005 ? "0,00%" : `${p > 0 ? "+" : "−"}${nf(Math.abs(p), Math.abs(p) < 10 ? 2 : 1)}%`;
+  Math.abs(p) < 0.005 ? "0%" : `${p > 0 ? "+" : "−"}${nf(Math.abs(p), Math.abs(p) < 10 ? 2 : 1)}%`;
 const leverPct = (v: number) => `${nf(v * 100, 1)}%`;
+const fmtInput = (v: number) => v.toLocaleString("id-ID", { maximumFractionDigits: 4 });
 
+/** Kalimat syarat sebuah target, mis. "minimal 5% lebih tinggi daripada tanpa kebijakan tambahan". */
 function ruleText(t: Target): string {
   const v = nf(t.value, t.value % 1 === 0 ? 0 : 2);
   switch (t.mode) {
     case "naik_min":
-      return t.value === 0 ? "tidak lebih rendah dari BAU" : `naik minimal ${v}% dibanding BAU`;
+      return t.value === 0 ? `tidak lebih rendah daripada ${TANPA}` : `minimal ${v}% lebih tinggi daripada ${TANPA}`;
     case "turun_min":
-      return `turun minimal ${v}% dibanding BAU`;
+      return `minimal ${v}% lebih rendah daripada ${TANPA}`;
     case "naik_maks":
-      return t.value === 0 ? "tidak lebih tinggi dari BAU" : `naik paling banyak ${v}% dibanding BAU`;
+      return t.value === 0 ? `tidak lebih tinggi daripada ${TANPA}` : `paling banyak ${v}% lebih tinggi daripada ${TANPA}`;
     case "abs_min":
-      return `minimal ${rawValue(t.value)}`;
+      return `paling sedikit ${showValue(t.indicator, t.value)}`;
     case "abs_maks":
-      return `maksimal ${rawValue(t.value)}`;
+      return `paling banyak ${showValue(t.indicator, t.value)}`;
   }
 }
 
-const describeTarget = (t: Target) => `${indicatorOf(t.indicator).label} ${t.year}: ${ruleText(t)}`;
+const describeTarget = (t: Target) => `${indicatorOf(t.indicator).label} tahun ${t.year} ${ruleText(t)}`;
+const roleName = (i: number) => (i === 0 ? "Hasil yang dicari" : `Syarat tambahan ${i}`);
 
 function defaultTargets(baseYear: number): Target[] {
   const year = Math.min(FINAL_YEAR, Math.max(baseYear + 1, 2045));
@@ -89,7 +94,7 @@ export default function PencarianTargetPage() {
   // Hasil disembunyikan bila data dasar berubah setelah pencarian dijalankan.
   const run = runRaw && runRaw.base === override ? runRaw : null;
 
-  // BAU sebagai acuan nilai pada isian target absolut.
+  // Kondisi tanpa kebijakan tambahan sebagai gambaran pada isian target.
   const [bauRef, setBauRef] = useState<{ base: BaseOverride | null; data: SimulationData } | null>(null);
   const bau = bauRef && bauRef.base === override ? bauRef.data : null;
   useEffect(() => {
@@ -105,12 +110,9 @@ export default function PencarianTargetPage() {
   useEffect(() => cancelSearch, []);
 
   const years = Array.from({ length: FINAL_YEAR - baseYear }, (_, i) => baseYear + 1 + i);
-  const assumptionBase = {
-    lama_menginap: config?.params.lama_menginap ?? RESEARCH_PARAMS.lama_menginap,
-    pengeluaran_per_kunjungan: config?.params.pengeluaran_per_kunjungan ?? RESEARCH_PARAMS.pengeluaran_per_kunjungan,
-    laju_odtw_non_investasi: LAJU_ODTW_DASAR,
-  };
-  const dims: Dim[] = useAssumptions ? [...LEVER_DIMS, ...assumptionDims(assumptionBase)] : LEVER_DIMS;
+  const assumptionBase = assumptionBaseValues(config?.params);
+  const dimsFor = (withAssumptions: boolean): Dim[] =>
+    withAssumptions ? [...LEVER_DIMS, ...assumptionDims(assumptionBase)] : LEVER_DIMS;
 
   const updateTarget = (i: number, patch: Partial<Target>) =>
     setTargets(targets.map((t, k) => (k === i ? { ...t, ...patch } : t)));
@@ -118,23 +120,24 @@ export default function PencarianTargetPage() {
   const addConstraint = () =>
     setTargets([...targets, { indicator: "indeks_kepadatan", year: targets[0]?.year ?? years[0], mode: "abs_maks", value: 2 }]);
 
-  const start = async () => {
-    const v = validateTargets(targets, baseYear);
+  const start = async (nextTargets: Target[] = targets, withAssumptions: boolean = useAssumptions) => {
+    setTargets(nextTargets);
+    setUseAssumptions(withAssumptions);
+    const v = validateTargets(nextTargets, baseYear);
     setErrors(v);
     if (v.length) return;
+    const dims = dimsFor(withAssumptions);
     setRunning(true);
     setProgress(0);
     try {
-      const { result, ms } = await searchTargets(targets, dims, override, setProgress);
-      setRun({ targets, dims, result, ms, base: override });
+      const { result, ms } = await searchTargets(nextTargets, dims, override, setProgress);
+      setRun({ targets: nextTargets, dims, result, ms, base: override });
     } catch (err) {
       if (!(err instanceof SearchCancelled)) setErrors([`Pencarian gagal: ${err instanceof Error ? err.message : String(err)}`]);
     } finally {
       setRunning(false);
     }
   };
-
-  const cancel = () => cancelSearch();
 
   return (
     <>
@@ -151,6 +154,7 @@ export default function PencarianTargetPage() {
         .pt .btn-primary:hover:not(:disabled) { background: #174a73; }
         .pt .btn-outline { background: white; color: #1D5A8C; border: 1.5px solid #1D5A8C; }
         .pt .btn-outline:hover:not(:disabled) { background: #eff6ff; }
+        .pt .btn-sm { font-size: 12px; padding: 6px 12px; }
         .pt .btn:disabled { opacity: .45; cursor: not-allowed; }
         .pt .field { border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; font-size: 13.5px; background: white; width: 100%; }
         .pt .field:focus { outline: 2px solid #1D5A8C33; border-color: #1D5A8C; }
@@ -160,13 +164,14 @@ export default function PencarianTargetPage() {
       <div className="pt min-h-screen" style={{ background: "#f8fafc" }}>
         <section className="page-hero text-white">
           <div className="relative z-10 max-w-6xl mx-auto px-6 py-16">
-            <p className="section-label mb-4" style={{ color: "#F4CD53" }}>Goal Seeking</p>
+            <p className="section-label mb-4" style={{ color: "#F4CD53" }}>Pencarian Target</p>
             <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight mb-4">
-              Pencarian <span style={{ color: "#2BB3B6" }}>Target Kebijakan</span>
+              Cari Nilai <span style={{ color: "#2BB3B6" }}>Kebijakan</span> yang Dibutuhkan
             </h1>
             <p className="text-blue-200 text-base max-w-2xl leading-relaxed">
-              Tentukan hasil yang ingin dicapai, lalu aplikasi mencari nilai Insentif Kebijakan dan Kebijakan Konservasi Lahan
-              yang dibutuhkan, dengan intervensi sekecil mungkin dari kondisi tanpa kebijakan tambahan (BAU).
+              Tuliskan hasil yang ingin dicapai, misalnya &ldquo;PDRB pariwisata tahun 2045 naik 5%&rdquo;. Aplikasi akan mencoba
+              ribuan kombinasi kebijakan, lalu menunjukkan kombinasi dengan perubahan paling kecil yang sudah cukup untuk
+              mencapainya.
             </p>
           </div>
         </section>
@@ -176,10 +181,11 @@ export default function PencarianTargetPage() {
           <section className="card p-5 sm:p-6 space-y-4">
             <div>
               <p className="section-label mb-1">Langkah 1</p>
-              <h2 className="font-display font-bold text-gray-900 text-lg">Tentukan target</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Baris pertama adalah <strong>target utama</strong>. Baris berikutnya adalah <strong>batasan</strong>: syarat yang
-                tidak boleh dilanggar, misalnya kepadatan maksimal atau daya dukung lahan minimal.
+              <h2 className="font-display font-bold text-gray-900 text-lg">Apa yang ingin dicapai?</h2>
+              <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                Isi baris pertama dengan <strong>hasil yang dicari</strong>. Bila perlu, tambahkan <strong>syarat tambahan</strong>{" "}
+                yang tidak boleh dilanggar, misalnya kepadatan wisatawan tidak boleh terlalu tinggi. Persentase selalu dibandingkan
+                dengan kondisi {TANPA} (disebut juga <em>Business-as-Usual</em> atau BAU) pada tahun yang sama.
               </p>
             </div>
 
@@ -199,16 +205,16 @@ export default function PencarianTargetPage() {
 
             {targets.length < MAX_TARGETS && (
               <button type="button" className="btn btn-outline" onClick={addConstraint}>
-                + Tambah batasan
+                + Tambah syarat
               </button>
             )}
           </section>
 
-          {/* Langkah 2: ruang pencarian */}
+          {/* Langkah 2: apa yang boleh diubah */}
           <section className="card p-5 sm:p-6 space-y-4">
             <div>
               <p className="section-label mb-1">Langkah 2</p>
-              <h2 className="font-display font-bold text-gray-900 text-lg">Ruang pencarian</h2>
+              <h2 className="font-display font-bold text-gray-900 text-lg">Kebijakan yang boleh diubah</h2>
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
               {LEVER_DIMS.map((d) => (
@@ -218,7 +224,7 @@ export default function PencarianTargetPage() {
                     <InfoTip text={GLOSSARY[d.key]} label={d.label} />
                   </p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Dicari antara {leverPct(d.min)} dan {leverPct(d.max)} (sama dengan rentang slider di halaman Simulasi).
+                    Dicoba dari {leverPct(d.min)} sampai {leverPct(d.max)}, sama seperti di halaman Simulasi.
                   </p>
                 </div>
               ))}
@@ -232,14 +238,14 @@ export default function PencarianTargetPage() {
                 onChange={(e) => setUseAssumptions(e.target.checked)}
               />
               <span className="text-sm text-amber-900">
-                <strong>Ikutkan asumsi tambahan</strong> (tidak aktif secara bawaan)
+                <strong>Ikut ubah kondisi lain (bukan kebijakan)</strong>
                 <span className="block text-xs mt-1 leading-relaxed">
-                  Ketiga nilai berikut adalah <strong>parameter model, bukan tuas kebijakan resmi</strong>. Mengaktifkannya berarti
-                  bertanya &ldquo;bagaimana bila asumsi ini sedikit berbeda?&rdquo;, bukan memilih kebijakan. Masing-masing dicari
-                  dalam rentang ±10% dari nilai dasarnya, sama seperti analisis sensitivitas model:
+                  Bila dicentang, aplikasi juga boleh mengandaikan tiga kondisi berikut sedikit berbeda, naik atau turun paling
+                  banyak 10%. Ketiganya <strong>tidak bisa langsung diatur pemerintah</strong>, jadi pakailah untuk menjawab
+                  pertanyaan &ldquo;bagaimana jika kondisinya berbeda?&rdquo;, bukan sebagai rekomendasi kebijakan.
                 </span>
-                <span className="block text-xs mt-1">
-                  {ASSUMPTIONS.map((a) => `${a.label} (${rawValue(assumptionBase[a.key])})`).join(" · ")}
+                <span className="block text-xs mt-1.5">
+                  {ASSUMPTIONS.map((a) => `${a.plain} (sekarang ${a.show(assumptionBase[a.key])})`).join(" · ")}
                 </span>
               </span>
             </label>
@@ -255,19 +261,15 @@ export default function PencarianTargetPage() {
             )}
 
             <div className="flex flex-wrap items-center gap-3">
-              <button type="button" className="btn btn-primary" onClick={start} disabled={running}>
-                {running ? "Mencari…" : "Cari kombinasi tuas"}
+              <button type="button" className="btn btn-primary" onClick={() => start()} disabled={running}>
+                {running ? "Mencari…" : "Cari kombinasi kebijakan"}
               </button>
               {running && (
-                <button type="button" className="btn btn-outline" onClick={cancel}>
+                <button type="button" className="btn btn-outline" onClick={cancelSearch}>
                   Batalkan
                 </button>
               )}
-              <span className="text-xs text-gray-500">
-                {useAssumptions
-                  ? "Latin Hypercube Sampling: sekitar 2.000 simulasi."
-                  : "Grid 41 × 41 titik lalu bisection: sekitar 2.000 simulasi."}
-              </span>
+              <span className="text-xs text-gray-500">Sekitar 2.000 kombinasi akan dicoba; biasanya selesai dalam 1–2 detik.</span>
             </div>
             {running && (
               <div
@@ -283,12 +285,19 @@ export default function PencarianTargetPage() {
             )}
           </section>
 
-          {run && <Results run={run} />}
+          {run && (
+            <Results
+              run={run}
+              busy={running}
+              assumptionsOff={!useAssumptions}
+              onRetry={(nextTargets, withAssumptions) => start(nextTargets, withAssumptions ?? useAssumptions)}
+            />
+          )}
 
           <p className="text-xs text-gray-500 leading-relaxed px-1">
-            <strong>Catatan:</strong> hasil pencarian bersifat indikatif. Angka dibandingkan secara relatif terhadap kondisi
-            Business-as-Usual (BAU) pada tahun yang sama, bukan ramalan nilai absolut, dan hanya mencakup variabel yang ada di
-            dalam model. Faktor di luar model (anggaran, regulasi, dampak sosial lain) tetap perlu dipertimbangkan.
+            <strong>Catatan:</strong> hasil ini adalah gambaran, bukan ramalan. Angka dibandingkan dengan kondisi {TANPA} pada
+            tahun yang sama, dan hanya memperhitungkan hal-hal yang ada di dalam model. Hal di luar model, misalnya anggaran,
+            aturan, dan dampak sosial lain, tetap perlu dipertimbangkan.
           </p>
         </div>
       </div>
@@ -314,15 +323,17 @@ function TargetRow({
   onRemove?: () => void;
 }) {
   const relatif = TARGET_MODES.find((m) => m.id === target.mode)!.relatif;
+  const ind = indicatorOf(target.indicator);
   const idx = bau ? bau.years.indexOf(target.year) : -1;
   const bauValue = idx >= 0 ? bau![target.indicator][idx] : null;
-  const unit = indicatorOf(target.indicator).unit;
+  // Nilai absolut diketik dalam satuan yang mudah dibaca (mis. % luas wilayah), disimpan dalam satuan model.
+  const scale = relatif ? 1 : ind.scale;
 
   return (
     <div className="rounded-xl border border-slate-200 p-4 space-y-3">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold" style={{ color: index === 0 ? "#1D5A8C" : "#475569" }}>
-          {index === 0 ? "Target utama" : `Batasan ${index}`}
+          {roleName(index)}
         </p>
         {onRemove && (
           <button type="button" onClick={onRemove} className="text-xs text-red-700 hover:underline">
@@ -332,17 +343,20 @@ function TargetRow({
       </div>
       <div className="grid gap-3 md:grid-cols-[1.4fr_1.6fr_0.9fr_0.8fr]">
         <label className="text-xs text-gray-500 space-y-1">
-          <span>Indikator</span>
+          <span className="flex items-center gap-1">
+            Indikator
+            <InfoTip text={GLOSSARY[target.indicator] ?? ind.label} label={ind.label} />
+          </span>
           <select className="field" value={target.indicator} onChange={(e) => onChange({ indicator: e.target.value as IndicatorId })}>
-            {INDICATORS.map((ind) => (
-              <option key={ind.id} value={ind.id}>
-                {ind.label}
+            {INDICATORS.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.label}
               </option>
             ))}
           </select>
         </label>
         <label className="text-xs text-gray-500 space-y-1">
-          <span>Jenis target</span>
+          <span>Bentuk target</span>
           <select className="field" value={target.mode} onChange={(e) => onChange({ mode: e.target.value as TargetMode })}>
             {TARGET_MODES.map((m) => (
               <option key={m.id} value={m.id}>
@@ -352,14 +366,14 @@ function TargetRow({
           </select>
         </label>
         <label className="text-xs text-gray-500 space-y-1">
-          <span>Nilai {relatif ? "(%)" : `(${unit})`}</span>
+          <span>Angka {relatif ? "(%)" : `(${ind.unit})`}</span>
           <input
             className="field"
             type="number"
             step="any"
             min={0}
-            value={Number.isFinite(target.value) ? target.value : ""}
-            onChange={(e) => onChange({ value: e.target.value === "" ? NaN : Number(e.target.value) })}
+            value={Number.isFinite(target.value) ? Number((target.value * scale).toPrecision(10)) : ""}
+            onChange={(e) => onChange({ value: e.target.value === "" ? NaN : Number(e.target.value) / scale })}
           />
         </label>
         <label className="text-xs text-gray-500 space-y-1">
@@ -373,10 +387,15 @@ function TargetRow({
           </select>
         </label>
       </div>
+      {Number.isFinite(target.value) && (
+        <p className="text-sm text-gray-700 bg-slate-50 rounded-lg px-3 py-2">
+          <span className="text-gray-500">Artinya:</span> {ind.label} tahun {target.year} harus {ruleText(target)}.
+        </p>
+      )}
       {bauValue !== null && (
         <p className="text-xs text-gray-500">
-          Sebagai acuan, nilai BAU {target.year}: <strong>{rawValue(bauValue)}</strong>{" "}
-          ({showValue(target.indicator, bauValue)}).
+          Sebagai gambaran, bila {TANPA} nilainya pada {target.year} sekitar <strong>{showValue(target.indicator, bauValue)}</strong>
+          {!relatif && ind.scale !== 1 && ` (angka ${fmtInput(bauValue * ind.scale)})`}.
         </p>
       )}
     </div>
@@ -385,11 +404,25 @@ function TargetRow({
 
 // ── Hasil ───────────────────────────────────────────────────────────────────
 
-function applyHref(c: Candidate) {
+/** Perubahan asumsi suatu titik dalam persen terhadap nilai dasar. */
+function assumptionChanges(c: Candidate, dims: Dim[]): Partial<Record<AssumptionKey, number>> {
+  const out: Partial<Record<AssumptionKey, number>> = {};
+  for (const d of dims)
+    if (d.kind === "asumsi") {
+      const pct = Math.round((c.point[d.key] / d.base - 1) * 10000) / 100;
+      if (pct !== 0) out[d.key as AssumptionKey] = pct;
+    }
+  return out;
+}
+
+const leversZero = (c: Candidate) => c.point.insentif_kebijakan < 5e-4 && c.point.kebijakan_konservasi_lahan < 5e-4;
+
+function applyHref(c: Candidate, dims: Dim[]) {
   const q = new URLSearchParams({
     insentif: String(Math.round(c.point.insentif_kebijakan * 10000) / 10000),
     konservasi: String(Math.round(c.point.kebijakan_konservasi_lahan * 10000) / 10000),
   });
+  for (const [key, pct] of Object.entries(assumptionChanges(c, dims))) q.set(ASSUMPTION_QUERY[key as AssumptionKey], String(pct));
   return `/simulasi?${q.toString()}`;
 }
 
@@ -398,18 +431,17 @@ function PointSummary({ c, dims }: { c: Candidate; dims: Dim[] }) {
     <div className="grid sm:grid-cols-2 gap-3">
       {dims.map((d) => {
         const v = c.point[d.key];
-        const text =
-          d.kind === "tuas"
-            ? leverPct(v)
-            : `${rawValue(v)} (${signedPct((v / d.base - 1) * 100)} dari nilai dasar)`;
+        const isLever = d.kind === "tuas";
+        const text = isLever
+          ? leverPct(v)
+          : `${assumptionOf(d.key as AssumptionKey).show(v)} (${signedPct((v / d.base - 1) * 100)})`;
         return (
           <div
             key={d.key}
-            className={`rounded-xl px-4 py-3 ${d.kind === "tuas" ? "bg-blue-50 border border-blue-100" : "bg-amber-50 border border-amber-200"}`}
+            className={`rounded-xl px-4 py-3 ${isLever ? "bg-blue-50 border border-blue-100" : "bg-amber-50 border border-amber-200"}`}
           >
             <p className="text-xs text-gray-500">
-              {d.label}
-              {d.kind === "asumsi" && " · asumsi model, bukan tuas kebijakan"}
+              {isLever ? d.label : `${assumptionOf(d.key as AssumptionKey).plain} · kondisi lain, bukan kebijakan`}
             </p>
             <p className="font-display font-bold text-lg text-gray-900">{text}</p>
           </div>
@@ -426,9 +458,9 @@ function EvalTable({ targets, evals }: { targets: Target[]; evals: TargetEval[] 
         <thead className="text-gray-500 border-b border-slate-100">
           <tr>
             <th>Target</th>
-            <th>Syarat</th>
-            <th>Hasil</th>
-            <th>Dibanding BAU</th>
+            <th>Yang diminta</th>
+            <th>Hasil simulasi</th>
+            <th>Dibanding {TANPA}</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -438,9 +470,10 @@ function EvalTable({ targets, evals }: { targets: Target[]; evals: TargetEval[] 
             return (
               <tr key={i} className="border-b border-slate-50">
                 <td className="font-medium text-gray-800">
-                  {i === 0 ? "Utama" : `Batasan ${i}`}: {indicatorOf(t.indicator).label} {t.year}
+                  {indicatorOf(t.indicator).label} {t.year}
+                  <span className="block text-[11px] font-normal text-gray-400">{roleName(i)}</span>
                 </td>
-                <td className="text-gray-600">{ruleText(t)}</td>
+                <td className="text-gray-600 whitespace-normal min-w-[180px]">{ruleText(t)}</td>
                 <td className="text-gray-800">{showValue(t.indicator, e.actual)}</td>
                 <td className="text-gray-800">{signedPct(e.pct)}</td>
                 <td>
@@ -459,7 +492,78 @@ function EvalTable({ targets, evals }: { targets: Target[]; evals: TargetEval[] 
   );
 }
 
-function Results({ run }: { run: RunState }) {
+interface Suggestion {
+  text: string;
+  action: string;
+  targets: Target[];
+  withAssumptions?: boolean;
+}
+
+/** Saran konkret ketika target tidak tercapai, masing-masing bisa langsung dicoba. */
+function suggestionsFor(run: RunState, assumptionsOff: boolean): Suggestion[] {
+  const { targets, result } = run;
+  const out: Suggestion[] = [];
+  const primary = targets[0];
+  const best = result.best;
+
+  if (best && !best.evals[0].satisfied) {
+    const v = valueForThreshold(primary.mode, best.evals[0].metric);
+    if (v !== null && v !== primary.value) {
+      const lowered = { ...primary, value: v };
+      out.push({
+        text: `Sesuaikan target menjadi: ${indicatorOf(primary.indicator).label} tahun ${primary.year} ${ruleText(lowered)}. Ini angka terbaik yang masih bisa dicapai${targets.length > 1 && result.constraintsMetSomewhere ? " tanpa melanggar syarat tambahan" : ""}.`,
+        action: "Cari ulang dengan target ini",
+        targets: [lowered, ...targets.slice(1)],
+      });
+    }
+  }
+  if (result.earliestYear) {
+    out.push({
+      text: `Beri waktu lebih panjang: target yang sama baru bisa tercapai pada tahun ${result.earliestYear}.`,
+      action: `Ganti tahun ke ${result.earliestYear}`,
+      targets: [{ ...primary, year: result.earliestYear }, ...targets.slice(1)],
+    });
+  }
+  for (const r of result.relaxations) {
+    const t = targets[r.index];
+    const v = valueForThreshold(t.mode, r.threshold);
+    if (v === null || v === t.value) continue;
+    const relaxed = { ...t, value: v };
+    out.push({
+      text: `Longgarkan ${roleName(r.index).toLowerCase()} menjadi: ${indicatorOf(t.indicator).label} tahun ${t.year} ${ruleText(relaxed)}.`,
+      action: "Cari ulang dengan syarat ini",
+      targets: targets.map((x, k) => (k === r.index ? relaxed : x)),
+    });
+  }
+  for (const k of result.unreachable.filter((k) => k > 0)) {
+    out.push({
+      text: `Hapus ${roleName(k).toLowerCase()} (${describeTarget(targets[k])}), karena syarat ini tidak bisa dipenuhi dengan kebijakan apa pun.`,
+      action: "Hapus syarat dan cari ulang",
+      targets: targets.filter((_, m) => m !== k),
+    });
+  }
+  if (assumptionsOff) {
+    out.push({
+      text: "Centang “Ikut ubah kondisi lain” untuk melihat apakah target tercapai bila kondisi lain sedikit berbeda. Ingat, ini pengandaian, bukan kebijakan.",
+      action: "Centang dan cari ulang",
+      targets,
+      withAssumptions: true,
+    });
+  }
+  return out;
+}
+
+function Results({
+  run,
+  busy,
+  assumptionsOff,
+  onRetry,
+}: {
+  run: RunState;
+  busy: boolean;
+  assumptionsOff: boolean;
+  onRetry: (targets: Target[], withAssumptions?: boolean) => void;
+}) {
   const { targets, dims, result } = run;
   const rec = result.recommendation;
   const reached = result.status === "tercapai";
@@ -467,87 +571,107 @@ function Results({ run }: { run: RunState }) {
   const hasConstraints = targets.length > 1;
   const rows = rec ? [rec, ...result.alternatives] : [];
   const asumsiDims = dims.filter((d) => d.kind === "asumsi");
+  const shown = rec ?? result.best;
+  const shownAssumptionNote = shown ? describeAssumptionChanges(assumptionChanges(shown, dims)) : "";
+  const primaryReachable = !result.unreachable.includes(0);
+  const suggestions = reached ? [] : suggestionsFor(run, assumptionsOff);
 
   return (
     <section className="space-y-6" aria-live="polite">
       {/* Status */}
-      <div
-        className="card p-5 sm:p-6 border-l-4"
-        style={{ borderLeftColor: reached ? "#3A9C77" : "#b42318" }}
-      >
+      <div className="card p-5 sm:p-6 border-l-4" style={{ borderLeftColor: reached ? "#3A9C77" : "#b42318" }}>
         <p className="section-label mb-1">Hasil pencarian</p>
         <p className="font-display text-2xl font-bold" style={{ color: reached ? "#2f7d60" : "#b42318" }}>
-          {reached ? "TERCAPAI" : "TIDAK TERCAPAI"}
+          {reached ? "✓ Target bisa dicapai" : "✗ Target belum bisa dicapai"}
         </p>
-        <div className="text-sm text-gray-700 mt-2 space-y-1.5 leading-relaxed">
-          {reached && rec && rec.distance === 0 && (
-            <p>Target sudah terpenuhi pada kondisi BAU, jadi tidak dibutuhkan kebijakan tambahan.</p>
-          )}
-          {reached && rec && rec.distance > 0 && (
+        <div className="text-sm text-gray-700 mt-2 space-y-2 leading-relaxed">
+          {reached && rec && rec.distance === 0 && <p>Target sudah tercapai walaupun {TANPA}.</p>}
+          {reached && rec && rec.distance > 0 && leversZero(rec) && (
             <p>
-              Kombinasi dengan intervensi terkecil dari BAU: <strong>Insentif Kebijakan {leverPct(rec.point.insentif_kebijakan)}</strong>{" "}
-              dan <strong>Kebijakan Konservasi Lahan {leverPct(rec.point.kebijakan_konservasi_lahan)}</strong>
-              {asumsiDims.length > 0 && ", dengan asumsi tambahan seperti di bawah"}.
+              Target bisa tercapai <strong>{TANPA}</strong>, asalkan kondisi berikut terjadi: {shownAssumptionNote}. Ingat, ini
+              pengandaian tentang kondisi, bukan kebijakan yang bisa langsung diatur.
             </p>
           )}
-          {!reached && result.best && (
-            <>
-              <p>
-                Tidak ada kombinasi dalam ruang pencarian yang memenuhi {hasConstraints ? "semua target" : "target"}. Nilai
-                terbaik untuk target utama ({describeTarget(primary)}) adalah{" "}
-                <strong>
-                  {showValue(primary.indicator, result.best.evals[0].actual)} ({signedPct(result.best.evals[0].pct)} dibanding BAU)
-                </strong>
-                , dicapai dengan Insentif Kebijakan {leverPct(result.best.point.insentif_kebijakan)} dan Kebijakan Konservasi
-                Lahan {leverPct(result.best.point.kebijakan_konservasi_lahan)}
-                {hasConstraints && result.constraintsMetSomewhere && " tanpa melanggar batasan"}.
-              </p>
-              {hasConstraints && result.constraintsMetSomewhere && !result.unreachable.includes(0) && (
-                <p>
-                  Target utama sebenarnya bisa dicapai, tetapi selalu dengan melanggar batasan. Artinya target utama dan batasan
-                  saling bertentangan di dalam model; longgarkan salah satunya.
-                </p>
-              )}
-              {result.unreachable.length > 0 && (
-                <p>
-                  Tidak terpenuhi di kombinasi mana pun: {result.unreachable.map((k) => describeTarget(targets[k])).join("; ")}.
-                </p>
-              )}
-            </>
+          {reached && rec && rec.distance > 0 && !leversZero(rec) && (
+            <p>
+              Cukup dengan <strong>Insentif Kebijakan {leverPct(rec.point.insentif_kebijakan)}</strong> dan{" "}
+              <strong>Kebijakan Konservasi Lahan {leverPct(rec.point.kebijakan_konservasi_lahan)}</strong>
+              {shownAssumptionNote && <>, dengan mengandaikan {shownAssumptionNote}</>}, semua target terpenuhi. Ini kombinasi
+              dengan perubahan kebijakan paling kecil dari kondisi sekarang.
+            </p>
           )}
-          <p className="text-xs text-gray-500">
-            {result.runs.toLocaleString("id-ID")} simulasi dalam {nf(run.ms / 1000, 1)} detik ·{" "}
-            {result.method === "grid" ? "grid search 41 × 41 + bisection" : "Latin Hypercube Sampling + penyempurnaan lokal"}
-          </p>
+          {!reached && result.best && !primaryReachable && (
+            <p>
+              Bahkan dengan kombinasi terbaik yang tersedia (Insentif {leverPct(result.best.point.insentif_kebijakan)}, Konservasi{" "}
+              {leverPct(result.best.point.kebijakan_konservasi_lahan)}), {indicatorOf(primary.indicator).label} tahun {primary.year}{" "}
+              hanya bisa mencapai <strong>{signedPct(result.best.evals[0].pct)}</strong> dibanding {TANPA}, sedangkan targetnya{" "}
+              {ruleText(primary)}.
+            </p>
+          )}
+          {!reached && primaryReachable && hasConstraints && (
+            <p>
+              Hasil yang dicari sebenarnya bisa dicapai, tetapi <strong>setiap kombinasi yang mencapainya melanggar syarat tambahan</strong>.
+              Artinya kebijakan yang mendorong {indicatorOf(primary.indicator).label} juga ikut mendorong hal yang ingin dibatasi.
+            </p>
+          )}
+          {!reached &&
+            result.unreachable
+              .filter((k) => k > 0)
+              .map((k) => (
+                <p key={k}>
+                  {roleName(k)} ({describeTarget(targets[k])}) tidak bisa dipenuhi dengan kebijakan apa pun.
+                </p>
+              ))}
         </div>
+
+        {suggestions.length > 0 && (
+          <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-4 space-y-3">
+            <p className="font-semibold text-amber-900 text-sm">Apa yang bisa dilakukan?</p>
+            <ul className="space-y-3">
+              {suggestions.map((s) => (
+                <li key={s.action + s.text} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+                  <span className="text-sm text-amber-900">{s.text}</span>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-sm shrink-0"
+                    disabled={busy}
+                    onClick={() => onRetry(s.targets, s.withAssumptions)}
+                  >
+                    {s.action}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
-      {/* Rekomendasi */}
-      {(rec ?? result.best) && (
+      {/* Saran utama / kombinasi terbaik */}
+      {shown && (
         <div className="card p-5 sm:p-6 space-y-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="section-label mb-1">{rec ? "Rekomendasi utama" : "Kombinasi terbaik yang bisa dicapai"}</p>
+              <p className="section-label mb-1">{rec ? "Saran kebijakan" : "Kombinasi terbaik yang ada"}</p>
               <h3 className="font-display font-bold text-gray-900 flex items-center gap-1.5">
-                {rec ? "Intervensi terkecil yang memenuhi target" : "Paling mendekati target utama"}
+                {rec ? "Perubahan paling kecil yang sudah cukup" : "Paling mendekati hasil yang dicari"}
                 {rec && (
                   <InfoTip
-                    label="Intervensi terkecil"
-                    text="Dari semua kombinasi yang memenuhi target, dipilih yang paling dekat dengan kondisi BAU. Jarak dihitung setelah setiap tuas dibagi lebar rentangnya, supaya Insentif (0–50%) dan Konservasi (0–100%) setara."
+                    label="Perubahan paling kecil"
+                    text="Dari semua kombinasi yang memenuhi target, dipilih yang paling dekat dengan kondisi tanpa kebijakan tambahan. Insentif (0–50%) dan Konservasi (0–100%) dihitung setara menurut lebar rentangnya."
                   />
                 )}
               </h3>
             </div>
-            <Link href={applyHref((rec ?? result.best)!)} className="btn btn-primary">
-              Terapkan ke Simulasi →
+            <Link href={applyHref(shown, dims)} className="btn btn-primary">
+              Coba di halaman Simulasi →
             </Link>
           </div>
-          <PointSummary c={(rec ?? result.best)!} dims={dims} />
-          <EvalTable targets={targets} evals={(rec ?? result.best)!.evals} />
-          {asumsiDims.length > 0 && (
+          <PointSummary c={shown} dims={dims} />
+          <EvalTable targets={targets} evals={shown.evals} />
+          {shownAssumptionNote && (
             <p className="text-xs text-amber-800">
-              Tombol &ldquo;Terapkan ke Simulasi&rdquo; hanya membawa nilai kedua tuas. Halaman Simulasi memakai asumsi dasar
-              model, sehingga hasilnya bisa berbeda dari angka di atas.
+              Perubahan kondisi lain ikut dibawa ke halaman Simulasi dan ditandai di sana, supaya hasilnya sama dengan angka di
+              atas.
             </p>
           )}
         </div>
@@ -557,11 +681,11 @@ function Results({ run }: { run: RunState }) {
       {result.grid && (
         <div className="card p-5 sm:p-6 space-y-3">
           <div>
-            <p className="section-label mb-1">Peta ruang tuas</p>
+            <p className="section-label mb-1">Peta kombinasi</p>
             <h3 className="font-display font-bold text-gray-900">Kombinasi mana yang memenuhi target?</h3>
-            <p className="text-sm text-gray-500 mt-1">
-              Setiap kotak adalah satu kombinasi Insentif (mendatar) dan Konservasi (tegak) yang disimulasikan. Pojok kiri bawah
-              adalah kondisi BAU.
+            <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+              Setiap kotak kecil adalah satu kombinasi yang dicoba: makin ke kanan makin besar insentifnya, makin ke atas makin
+              besar konservasi lahannya. Pojok kiri bawah adalah kondisi {TANPA}.
             </p>
           </div>
           <TargetHeatmap
@@ -579,13 +703,13 @@ function Results({ run }: { run: RunState }) {
       )}
 
       {/* Alternatif */}
-      {rows.length > 0 && (
+      {rows.length > 1 && (
         <div className="card p-5 sm:p-6 space-y-3">
           <div>
-            <p className="section-label mb-1">Alternatif</p>
+            <p className="section-label mb-1">Pilihan lain</p>
             <h3 className="font-display font-bold text-gray-900">Kombinasi lain yang juga memenuhi target</h3>
             <p className="text-sm text-gray-500 mt-1">
-              Dampak pada indikator lain di tahun {primary.year}, dibanding BAU. Baris R adalah rekomendasi utama.
+              Angka menunjukkan perubahan dibanding {TANPA} pada tahun {primary.year}. Baris R adalah saran utama.
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -596,11 +720,13 @@ function Results({ run }: { run: RunState }) {
                   <th>Insentif</th>
                   <th>Konservasi</th>
                   {asumsiDims.map((d) => (
-                    <th key={d.key}>{d.label}</th>
+                    <th key={d.key}>{assumptionOf(d.key as AssumptionKey).plain}</th>
                   ))}
-                  {rec!.impacts.map((im) => (
-                    <th key={im.indicator}>{indicatorOf(im.indicator).label}</th>
-                  ))}
+                  <th>PDRB</th>
+                  <th>Wisatawan</th>
+                  <th>Lahan terbangun</th>
+                  <th>Kepadatan</th>
+                  <th>Tenaga kerja</th>
                   <th />
                 </tr>
               </thead>
@@ -621,8 +747,8 @@ function Results({ run }: { run: RunState }) {
                       </td>
                     ))}
                     <td>
-                      <Link href={applyHref(c)} className="text-xs font-semibold text-[#1D5A8C] hover:underline">
-                        Terapkan →
+                      <Link href={applyHref(c, dims)} className="text-xs font-semibold text-[#1D5A8C] hover:underline">
+                        Coba →
                       </Link>
                     </td>
                   </tr>
@@ -632,6 +758,23 @@ function Results({ run }: { run: RunState }) {
           </div>
         </div>
       )}
+
+      <details className="card px-5 py-4 text-sm text-gray-600">
+        <summary className="cursor-pointer font-semibold text-gray-700">Cara kerja pencarian (untuk peneliti)</summary>
+        <div className="mt-2 space-y-1.5 leading-relaxed">
+          <p>
+            Model dijalankan {result.runs.toLocaleString("id-ID")} kali dalam {nf(run.ms / 1000, 1)} detik.{" "}
+            {result.method === "grid"
+              ? "Metode: grid search 41 × 41 titik pada ruang dua tuas, lalu bisection pada batas wilayah yang memenuhi target, lalu pattern search."
+              : "Metode: Latin Hypercube Sampling 2.000 sampel pada ruang lima dimensi (dua tuas dan tiga asumsi ±10%), lalu penyempurnaan lokal (pattern search)."}
+          </p>
+          <p>
+            Saran utama adalah titik yang memenuhi semua target dengan jarak ternormalisasi terkecil dari BAU, yaitu √Σ((xᵢ − xᵢ,BAU) ÷
+            rentangᵢ)². Bila tidak tercapai, nilai terbaik target utama dicari di antara titik yang memenuhi batasan, lalu
+            dipertajam dengan hill climbing.
+          </p>
+        </div>
+      </details>
     </section>
   );
 }

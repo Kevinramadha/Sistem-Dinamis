@@ -3,6 +3,7 @@ import {
   ASSUMPTION_RANGE,
   LEVER_DIMS,
   assumptionDims,
+  assumptionConstants,
   distanceFromBau,
   evaluateTarget,
   goalSeek,
@@ -10,6 +11,7 @@ import {
   modelEvaluator,
   mulberry32,
   validateTargets,
+  valueForThreshold,
   type Outputs,
   type Target,
 } from "@/lib/goalSeek";
@@ -84,6 +86,20 @@ describe("validateTargets", () => {
   });
 });
 
+describe("valueForThreshold", () => {
+  it("membulatkan ke arah yang tetap tercapai", () => {
+    expect(valueForThreshold("naik_min", 2.4567)).toBe(2.45);
+    expect(valueForThreshold("naik_maks", 5.0012)).toBe(5.01);
+    expect(valueForThreshold("turun_min", -1.239)).toBe(1.23);
+    expect(valueForThreshold("abs_maks", 2.36381)).toBe(2.364);
+    expect(valueForThreshold("abs_min", 36287.8)).toBe(36287);
+  });
+  it("menolak saran yang tidak valid", () => {
+    expect(valueForThreshold("turun_min", 0.5)).toBeNull();
+    expect(valueForThreshold("naik_min", -1)).toBeNull();
+  });
+});
+
 describe("latinHypercube", () => {
   it("mengisi setiap strata tepat satu kali per dimensi dan deterministik", () => {
     const dims = assumptionDims({ lama_menginap: 1, pengeluaran_per_kunjungan: 2, laju_odtw_non_investasi: 3 });
@@ -137,6 +153,22 @@ describe("goalSeek dengan model (uji balik)", () => {
     expect(r.best!.evals[0].pct).toBeGreaterThan(2.3);
     expect(r.best!.evals[0].pct).toBeLessThan(2.6);
     expect(r.best!.point.insentif_kebijakan).toBeCloseTo(0.5, 5);
+    expect(r.earliestYear).toBeNull(); // +500% tidak tercapai sampai 2050
+    // Saran "sesuaikan target" harus benar-benar tercapai bila dicoba.
+    const saran = valueForThreshold("naik_min", r.best!.evals[0].metric)!;
+    const ulang = await goalSeek([{ indicator: "pdrb_sektor_pariwisata", year: 2035, mode: "naik_min", value: saran }], LEVER_DIMS, evaluate);
+    expect(ulang.status).toBe("tercapai");
+  });
+
+  it("menyarankan tahun paling awal bila target belum tercapai di tahunnya", async () => {
+    const target: Target = { indicator: "pdrb_sektor_pariwisata", year: 2035, mode: "naik_min", value: 10 };
+    const r = await goalSeek([target], LEVER_DIMS, evaluate);
+    expect(r.status).toBe("tidak_tercapai");
+    expect(r.earliestYear).toBeGreaterThan(2035);
+    const ulang = await goalSeek([{ ...target, year: r.earliestYear! }], LEVER_DIMS, evaluate);
+    expect(ulang.status).toBe("tercapai");
+    const sebelum = await goalSeek([{ ...target, year: r.earliestYear! - 1 }], LEVER_DIMS, evaluate);
+    expect(sebelum.status).toBe("tidak_tercapai");
   });
 
   it("titik yang memenuhi PDRB tetapi melanggar batas kepadatan tidak direkomendasikan", async () => {
@@ -150,6 +182,13 @@ describe("goalSeek dengan model (uji balik)", () => {
     expect(ketat.grid!.cells.some((c) => c.status === "semua")).toBe(false);
     expect(ketat.best!.evals[1].satisfied).toBe(true);
     expect(ketat.best!.evals[0].pct).toBeLessThan(5);
+    // Saran: batas kepadatan dilonggarkan menjadi sekitar +5% agar PDRB +5% tercapai.
+    expect(ketat.relaxations).toHaveLength(1);
+    const saran = valueForThreshold("abs_maks", ketat.relaxations[0].threshold)!;
+    expect(saran / kBau).toBeGreaterThan(1.049);
+    expect(saran / kBau).toBeLessThan(1.052);
+    const ulang = await goalSeek([pdrb, { indicator: "indeks_kepadatan", year: 2045, mode: "abs_maks", value: saran }], LEVER_DIMS, evaluate);
+    expect(ulang.status).toBe("tercapai");
 
     const longgar = await goalSeek([pdrb, { indicator: "indeks_kepadatan", year: 2045, mode: "abs_maks", value: kBau * 1.06 }], LEVER_DIMS, evaluate);
     expect(longgar.status).toBe("tercapai");
@@ -190,5 +229,25 @@ describe("goalSeek dengan model (uji balik)", () => {
     // Dengan tuas saja PDRB 2035 hanya bisa naik ±2,4%, jadi pengeluaran per kunjungan harus lebih tinggi dari dasar.
     expect(r.recommendation!.point.pengeluaran_per_kunjungan).toBeGreaterThan(0.00272021);
     expect(r.recommendation!.evals[0].pct).toBeGreaterThanOrEqual(5 - 1e-7);
+  });
+
+  it("nilai asumsi yang dibawa ke Simulasi menghasilkan angka yang sama", async () => {
+    const base = { lama_menginap: 1.427, pengeluaran_per_kunjungan: 0.00272021, laju_odtw_non_investasi: 5.427 };
+    const dims = [...LEVER_DIMS, ...assumptionDims(base)];
+    const target: Target = { indicator: "pdrb_sektor_pariwisata", year: 2035, mode: "naik_min", value: 5 };
+    const r = await goalSeek([target], dims, modelEvaluator(dims, null), { samples: 600 });
+    const rec = r.recommendation!;
+    // Sama seperti tombol "Coba di halaman Simulasi": persen dibulatkan 2 desimal.
+    const pct = Object.fromEntries(
+      dims.filter((d) => d.kind === "asumsi").map((d) => [d.key, Math.round((rec.point[d.key] / d.base - 1) * 10000) / 100])
+    );
+    const sim = await runModel(
+      { insentif_kebijakan: rec.point.insentif_kebijakan, kebijakan_konservasi_lahan: rec.point.kebijakan_konservasi_lahan },
+      null,
+      assumptionConstants(pct)
+    );
+    const bau = await runModel(scenarios.BAU.params);
+    const simPct = (at(sim, "pdrb_sektor_pariwisata", 2035) / at(bau, "pdrb_sektor_pariwisata", 2035) - 1) * 100;
+    expect(Math.abs(simPct - rec.evals[0].pct)).toBeLessThan(0.05);
   });
 });
