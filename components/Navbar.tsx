@@ -8,6 +8,7 @@ const navLinks = [
   { href: "/model", label: "Model" },
   { href: "/skenario", label: "Skenario" },
   { href: "/simulasi", label: "Eksplorasi Simulasi" },
+  { href: "/pencarian-target", label: "Pencarian Target" },
   { href: "/pembaruan-data", label: "Pembaruan Data" },
 ];
 

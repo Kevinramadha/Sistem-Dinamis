@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { Suspense, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
 import { runModel, SimulationParams } from "@/lib/model";
@@ -10,6 +10,7 @@ import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
+import ApplyLeversFromUrl from "@/components/ApplyLeversFromUrl";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
 import type { CompareInput } from "@/lib/comparison";
 
@@ -403,6 +404,14 @@ export default function SimulasiPage() {
 
         {/* ── MAIN CONTENT ─────────────────────────────────── */}
         <div className="max-w-6xl mx-auto px-6 py-10">
+          <Suspense fallback={null}>
+            <ApplyLeversFromUrl
+              onApply={(p) => {
+                setParams(p);
+                setActivePreset("");
+              }}
+            />
+          </Suspense>
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
 
             {/* ── LEFT PANEL ───────────────────────────────── */}
