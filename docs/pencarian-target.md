@@ -60,7 +60,7 @@ penyebabnya dan memberi saran yang masing-masing dapat langsung dicoba dengan sa
 | Beri waktu lebih panjang | Dengan kombinasi terbaik, dicari tahun paling awal setelah tahun target ketika target yang sama tercapai. |
 | Longgarkan syarat tambahan | Di antara kombinasi yang memenuhi hasil yang dicari dan syarat lain, diambil yang paling sedikit melanggar syarat tersebut; nilainya menjadi batas baru yang disarankan. |
 | Hapus syarat | Untuk syarat yang tidak terpenuhi oleh kombinasi mana pun (mis. kepadatan ≤ 2,0 setelah 2043). |
-| Ikut ubah kondisi lain | Bila asumsi tambahan belum dicentang; ditegaskan sebagai pengandaian, bukan kebijakan. |
+| Ikut ubah kondisi lain | Bila asumsi tambahan belum dicentang; ditegaskan bahwa kondisi ini bukan kebijakan, hanya kemungkinan kondisi di lapangan. |
 
 ### Bahasa pada halaman
 

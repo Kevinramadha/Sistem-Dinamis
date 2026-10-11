@@ -23,6 +23,7 @@ import {
 } from "@/lib/templateIO";
 import { parseConfig, useBaseData } from "@/components/BaseDataProvider";
 import Step from "@/components/Step";
+import InfoTip from "@/components/InfoTip";
 import { Toast, toastError, toastInfo, toastOk, type ToastMessage } from "@/components/RunFeedback";
 
 type Source = "unggah" | "form" | "impor";
@@ -332,54 +333,52 @@ export default function PembaruanDataPage() {
           {/* ── OPSI LANJUTAN ─────────────────────────────── */}
           <details className="card overflow-hidden">
             <summary className="px-5 sm:px-6 py-4 cursor-pointer select-none font-display font-semibold text-gray-800">
-              Opsi lanjutan
-              <span className="ml-2 text-xs font-normal text-gray-400">simpan/buka berkas data, angka tetap model</span>
+              Simpan atau buka data
             </summary>
-            <div className="px-5 sm:px-6 pb-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-slate-100 p-4">
-                  <p className="font-semibold text-gray-900 text-sm">Simpan ke berkas</p>
-                  <p className="text-xs text-gray-500 mt-1 mb-3">Cadangan data yang sedang dipakai (.json), bisa dibuka di perangkat lain.</p>
-                  {isCustom ? (
-                    <button className="btn btn-outline" onClick={onExport}>Simpan ke berkas</button>
-                  ) : (
-                    <p className="text-xs text-gray-400">Tersedia setelah data tahun baru diterapkan.</p>
-                  )}
-                </div>
-                <div className="rounded-xl border border-slate-100 p-4">
-                  <p className="font-semibold text-gray-900 text-sm">Buka berkas tersimpan</p>
-                  <p className="text-xs text-gray-500 mt-1 mb-3">Pakai lagi data dari berkas .json. Data diperiksa dulu sebelum diterapkan.</p>
-                  <button className="btn btn-outline" onClick={() => jsonRef.current?.click()}>Buka berkas</button>
-                  <input ref={jsonRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => onImportJson(e.target.files?.[0])} aria-label="Impor konfigurasi JSON" />
-                </div>
+            <div className="px-5 sm:px-6 pb-5">
+              <p className="text-sm text-gray-500 mb-3">
+                Simpan data yang sedang dipakai ke berkas, lalu buka lagi kapan saja atau di perangkat lain.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button className="btn btn-outline" onClick={onExport} disabled={!isCustom}>Simpan ke berkas</button>
+                <button className="btn btn-outline" onClick={() => jsonRef.current?.click()}>Buka berkas</button>
+                <input ref={jsonRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => onImportJson(e.target.files?.[0])} aria-label="Impor konfigurasi JSON" />
+                {!isCustom && <span className="text-xs text-gray-400">Simpan bisa dipakai setelah data tahun baru diterapkan.</span>}
               </div>
+            </div>
+          </details>
 
-              <div>
-                <p className="font-semibold text-gray-900 text-sm">Angka tetap yang dipakai model</p>
-                <p className="text-xs text-gray-500 mt-1 mb-4">
-                  Ditetapkan peneliti dan tidak ikut berubah saat data diperbarui.
-                </p>
-              <div className="space-y-6">
-                  {FIXED_PARAMS.map((g) => (
-                    <div key={g.kategori}>
-                      <p className="text-sm font-semibold text-gray-900">{g.kategori}</p>
-                      <p className="text-xs text-gray-400 mb-2">{g.penjelasan}</p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                        {g.items.map((it) => (
-                          <div key={it.nama} className="flex items-start justify-between gap-4 py-2.5" style={{ borderBottom: "1px solid #f1f5f9" }}>
-                            <div className="min-w-0">
-                              <p className="text-sm text-gray-800">{it.label}</p>
-                              <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{it.keterangan}</p>
-                              <p className="text-[11px] text-gray-400 mt-0.5">Nama di model: {it.nama}</p>
-                            </div>
-                            <p className="text-sm font-semibold text-gray-900 text-right shrink-0 whitespace-nowrap">{it.tampil}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          <details className="card overflow-hidden">
+            <summary className="px-5 sm:px-6 py-4 cursor-pointer select-none font-display font-semibold text-gray-800">
+              Angka yang tidak ikut berubah
+            </summary>
+            <div className="px-5 sm:px-6 pb-5">
+              <p className="text-sm text-gray-500 mb-4">
+                Angka ini ditentukan peneliti, jadi tetap sama walau data BPS diperbarui. Arahkan kursor ke ⓘ untuk penjelasan.
+              </p>
+              <div className="md:columns-2 gap-x-8">
+                {FIXED_PARAMS.map((g) => (
+                  <div key={g.kategori} className="break-inside-avoid mb-5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      {g.kategori} <span className="normal-case font-normal tracking-normal text-gray-400">· {g.penjelasan}</span>
+                    </p>
+                    <ul className="mt-1">
+                      {g.items.map((it) => (
+                        <li key={it.nama} className="flex items-center justify-between gap-4 py-2 text-sm" style={{ borderBottom: "1px solid #f1f5f9" }}>
+                          <span className="flex items-center gap-1.5 text-gray-700 min-w-0">
+                            {it.label}
+                            <InfoTip text={`${it.keterangan} (Nama di model: ${it.nama})`} label={it.label} />
+                          </span>
+                          <span className="font-semibold text-gray-900 whitespace-nowrap">{it.tampil}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
+              <p className="text-xs text-gray-400 mt-4">
+                Insentif dan konservasi lahan tidak diatur di sini, tetapi di halaman Skenario dan Eksplorasi Simulasi.
+              </p>
             </div>
           </details>
         </div>

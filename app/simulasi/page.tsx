@@ -665,7 +665,7 @@ export default function SimulasiPage() {
                     })}
                   </ul>
                   <p className="text-xs mt-2 leading-relaxed">
-                    Dari Pencarian Target. Ini pengandaian, <strong>bukan kebijakan</strong>. Hasil tetap dibandingkan dengan
+                    Dari Pencarian Target. Kondisi ini <strong>bukan kebijakan</strong>, hanya kemungkinan di lapangan. Hasil tetap dibandingkan dengan
                     kondisi tanpa kebijakan.
                   </p>
                   <button type="button" onClick={resetAssumptions} className="mt-2 text-xs font-semibold underline">

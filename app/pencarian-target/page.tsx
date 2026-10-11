@@ -233,14 +233,14 @@ export default function PencarianTargetPage() {
                 <span className="text-sm text-gray-800">Ikut ubah kondisi lain</span>
                 <InfoTip
                   label="Kondisi lain"
-                  text={`Bukan kebijakan, hanya pengandaian. Aplikasi boleh menaikkan atau menurunkan paling banyak 10%: ${ASSUMPTIONS.map(
+                  text={`Kondisi ini tidak diatur langsung lewat kebijakan, tetapi bisa saja sedikit berbeda di lapangan. Aplikasi boleh menaikkan atau menurunkan paling banyak 10%: ${ASSUMPTIONS.map(
                     (a) => `${a.plain.toLowerCase()} (sekarang ${a.show(assumptionBase[a.key])})`
                   ).join(", ")}.`}
                 />
               </label>
               {useAssumptions && (
                 <p className="mt-2 text-xs text-amber-800">
-                  Lama menginap, belanja per kunjungan, dan objek wisata baru boleh berubah ±10%. Ini pengandaian, bukan kebijakan.
+                  Aplikasi juga boleh mengubah lama menginap, belanja per kunjungan, dan objek wisata baru (paling banyak ±10%). Ketiganya bukan kebijakan, hanya kemungkinan kondisi di lapangan.
                 </p>
               )}
             </Step>
@@ -552,7 +552,7 @@ function suggestionsFor(run: RunState, assumptionsOff: boolean): Suggestion[] {
   }
   if (assumptionsOff) {
     out.push({
-      text: "Centang “Ikut ubah kondisi lain” untuk melihat apakah target tercapai bila kondisi lain sedikit berbeda. Ingat, ini pengandaian, bukan kebijakan.",
+      text: "Centang “Ikut ubah kondisi lain” untuk melihat apakah target tercapai bila kondisi lain sedikit berbeda. Kondisi ini tidak diatur langsung lewat kebijakan.",
       action: "Centang dan cari ulang",
       targets,
       withAssumptions: true,
@@ -596,8 +596,8 @@ function Results({
           {reached && rec && rec.distance === 0 && <p>Target sudah tercapai walaupun {TANPA}.</p>}
           {reached && rec && rec.distance > 0 && leversZero(rec) && (
             <p>
-              Target bisa tercapai <strong>{TANPA}</strong>, asalkan kondisi berikut terjadi: {shownAssumptionNote}. Ingat, ini
-              pengandaian tentang kondisi, bukan kebijakan yang bisa langsung diatur.
+              Target bisa tercapai <strong>{TANPA}</strong>, asalkan kondisi berikut terjadi: {shownAssumptionNote}. Kondisi ini
+              tidak bisa diatur langsung lewat kebijakan, jadi belum tentu terjadi.
             </p>
           )}
           {reached && rec && rec.distance > 0 && !leversZero(rec) && (

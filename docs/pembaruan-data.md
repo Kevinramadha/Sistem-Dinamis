@@ -55,9 +55,11 @@ Penurunan Dasar, Sensitivitas Konstruksi terhadap TPK, TPK Ambang, Sensitivitas 
 Investasi, Laju Pembangunan ODTW Non Investasi, Laju Penutupan Dasar ODTW, Laju Konversi
 Dasar); parameter regulasi (Laju Demolisi Dasar, Laju Keluar Dasar TK); parameter asumsi
 (bobot daya tarik, elastisitas, batas efek ODTW, lahan per hotel/ODTW, waktu penyesuaian TK);
-dan tuas kebijakan. Halaman Pembaruan Data menampilkannya di panel "Angka tetap yang dipakai
-model" dengan nama sehari-hari, penjelasan singkat, dan satuan yang mudah dipahami, disertai
-keterangan bahwa angka ini perlu dihitung ulang peneliti bila cara pendataan BPS berubah.
+dan tuas kebijakan. Halaman Pembaruan Data menampilkannya di panel "Angka yang tidak ikut
+berubah" (tertutup secara bawaan) sebagai daftar ringkas: nama sehari-hari dan nilai dengan
+satuan yang mudah dipahami. Penjelasan satu kalimat dan nama variabel di model tampil lewat
+ikon ⓘ. Tuas kebijakan cukup disebut dalam satu catatan karena diatur di Skenario dan
+Eksplorasi Simulasi.
 
 ## 3. Keputusan desain
 
@@ -143,9 +145,9 @@ cp build/*.js lib/model-final.js
 | BB-23 | Buka berkas tersimpan (valid) | Klik "Buka berkas tersimpan", pilih `.json` hasil BB-22, lalu Terapkan | Pratinjau tampil; setelah diterapkan penanda menjadi tahun 2026 | Sesuai |
 | BB-24 | Buka berkas tersimpan (rusak) | Pilih `.json` yang datanya tidak lengkap | Pesan "Konfigurasi tidak dapat diimpor …"; data dasar tidak berubah | Sesuai |
 | BB-25 | Kembali ke data penelitian | Klik "Kembali ke data penelitian (2025)" lalu konfirmasi | Penanda kembali "2025 (data penelitian)"; data tersimpan dihapus | Sesuai |
-| BB-26 | Tampilan saat data penelitian | Buka halaman tanpa pembaruan data | Kartu status menjelaskan bahwa data asli penelitian dipakai; tombol "Kembali ke data penelitian" tidak ditampilkan; bagian "Simpan ke berkas" berisi keterangan bahwa fitur tersedia setelah data tahun baru diterapkan | Sesuai |
-| BB-27 | Informasi angka tetap (kelompok C) | Buka panel "Angka tetap yang dipakai model" | Setiap angka tampil dengan nama sehari-hari, penjelasan satu kalimat, satuan yang mudah dipahami (misalnya "5% per tahun"), dan nama variabel di model; disertai keterangan bahwa angka ini perlu dihitung ulang peneliti bila cara pendataan BPS berubah | Sesuai |
+| BB-26 | Tampilan saat data penelitian | Buka halaman tanpa pembaruan data | Kartu status menjelaskan bahwa data asli penelitian dipakai; tombol "Kembali ke data penelitian" tidak ditampilkan; pada panel "Simpan atau buka data" tombol "Simpan ke berkas" nonaktif dengan keterangan bahwa fitur tersedia setelah data tahun baru diterapkan | Sesuai |
+| BB-27 | Informasi angka tetap (kelompok C) | Buka panel "Angka yang tidak ikut berubah" | Angka dikelompokkan (Luas wilayah, Kecepatan perubahan, Aturan umum, Perkiraan peneliti); tiap baris berisi nama sehari-hari dan nilai dengan satuan mudah dipahami (misalnya "5% per tahun"); ikon ⓘ menampilkan penjelasan satu kalimat dan nama variabel di model | Sesuai |
 | BB-28 | Penyimpanan tidak tersedia | `localStorage` diblokir peramban, lalu terapkan data 2026 | Aplikasi tetap berjalan; data dasar 2026 berlaku selama halaman terbuka | Sesuai |
 | BB-29 | Fitur lama tetap berjalan | Buka Beranda dan Model; jalankan 3 skenario dengan data penelitian | Halaman tampil normal; hasil 2025–2050 identik dengan sebelum fitur ditambahkan | Sesuai |
-| BB-30 | Susunan halaman | Buka halaman | Tiga langkah bernomor (Unduh template, Masukkan data tahun berikutnya, Periksa lalu terapkan); simpan/buka berkas dan angka tetap model berada di "Opsi lanjutan" yang tertutup | Sesuai |
+| BB-30 | Susunan halaman | Buka halaman | Tiga langkah bernomor (Unduh template, Masukkan data tahun berikutnya, Periksa lalu terapkan); panel "Simpan atau buka data" dan "Angka yang tidak ikut berubah" tertutup secara bawaan | Sesuai |
 | BB-31 | Hasil pemeriksaan ringkas | Unggah berkas valid | Kartu "Hasil pemeriksaan" menampilkan peringatan/status dan tombol Terapkan; tabel data dan angka model yang berubah dapat dibuka lewat "Lihat …" | Sesuai |
