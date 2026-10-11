@@ -134,7 +134,7 @@ export default function PencarianTargetPage() {
     const v = validateTargets(nextTargets, baseYear);
     setErrors(v);
     if (v.length) {
-      setToast(toastError("Ada isian target yang perlu diperbaiki. Lihat pesan merah di atas tombol pencarian."));
+      setToast(toastError("Ada isian target yang perlu diperbaiki. Lihat pesan merah di atas tombol pencarian.", "Isian belum lengkap"));
       return;
     }
     const dims = dimsFor(withAssumptions);
@@ -146,13 +146,13 @@ export default function PencarianTargetPage() {
       setRun({ targets: nextTargets, dims, result, ms, base: override });
       setToast(
         result.status === "tercapai"
-          ? toastOk("Pencarian selesai: target bisa dicapai. Lihat saran kebijakan di bawah.")
-          : toastInfo("Pencarian selesai: target belum bisa dicapai. Lihat saran perbaikan di bawah.")
+          ? toastOk("Target bisa dicapai. Lihat saran kebijakan di bawah.", "Pencarian selesai")
+          : toastInfo("Target belum bisa dicapai. Lihat saran perbaikan di bawah.", "Pencarian selesai")
       );
       setRevealTick((t) => t + 1);
     } catch (err) {
-      if (err instanceof SearchCancelled) setToast(toastInfo("Pencarian dibatalkan."));
-      else setToast(toastError(`Pencarian gagal: ${err instanceof Error ? err.message : String(err)}`));
+      if (err instanceof SearchCancelled) setToast(toastInfo("Tidak ada hasil baru yang ditampilkan.", "Pencarian dibatalkan"));
+      else setToast(toastError(err instanceof Error ? err.message : String(err), "Pencarian gagal"));
     } finally {
       setRunning(false);
     }

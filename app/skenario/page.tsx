@@ -63,7 +63,7 @@ export default function SkenarioPage() {
         setSimulationData(allData);
         setBaselineData(null);
         setResultBase(override);
-        setToast(toastOk(`Simulasi selesai: ketiga skenario dibandingkan · ${baseYear}–2050.`));
+        setToast(toastOk(`Ketiga skenario dibandingkan · periode ${baseYear}–2050. Hasilnya ada di bawah.`, "Simulasi selesai"));
       } else {
         const activeScenarioObj = scenariosList.find((s) => s.id === activeScenario);
         if (activeScenarioObj) {
@@ -76,14 +76,14 @@ export default function SkenarioPage() {
           setSimulationData({ [activeScenarioObj.label]: data });
           setBaselineData(baseline);
           setResultBase(override);
-          setToast(toastOk(`Simulasi selesai: skenario ${activeScenarioObj.label} · ${baseYear}–2050.`));
+          setToast(toastOk(`Skenario ${activeScenarioObj.label} · periode ${baseYear}–2050. Hasilnya ada di bawah.`, "Simulasi selesai"));
         }
       }
       setRunConfig({ activeScenario, compareAll });
       setRevealTick((t) => t + 1);
     } catch (error) {
       console.error("Simulation error:", error);
-      setToast(toastError("Simulasi gagal dijalankan. Muat ulang halaman lalu coba lagi."));
+      setToast(toastError("Muat ulang halaman lalu coba lagi.", "Simulasi gagal dijalankan"));
     } finally {
       setIsLoading(false);
     }
@@ -385,7 +385,9 @@ export default function SkenarioPage() {
         {/* ── MAIN CONTENT ─────────────────────────────────── */}
         <div className="max-w-6xl mx-auto px-6 py-12">
           <Toast toast={stale ? null : toast} onClose={closeToast} />
-          <StalePopup show={stale} onRun={runSimulation} busy={isLoading} what={staleWhat} />
+          {stale && (
+            <StalePopup changeKey={`${activeScenario}|${compareAll}`} onRun={runSimulation} busy={isLoading} what={staleWhat} />
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
             {/* ── CONTROL PANEL ────────────────────────────── */}
@@ -412,7 +414,7 @@ export default function SkenarioPage() {
                             setActiveScenario(scenario.id);
                             setCompareAll(false);
                             if (!simulationData)
-                              setToast(toastInfo(`Skenario ${scenario.label} dipilih. Klik Jalankan Simulasi untuk melihat hasilnya.`));
+                              setToast(toastInfo("Klik Jalankan Simulasi untuk melihat hasilnya.", `Skenario ${scenario.label} dipilih`));
                           }}
                           className={`scenario-btn ${isActive ? "active" : "inactive"}`}
                           style={isActive ? { background: scenario.color, color: 'white' } : { color: '#374151' }}
@@ -729,7 +731,7 @@ export default function SkenarioPage() {
                                 const blob = new Blob([csv], { type: "text/csv" });
                                 const url = URL.createObjectURL(blob);
                                 const a = document.createElement("a"); a.href = url; a.download = "skenario.csv"; a.click();
-                                setToast(toastOk("Tabel data diunduh sebagai skenario.csv."));
+                                setToast(toastOk("Berkas skenario.csv tersimpan di folder unduhan.", "Tabel diunduh"));
                               }}
                               style={{
                                 display: 'flex', alignItems: 'center', gap: 6,
@@ -851,7 +853,7 @@ export default function SkenarioPage() {
                                   const blob = new Blob([csv], { type: "text/csv" });
                                   const url = URL.createObjectURL(blob);
                                   const a = document.createElement("a"); a.href = url; a.download = "skenario-komparasi.csv"; a.click();
-                                  setToast(toastOk("Tabel perbandingan diunduh sebagai skenario-komparasi.csv."));
+                                  setToast(toastOk("Berkas skenario-komparasi.csv tersimpan di folder unduhan.", "Tabel diunduh"));
                                 }}
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: 6,

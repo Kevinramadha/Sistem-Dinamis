@@ -83,7 +83,7 @@ export default function PembaruanDataPage() {
     setBusy("Menyiapkan template .xlsx…");
     try {
       downloadBlob(await buildTemplateXlsx(activeRows), `${TEMPLATE_BASENAME}-${baseYear}.xlsx`);
-      setToast(toastOk("Template .xlsx diunduh. Tambahkan baris tahun baru, lalu unggah kembali di Langkah 2."));
+      setToast(toastOk("Tambahkan baris tahun baru, lalu unggah kembali berkasnya di Langkah 2.", "Template .xlsx diunduh"));
     } catch (e) {
       notify({ kind: "error", text: `Gagal membuat template: ${(e as Error).message}` });
     } finally {
@@ -93,7 +93,7 @@ export default function PembaruanDataPage() {
 
   const downloadCsv = () => {
     downloadBlob(new Blob([buildTemplateCsv(activeRows)], { type: "text/csv;charset=utf-8" }), `${TEMPLATE_BASENAME}-${baseYear}.csv`);
-    setToast(toastOk("Template .csv diunduh. Tambahkan baris tahun baru, lalu unggah kembali di Langkah 2."));
+    setToast(toastOk("Tambahkan baris tahun baru, lalu unggah kembali berkasnya di Langkah 2.", "Template .csv diunduh"));
   };
 
   const onUpload = async (file: File | undefined) => {
@@ -103,7 +103,7 @@ export default function PembaruanDataPage() {
     try {
       const rows = await parseTemplateFile(file);
       setCandidate(makeCandidate("unggah", `Berkas: ${file.name}`, rows));
-      setToast(toastInfo(`Berkas ${file.name} terbaca. Periksa hasil pemeriksaan di Langkah 3 sebelum menerapkan.`));
+      setToast(toastInfo(`Periksa hasil pemeriksaan ${file.name} di Langkah 3 sebelum menerapkan.`, "Berkas terbaca"));
     } catch (e) {
       setCandidate(null);
       notify({ kind: "error", text: (e as Error).message });
@@ -122,7 +122,7 @@ export default function PembaruanDataPage() {
       row[s.key] = t === "" ? NaN : Number.isNaN(n) ? Infinity : n;
     }
     setCandidate(makeCandidate("form", `Isian form tahun ${nextYear}`, [...activeRows.map((r) => ({ ...r })), row]));
-    setToast(toastInfo(`Isian tahun ${nextYear} diperiksa. Lihat hasilnya di Langkah 3.`));
+    setToast(toastInfo("Lihat hasil pemeriksaan di Langkah 3 sebelum menerapkan.", `Isian tahun ${nextYear} diperiksa`));
   };
 
   const onImportJson = async (file: File | undefined) => {
@@ -131,7 +131,7 @@ export default function PembaruanDataPage() {
     try {
       const cfg = parseConfig(JSON.parse(await file.text()));
       setCandidate(makeCandidate("impor", `Konfigurasi: ${file.name}`, cfg.rows));
-      setToast(toastInfo(`Berkas ${file.name} terbaca. Periksa hasil pemeriksaan di Langkah 3 sebelum menerapkan.`));
+      setToast(toastInfo(`Periksa hasil pemeriksaan ${file.name} di Langkah 3 sebelum menerapkan.`, "Berkas terbaca"));
     } catch (e) {
       setCandidate(null);
       notify({ kind: "error", text: `Konfigurasi tidak dapat diimpor. ${(e as Error).message}` });
@@ -163,7 +163,7 @@ export default function PembaruanDataPage() {
   const onExport = () => {
     if (!config) return;
     downloadBlob(new Blob([JSON.stringify(config, null, 2)], { type: "application/json" }), `konfigurasi-data-dasar-simdiy-${config.baseYear}.json`);
-    setToast(toastOk(`Data dasar ${config.baseYear} disimpan ke berkas .json. Buka berkas ini nanti untuk memakainya lagi.`));
+    setToast(toastOk("Buka berkas .json ini nanti untuk memakai data dasar yang sama lagi.", `Data dasar ${config.baseYear} disimpan`));
   };
 
   return (

@@ -102,15 +102,16 @@ export default function SimulasiPage() {
       setRunAssumptions(assumptions);
       const note = describeAssumptionChanges(assumptions);
       setToast(toastOk(
-        `Simulasi selesai: Insentif ${(params.insentif_kebijakan * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%, ` +
+        `Insentif ${(params.insentif_kebijakan * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%, ` +
           `Konservasi ${(params.kebijakan_konservasi_lahan * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%` +
-          `${note ? `, ${note}` : ""} · ${baseYear}–2050.`
+          `${note ? `, ${note}` : ""} · periode ${baseYear}–2050. Hasilnya ada di bawah.`,
+        "Simulasi selesai"
       ));
       setRevealTick((t) => t + 1);
       setBaselineData(baseline);
     } catch (error) {
       console.error("Simulation error:", error);
-      setToast(toastError("Simulasi gagal dijalankan. Muat ulang halaman lalu coba lagi."));
+      setToast(toastError("Muat ulang halaman lalu coba lagi.", "Simulasi gagal dijalankan"));
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +133,7 @@ export default function SimulasiPage() {
       setParams(scenario.params);
       setActivePreset(scenarioKey);
       // Bila sudah ada hasil, popup "Perbarui hasil" yang tampil; bila belum, beri tahu langkah berikutnya.
-      if (!runParams) setToast(toastInfo(`Preset ${scenario.label} dimuat. Klik Jalankan Simulasi untuk melihat hasilnya.`));
+      if (!runParams) setToast(toastInfo("Klik Jalankan Simulasi untuk melihat hasilnya.", `Preset ${scenario.label} dimuat`));
     }
   };
 
@@ -141,13 +142,13 @@ export default function SimulasiPage() {
     setActivePreset("BAU");
     setAssumptions({});
     clearResults();
-    setToast(toastOk("Pengaturan dikembalikan ke kondisi tanpa kebijakan tambahan (BAU). Hasil sebelumnya dihapus."));
+    setToast(toastOk("Semua tuas kembali ke 0% (tanpa kebijakan tambahan) dan hasil sebelumnya dihapus.", "Kembali ke kondisi BAU"));
   };
 
   const resetAssumptions = () => {
     setAssumptions({});
     clearResults();
-    setToast(toastOk("Berhasil kembali ke kondisi dasar. Hasil sebelumnya dihapus; klik Jalankan Simulasi untuk melihat hasil baru."));
+    setToast(toastOk("Kondisi lain kembali sesuai data dan hasil sebelumnya dihapus. Klik Jalankan Simulasi untuk melihat hasil baru.", "Berhasil kembali ke kondisi dasar"));
   };
 
   const chartData = useMemo(() => {
@@ -485,16 +486,24 @@ export default function SimulasiPage() {
                 const note = describeAssumptionChanges(applied.assumptions);
                 setToast(
                   toastInfo(
-                    `Nilai dari Pencarian Target dimuat: Insentif ${pctText(applied.levers.insentif_kebijakan)}, ` +
+                    `Insentif ${pctText(applied.levers.insentif_kebijakan)}, ` +
                       `Konservasi ${pctText(applied.levers.kebijakan_konservasi_lahan)}${note ? `, ${note}` : ""}. ` +
-                      "Klik Jalankan Simulasi untuk melihat hasilnya."
+                      "Klik Jalankan Simulasi untuk melihat hasilnya.",
+                    "Nilai dari Pencarian Target dimuat"
                   )
                 );
               }}
             />
           </Suspense>
           <Toast toast={stale ? null : toast} onClose={closeToast} />
-          <StalePopup show={stale} onRun={runSimulation} busy={isLoading} what={staleWhat} />
+          {stale && (
+            <StalePopup
+              changeKey={`${params.insentif_kebijakan}|${params.kebijakan_konservasi_lahan}|${JSON.stringify(assumptions)}`}
+              onRun={runSimulation}
+              busy={isLoading}
+              what={staleWhat}
+            />
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
 
             {/* ── LEFT PANEL ───────────────────────────────── */}
@@ -816,7 +825,7 @@ export default function SimulasiPage() {
                         const blob = new Blob([csv], { type: "text/csv" });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement("a"); a.href = url; a.download = "simulasi.csv"; a.click();
-                        setToast(toastOk("Tabel data diunduh sebagai simulasi.csv."));
+                        setToast(toastOk("Berkas simulasi.csv tersimpan di folder unduhan.", "Tabel diunduh"));
                       }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 6,
