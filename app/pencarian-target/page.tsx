@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useBaseData } from "@/components/BaseDataProvider";
 import InfoTip from "@/components/InfoTip";
 import TargetHeatmap from "@/components/TargetHeatmap";
+import Step from "@/components/Step";
 import { Toast, revealElement, toastError, toastInfo, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
 import { ASSUMPTION_QUERY } from "@/components/ApplyLeversFromUrl";
 import {
@@ -43,7 +44,6 @@ const showValue = (id: IndicatorId, v: number) => formatValue(v, outputVariables
 const signedPct = (p: number) =>
   Math.abs(p) < 0.005 ? "0%" : `${p > 0 ? "+" : "−"}${nf(Math.abs(p), Math.abs(p) < 10 ? 2 : 1)}%`;
 const leverPct = (v: number) => `${nf(v * 100, 1)}%`;
-const fmtInput = (v: number) => v.toLocaleString("id-ID", { maximumFractionDigits: 4 });
 
 /** Kalimat syarat sebuah target, mis. "minimal 5% lebih tinggi daripada tanpa kebijakan tambahan". */
 function ruleText(t: Target): string {
@@ -175,134 +175,110 @@ export default function PencarianTargetPage() {
         .pt .btn-outline:hover:not(:disabled) { background: #eff6ff; }
         .pt .btn-sm { font-size: 12px; padding: 6px 12px; }
         .pt .btn:disabled { opacity: .45; cursor: not-allowed; }
-        .pt .field { border: 1px solid #e2e8f0; border-radius: 8px; padding: 7px 10px; font-size: 13.5px; background: white; width: 100%; }
+        .pt .field { border: 1px solid #e2e8f0; border-radius: 8px; height: 40px; padding: 0 10px; font-size: 13.5px; background: white; width: 100%; }
+        .pt .field-label { display: flex; align-items: center; gap: 4px; height: 20px; margin-bottom: 4px; font-size: 12px; color: #64748b; }
         .pt .field:focus { outline: 2px solid #1D5A8C33; border-color: #1D5A8C; }
         .pt table td, .pt table th { padding: 8px 10px; font-size: 12.5px; white-space: nowrap; }
       `}</style>
 
       <div className="pt min-h-screen" style={{ background: "#f8fafc" }}>
         <section className="page-hero text-white">
-          <div className="relative z-10 max-w-6xl mx-auto px-6 py-16">
-            <p className="section-label mb-4" style={{ color: "#F4CD53" }}>Pencarian Target</p>
-            <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight mb-4">
-              Cari Nilai <span style={{ color: "#2BB3B6" }}>Kebijakan</span> yang Dibutuhkan
+          <div className="relative z-10 max-w-6xl mx-auto px-6 py-10">
+            <p className="section-label mb-2" style={{ color: "#F4CD53" }}>Alat lanjutan</p>
+            <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight mb-2">
+              Pencarian <span style={{ color: "#2BB3B6" }}>Target</span>
             </h1>
-            <p className="text-blue-200 text-base max-w-2xl leading-relaxed">
-              Tuliskan hasil yang ingin dicapai, misalnya &ldquo;PDRB pariwisata tahun 2045 naik 5%&rdquo;. Aplikasi akan mencoba
-              ribuan kombinasi kebijakan, lalu menunjukkan kombinasi dengan perubahan paling kecil yang sudah cukup untuk
-              mencapainya.
+            <p className="text-blue-200 text-sm md:text-base max-w-2xl">
+              Tentukan hasil yang ingin dicapai, lalu aplikasi mencari nilai kebijakan yang dibutuhkan.
             </p>
           </div>
         </section>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-6">
-          {/* Langkah 1: target */}
-          <section className="card p-5 sm:p-6 space-y-4">
-            <div>
-              <p className="section-label mb-1">Langkah 1</p>
-              <h2 className="font-display font-bold text-gray-900 text-lg">Apa yang ingin dicapai?</h2>
-              <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                Isi baris pertama dengan <strong>hasil yang dicari</strong>. Bila perlu, tambahkan <strong>syarat tambahan</strong>{" "}
-                yang tidak boleh dilanggar, misalnya kepadatan wisatawan tidak boleh terlalu tinggi. Persentase selalu dibandingkan
-                dengan kondisi {TANPA} (disebut juga <em>Business-as-Usual</em> atau BAU) pada tahun yang sama.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {targets.map((t, i) => (
-                <TargetRow
-                  key={i}
-                  index={i}
-                  target={t}
-                  years={years}
-                  bau={bau}
-                  onChange={(patch) => updateTarget(i, patch)}
-                  onRemove={i > 0 ? () => removeTarget(i) : undefined}
-                />
-              ))}
-            </div>
-
-            {targets.length < MAX_TARGETS && (
-              <button type="button" className="btn btn-outline" onClick={addConstraint}>
-                + Tambah syarat
-              </button>
-            )}
-          </section>
-
-          {/* Langkah 2: apa yang boleh diubah */}
-          <section className="card p-5 sm:p-6 space-y-4">
-            <div>
-              <p className="section-label mb-1">Langkah 2</p>
-              <h2 className="font-display font-bold text-gray-900 text-lg">Kebijakan yang boleh diubah</h2>
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              {LEVER_DIMS.map((d) => (
-                <div key={d.key} className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-                  <p className="text-sm font-semibold text-gray-800 flex items-center gap-1.5">
-                    {d.label}
-                    <InfoTip text={GLOSSARY[d.key]} label={d.label} />
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Dicoba dari {leverPct(d.min)} sampai {leverPct(d.max)}, sama seperti di halaman Simulasi.
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            <label className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 cursor-pointer">
-              <input
-                type="checkbox"
-                className="mt-1 w-4 h-4 accent-[#b45309]"
-                checked={useAssumptions}
-                onChange={(e) => setUseAssumptions(e.target.checked)}
-              />
-              <span className="text-sm text-amber-900">
-                <strong>Ikut ubah kondisi lain (bukan kebijakan)</strong>
-                <span className="block text-xs mt-1 leading-relaxed">
-                  Bila dicentang, aplikasi juga boleh mengandaikan tiga kondisi berikut sedikit berbeda, naik atau turun paling
-                  banyak 10%. Ketiganya <strong>tidak bisa langsung diatur pemerintah</strong>, jadi pakailah untuk menjawab
-                  pertanyaan &ldquo;bagaimana jika kondisinya berbeda?&rdquo;, bukan sebagai rekomendasi kebijakan.
-                </span>
-                <span className="block text-xs mt-1.5">
-                  {ASSUMPTIONS.map((a) => `${a.plain} (sekarang ${a.show(assumptionBase[a.key])})`).join(" · ")}
-                </span>
-              </span>
-            </label>
-
-            {errors.length > 0 && (
-              <div role="alert" className="rounded-xl px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200">
-                <ul className="list-disc pl-5 space-y-0.5">
-                  {errors.map((e) => (
-                    <li key={e}>{e}</li>
-                  ))}
-                </ul>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-5">
+          <div className="card overflow-hidden">
+            <Step n={1} title="Tentukan target" note="Baris pertama adalah hasil yang dicari. Syarat tambahan boleh dikosongkan.">
+              <div className="space-y-3">
+                {targets.map((t, i) => (
+                  <TargetRow
+                    key={i}
+                    index={i}
+                    target={t}
+                    years={years}
+                    bau={bau}
+                    onChange={(patch) => updateTarget(i, patch)}
+                    onRemove={i > 0 ? () => removeTarget(i) : undefined}
+                  />
+                ))}
               </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-3">
-              <button type="button" className="btn btn-primary" onClick={() => start()} disabled={running}>
-                {running ? "Mencari…" : "Cari kombinasi kebijakan"}
-              </button>
-              {running && (
-                <button type="button" className="btn btn-outline" onClick={cancelSearch}>
-                  Batalkan
+              {targets.length < MAX_TARGETS && (
+                <button type="button" className="mt-3 text-sm font-semibold text-[#1D5A8C] hover:underline" onClick={addConstraint}>
+                  + Tambah syarat
                 </button>
               )}
-              <span className="text-xs text-gray-500">Sekitar 2.000 kombinasi akan dicoba; biasanya selesai dalam 1–2 detik.</span>
-            </div>
-            {running && (
-              <div
-                className="h-2 rounded-full bg-slate-100 overflow-hidden"
-                role="progressbar"
-                aria-label="Kemajuan pencarian"
-                aria-valuenow={Math.round(progress * 100)}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              >
-                <div className="h-full bg-[#2BB3B6] transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
+            </Step>
+
+            <Step n={2} title="Kebijakan yang dicari" note="Insentif Kebijakan 0–50% dan Kebijakan Konservasi Lahan 0–100%.">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  role="switch"
+                  className="peer sr-only"
+                  checked={useAssumptions}
+                  onChange={(e) => setUseAssumptions(e.target.checked)}
+                />
+                <span
+                  aria-hidden="true"
+                  className="relative h-6 w-11 shrink-0 rounded-full bg-slate-300 transition-colors peer-checked:bg-amber-500 peer-focus-visible:ring-2 peer-focus-visible:ring-amber-300 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5"
+                />
+                <span className="text-sm text-gray-800">Ikut ubah kondisi lain</span>
+                <InfoTip
+                  label="Kondisi lain"
+                  text={`Bukan kebijakan, hanya pengandaian. Aplikasi boleh menaikkan atau menurunkan paling banyak 10%: ${ASSUMPTIONS.map(
+                    (a) => `${a.plain.toLowerCase()} (sekarang ${a.show(assumptionBase[a.key])})`
+                  ).join(", ")}.`}
+                />
+              </label>
+              {useAssumptions && (
+                <p className="mt-2 text-xs text-amber-800">
+                  Lama menginap, belanja per kunjungan, dan objek wisata baru boleh berubah ±10%. Ini pengandaian, bukan kebijakan.
+                </p>
+              )}
+            </Step>
+
+            <Step n={3} title="Cari" note="Sekitar 2.000 kombinasi dicoba, biasanya selesai dalam 1–2 detik." last>
+              {errors.length > 0 && (
+                <div role="alert" className="mb-3 rounded-xl px-4 py-3 text-sm bg-red-50 text-red-800 border border-red-200">
+                  <ul className="list-disc pl-5 space-y-0.5">
+                    {errors.map((e) => (
+                      <li key={e}>{e}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="flex flex-wrap items-center gap-3">
+                <button type="button" className="btn btn-primary" onClick={() => start()} disabled={running}>
+                  {running ? "Mencari…" : "Cari kombinasi kebijakan"}
+                </button>
+                {running && (
+                  <button type="button" className="btn btn-outline" onClick={cancelSearch}>
+                    Batalkan
+                  </button>
+                )}
               </div>
-            )}
-          </section>
+              {running && (
+                <div
+                  className="mt-3 h-2 rounded-full bg-slate-100 overflow-hidden"
+                  role="progressbar"
+                  aria-label="Kemajuan pencarian"
+                  aria-valuenow={Math.round(progress * 100)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                >
+                  <div className="h-full bg-[#2BB3B6] transition-[width] duration-150" style={{ width: `${progress * 100}%` }} />
+                </div>
+              )}
+            </Step>
+          </div>
 
           <Toast toast={toast} onClose={closeToast} />
           <div ref={resultsRef} className="scroll-mt-28">
@@ -316,10 +292,8 @@ export default function PencarianTargetPage() {
           )}
           </div>
 
-          <p className="text-xs text-gray-500 leading-relaxed px-1">
-            <strong>Catatan:</strong> hasil ini adalah gambaran, bukan ramalan. Angka dibandingkan dengan kondisi {TANPA} pada
-            tahun yang sama, dan hanya memperhitungkan hal-hal yang ada di dalam model. Hal di luar model, misalnya anggaran,
-            aturan, dan dampak sosial lain, tetap perlu dipertimbangkan.
+          <p className="text-xs text-gray-400 px-1">
+            Hasil berupa gambaran, bukan ramalan, dan selalu dibandingkan dengan kondisi {TANPA} (BAU).
           </p>
         </div>
       </div>
@@ -352,22 +326,29 @@ function TargetRow({
   const scale = relatif ? 1 : ind.scale;
 
   return (
-    <div className="rounded-xl border border-slate-200 p-4 space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-sm font-semibold" style={{ color: index === 0 ? "#1D5A8C" : "#475569" }}>
+    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span
+          className="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+          style={index === 0 ? { background: "#e6eef7", color: "#1D5A8C" } : { background: "#eef2f6", color: "#475569" }}
+        >
           {roleName(index)}
-        </p>
+        </span>
         {onRemove && (
-          <button type="button" onClick={onRemove} className="text-xs text-red-700 hover:underline">
-            Hapus
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={`Hapus ${roleName(index).toLowerCase()}`}
+            className="flex h-7 w-7 items-center justify-center rounded-full text-gray-400 hover:bg-red-50 hover:text-red-600"
+          >
+            ✕
           </button>
         )}
       </div>
-      <div className="grid gap-3 md:grid-cols-[1.4fr_1.6fr_0.9fr_0.8fr]">
-        <label className="text-xs text-gray-500 space-y-1">
-          <span className="flex items-center gap-1">
-            Indikator
-            <InfoTip text={GLOSSARY[target.indicator] ?? ind.label} label={ind.label} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12">
+        <label className="lg:col-span-4">
+          <span className="field-label">
+            Indikator <InfoTip text={GLOSSARY[target.indicator] ?? ind.label} label={ind.label} />
           </span>
           <select className="field" value={target.indicator} onChange={(e) => onChange({ indicator: e.target.value as IndicatorId })}>
             {INDICATORS.map((o) => (
@@ -377,8 +358,8 @@ function TargetRow({
             ))}
           </select>
         </label>
-        <label className="text-xs text-gray-500 space-y-1">
-          <span>Bentuk target</span>
+        <label className="lg:col-span-4">
+          <span className="field-label">Bentuk target</span>
           <select className="field" value={target.mode} onChange={(e) => onChange({ mode: e.target.value as TargetMode })}>
             {TARGET_MODES.map((m) => (
               <option key={m.id} value={m.id}>
@@ -387,19 +368,24 @@ function TargetRow({
             ))}
           </select>
         </label>
-        <label className="text-xs text-gray-500 space-y-1">
-          <span>Angka {relatif ? "(%)" : `(${ind.unit})`}</span>
-          <input
-            className="field"
-            type="number"
-            step="any"
-            min={0}
-            value={Number.isFinite(target.value) ? Number((target.value * scale).toPrecision(10)) : ""}
-            onChange={(e) => onChange({ value: e.target.value === "" ? NaN : Number(e.target.value) / scale })}
-          />
+        <label className="lg:col-span-2">
+          <span className="field-label">Angka</span>
+          <span className="relative block">
+            <input
+              className="field pr-10"
+              type="number"
+              step="any"
+              min={0}
+              value={Number.isFinite(target.value) ? Number((target.value * scale).toPrecision(10)) : ""}
+              onChange={(e) => onChange({ value: e.target.value === "" ? NaN : Number(e.target.value) / scale })}
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+              {relatif ? "%" : ind.scale !== 1 ? "%" : ""}
+            </span>
+          </span>
         </label>
-        <label className="text-xs text-gray-500 space-y-1">
-          <span>Tahun</span>
+        <label className="lg:col-span-2">
+          <span className="field-label">Tahun</span>
           <select className="field" value={target.year} onChange={(e) => onChange({ year: Number(e.target.value) })}>
             {years.map((y) => (
               <option key={y} value={y}>
@@ -410,14 +396,14 @@ function TargetRow({
         </label>
       </div>
       {Number.isFinite(target.value) && (
-        <p className="text-sm text-gray-700 bg-slate-50 rounded-lg px-3 py-2">
-          <span className="text-gray-500">Artinya:</span> {ind.label} tahun {target.year} harus {ruleText(target)}.
-        </p>
-      )}
-      {bauValue !== null && (
-        <p className="text-xs text-gray-500">
-          Sebagai gambaran, bila {TANPA} nilainya pada {target.year} sekitar <strong>{showValue(target.indicator, bauValue)}</strong>
-          {!relatif && ind.scale !== 1 && ` (angka ${fmtInput(bauValue * ind.scale)})`}.
+        <p className="mt-3 text-xs text-gray-600 leading-relaxed">
+          <span className="font-semibold text-gray-800">Artinya:</span> {ind.label} {target.year} {ruleText(target)}.
+          {bauValue !== null && (
+            <span className="text-gray-400">
+              {" "}
+              Tanpa kebijakan: {showValue(target.indicator, bauValue)}.
+            </span>
+          )}
         </p>
       )}
     </div>
@@ -618,8 +604,8 @@ function Results({
             <p>
               Cukup dengan <strong>Insentif Kebijakan {leverPct(rec.point.insentif_kebijakan)}</strong> dan{" "}
               <strong>Kebijakan Konservasi Lahan {leverPct(rec.point.kebijakan_konservasi_lahan)}</strong>
-              {shownAssumptionNote && <>, dengan mengandaikan {shownAssumptionNote}</>}, semua target terpenuhi. Ini kombinasi
-              dengan perubahan kebijakan paling kecil dari kondisi sekarang.
+              {shownAssumptionNote && <>, dengan mengandaikan {shownAssumptionNote}</>}. Ini perubahan kebijakan paling kecil yang
+              sudah memenuhi semua target.
             </p>
           )}
           {!reached && result.best && !primaryReachable && (
@@ -692,8 +678,7 @@ function Results({
           <EvalTable targets={targets} evals={shown.evals} />
           {shownAssumptionNote && (
             <p className="text-xs text-amber-800">
-              Perubahan kondisi lain ikut dibawa ke halaman Simulasi dan ditandai di sana, supaya hasilnya sama dengan angka di
-              atas.
+              Kondisi lain ikut dibawa ke halaman Simulasi.
             </p>
           )}
         </div>
@@ -706,8 +691,7 @@ function Results({
             <p className="section-label mb-1">Peta kombinasi</p>
             <h3 className="font-display font-bold text-gray-900">Kombinasi mana yang memenuhi target?</h3>
             <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-              Setiap kotak kecil adalah satu kombinasi yang dicoba: makin ke kanan makin besar insentifnya, makin ke atas makin
-              besar konservasi lahannya. Pojok kiri bawah adalah kondisi {TANPA}.
+              Tiap kotak adalah satu kombinasi. Ke kanan insentif makin besar, ke atas konservasi makin besar.
             </p>
           </div>
           <TargetHeatmap
@@ -731,7 +715,7 @@ function Results({
             <p className="section-label mb-1">Pilihan lain</p>
             <h3 className="font-display font-bold text-gray-900">Kombinasi lain yang juga memenuhi target</h3>
             <p className="text-sm text-gray-500 mt-1">
-              Angka menunjukkan perubahan dibanding {TANPA} pada tahun {primary.year}. Baris R adalah saran utama.
+              Perubahan dibanding {TANPA} pada {primary.year}. R = saran utama.
             </p>
           </div>
           <div className="overflow-x-auto">

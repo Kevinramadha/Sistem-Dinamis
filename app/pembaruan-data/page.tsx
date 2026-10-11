@@ -22,6 +22,7 @@ import {
   parseTemplateFile,
 } from "@/lib/templateIO";
 import { parseConfig, useBaseData } from "@/components/BaseDataProvider";
+import Step from "@/components/Step";
 import { Toast, toastError, toastInfo, toastOk, type ToastMessage } from "@/components/RunFeedback";
 
 type Source = "unggah" | "form" | "impor";
@@ -104,7 +105,7 @@ export default function PembaruanDataPage() {
     try {
       const rows = await parseTemplateFile(file);
       setCandidate(makeCandidate("unggah", `Berkas: ${file.name}`, rows));
-      setToast(toastInfo("Cek hasil pemeriksaan di Langkah 3.", "Berkas terbaca"));
+      setToast(toastInfo("Cek hasil pemeriksaan di bawah.", "Berkas terbaca"));
     } catch (e) {
       setCandidate(null);
       notify({ kind: "error", text: (e as Error).message }, "Berkas tidak bisa dibaca");
@@ -123,7 +124,7 @@ export default function PembaruanDataPage() {
       row[s.key] = t === "" ? NaN : Number.isNaN(n) ? Infinity : n;
     }
     setCandidate(makeCandidate("form", `Isian form tahun ${nextYear}`, [...activeRows.map((r) => ({ ...r })), row]));
-    setToast(toastInfo("Cek hasil pemeriksaan di Langkah 3.", "Isian diperiksa"));
+    setToast(toastInfo("Cek hasil pemeriksaan di bawah.", "Isian diperiksa"));
   };
 
   const onImportJson = async (file: File | undefined) => {
@@ -132,7 +133,7 @@ export default function PembaruanDataPage() {
     try {
       const cfg = parseConfig(JSON.parse(await file.text()));
       setCandidate(makeCandidate("impor", `Konfigurasi: ${file.name}`, cfg.rows));
-      setToast(toastInfo("Cek hasil pemeriksaan di Langkah 3.", "Berkas terbaca"));
+      setToast(toastInfo("Cek hasil pemeriksaan di bawah.", "Berkas terbaca"));
     } catch (e) {
       setCandidate(null);
       notify({ kind: "error", text: `Konfigurasi tidak dapat diimpor. ${(e as Error).message}` }, "Berkas tidak bisa dibuka", (e as Error).message);
@@ -200,19 +201,18 @@ export default function PembaruanDataPage() {
       <div className="pd min-h-screen" style={{ background: "#f8fafc" }}>
         <Toast toast={toast} onClose={closeToast} />
         <section className="page-hero text-white">
-          <div className="relative z-10 max-w-6xl mx-auto px-6 py-16">
-            <p className="section-label mb-4" style={{ color: "#F4CD53" }}>Pembaruan Data Tahunan</p>
-            <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight mb-4">
+          <div className="relative z-10 max-w-6xl mx-auto px-6 py-10">
+            <p className="section-label mb-2" style={{ color: "#F4CD53" }}>Alat lanjutan</p>
+            <h1 className="font-display text-3xl md:text-4xl font-bold leading-tight mb-2">
               Pembaruan <span style={{ color: "#2BB3B6" }}>Data Dasar</span>
             </h1>
-            <p className="text-blue-200 text-base max-w-2xl leading-relaxed">
-              Saat BPS merilis data tahun baru, masukkan datanya di sini. Parameter model dihitung ulang otomatis dan simulasi
-              dijalankan dari tahun dasar terbaru sampai 2050, tanpa mengubah kode aplikasi.
+            <p className="text-blue-200 text-sm md:text-base max-w-2xl">
+              Masukkan data BPS tahun terbaru agar simulasi berjalan dari tahun itu sampai 2050.
             </p>
           </div>
         </section>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-5">
           {message && (
             <div
               role="alert"
@@ -231,120 +231,94 @@ export default function PembaruanDataPage() {
           )}
 
           {/* ── STATUS ─────────────────────────────────────── */}
-          <div className="card p-5 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="max-w-2xl">
-              <p className="section-label mb-1">Data dasar yang dipakai sekarang</p>
-              <p className="font-display text-xl font-bold text-gray-900">
-                Tahun {baseYear}{" "}
-                <span className="text-sm font-semibold px-2 py-0.5 rounded-full align-middle whitespace-nowrap" style={isCustom ? { background: "#fff4e0", color: "#9a5b00" } : { background: "#e6eef7", color: "#1D5A8C" }}>
-                  {isCustom ? "pembaruan pengguna" : "data penelitian"}
-                </span>
-              </p>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                {isCustom ? (
-                  <>
-                    Simulasi memakai data sampai tahun {baseYear} yang Anda terapkan
-                    {config && ` pada ${new Date(config.appliedAt).toLocaleString("id-ID")}`}, sehingga proyeksi berjalan {baseYear}–2050.
-                    Data ini hanya tersimpan di peramban ini.
-                  </>
-                ) : (
-                  <>
-                    Simulasi memakai data asli penelitian (seri 2015–{RESEARCH_BASE_YEAR}), sehingga proyeksi berjalan {RESEARCH_BASE_YEAR}–2050.
-                    Untuk memakai data tahun yang lebih baru, ikuti langkah di bawah.
-                  </>
-                )}
-              </p>
+          <div className="card px-5 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span className="text-sm text-gray-500">Data dasar sekarang</span>
+              <span className="font-display text-lg font-bold text-gray-900">Tahun {baseYear}</span>
+              <span
+                className="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                style={isCustom ? { background: "#fff4e0", color: "#9a5b00" } : { background: "#e6eef7", color: "#1D5A8C" }}
+              >
+                {isCustom ? "hasil pembaruan" : "data penelitian"}
+              </span>
+              <span className="text-sm text-gray-500">· simulasi {baseYear}–2050</span>
             </div>
             {isCustom && (
-              <div className="shrink-0 md:text-right">
-                <button className="btn btn-danger" onClick={onReset}>
-                  Kembali ke data penelitian ({RESEARCH_BASE_YEAR})
-                </button>
-                <p className="text-[11px] text-gray-400 mt-1.5 md:max-w-[16rem] md:ml-auto">
-                  Menghapus data hasil pembaruan dan memakai lagi data asli penelitian.
-                </p>
-              </div>
+              <button className="btn btn-danger shrink-0" onClick={onReset}>
+                Kembali ke data penelitian
+              </button>
             )}
           </div>
 
-          {/* ── LANGKAH 1–2 ─────────────────────────────────── */}
+          {/* ── LANGKAH 1–3 ─────────────────────────────────── */}
           <div className="card overflow-hidden">
-            <div className="px-5 sm:px-6 py-4" style={{ borderBottom: "1px solid #f0f4f8" }}>
-              <p className="section-label mb-0.5">Langkah 1</p>
-              <h2 className="font-display font-bold text-gray-900">Unduh template data</h2>
-            </div>
-            <div className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center gap-4 justify-between">
-              <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
-                Template berisi {SERIES.length} seri tahunan yang dibutuhkan rumus parameter, sudah terisi data{" "}
-                {activeRows[0].tahun}–{activeRows[activeRows.length - 1].tahun} yang dipakai sekarang, lengkap dengan satuan dan sumber.
-                Tambahkan satu baris untuk tahun {nextYear}, lalu unggah kembali.
-              </p>
-              <div className="flex gap-2 shrink-0">
+            <Step n={1} title="Unduh template" note={`Berisi data ${activeRows[0].tahun}–${activeRows[activeRows.length - 1].tahun}. Tambahkan satu baris untuk tahun ${nextYear}.`}>
+              <div className="flex flex-wrap gap-2">
                 <button className="btn btn-primary" onClick={downloadXlsx} disabled={!!busy}>Unduh .xlsx</button>
                 <button className="btn btn-outline" onClick={downloadCsv}>Unduh .csv</button>
               </div>
-            </div>
-          </div>
+            </Step>
 
-          <div className="card overflow-hidden">
-            <div className="px-5 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3" style={{ borderBottom: "1px solid #f0f4f8" }}>
-              <div>
-                <p className="section-label mb-0.5">Langkah 2</p>
-                <h2 className="font-display font-bold text-gray-900">Masukkan data tahun baru</h2>
-              </div>
-              <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#f1f5f9" }} role="tablist">
-                {(["unggah", "form"] as const).map((m) => (
-                  <button key={m} role="tab" aria-selected={mode === m} className="tab" onClick={() => setMode(m)}
-                    style={mode === m ? { background: "#1D5A8C", color: "white" } : { color: "#475569" }}>
-                    {m === "unggah" ? "Unggah template" : `Isi form tahun ${nextYear}`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {mode === "unggah" ? (
-              <div className="p-5 sm:p-6">
-                <label
-                  className="flex flex-col items-center justify-center text-center gap-2 rounded-xl border-2 border-dashed px-4 py-10 cursor-pointer transition-colors hover:bg-blue-50"
-                  style={{ borderColor: "#bfdbfe" }}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => { e.preventDefault(); onUpload(e.dataTransfer.files?.[0]); }}
-                >
-                  <span className="font-display font-semibold text-gray-800">Pilih atau seret berkas template ke sini</span>
-                  <span className="text-xs text-gray-500">Format .xlsx atau .csv, maksimal 5 MB</span>
-                  <input ref={fileRef} type="file" accept=".xlsx,.csv" className="hidden" onChange={(e) => onUpload(e.target.files?.[0])} aria-label="Unggah template data" />
-                </label>
-                {busy && <p className="text-sm text-gray-500 mt-3">{busy}</p>}
-              </div>
-            ) : (
-              <div className="p-5 sm:p-6">
-                <p className="text-sm text-gray-600 mb-4">
-                  Isi seluruh kolom untuk tahun <strong>{nextYear}</strong>. Angka tahun {prevRow.tahun} ditampilkan sebagai pembanding.
-                  Gunakan titik atau koma untuk desimal, tanpa pemisah ribuan.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {SERIES.map((s) => (
-                    <label key={s.key} className="block">
-                      <span className="block text-xs font-semibold text-gray-700 mb-1">{s.label}</span>
-                      <input
-                        inputMode="decimal"
-                        value={form[s.key]}
-                        onChange={(e) => setForm({ ...form, [s.key]: e.target.value })}
-                        placeholder={`${prevRow.tahun}: ${fmtNum(prevRow[s.key])}`}
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                      />
-                      <span className="block text-[11px] text-gray-400 mt-1">{s.satuan} · {s.sumber}</span>
-                    </label>
+            <Step
+              n={2}
+              title={`Masukkan data tahun ${nextYear}`}
+              aside={
+                <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#f1f5f9" }} role="tablist">
+                  {(["unggah", "form"] as const).map((m) => (
+                    <button key={m} role="tab" aria-selected={mode === m} className="tab" onClick={() => setMode(m)}
+                      style={mode === m ? { background: "#1D5A8C", color: "white" } : { color: "#475569" }}>
+                      {m === "unggah" ? "Unggah berkas" : "Isi form"}
+                    </button>
                   ))}
                 </div>
-                <div className="mt-5">
-                  <button className="btn btn-primary" onClick={onFormCheck}>Periksa data</button>
-                </div>
-              </div>
-            )}
+              }
+            >
+              {mode === "unggah" ? (
+                <>
+                  <label
+                    className="flex flex-col items-center justify-center text-center gap-1 rounded-xl border-2 border-dashed px-4 py-8 cursor-pointer transition-colors hover:bg-blue-50"
+                    style={{ borderColor: "#bfdbfe" }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => { e.preventDefault(); onUpload(e.dataTransfer.files?.[0]); }}
+                  >
+                    <span className="font-display font-semibold text-gray-800">Pilih atau seret berkas ke sini</span>
+                    <span className="text-xs text-gray-500">.xlsx atau .csv, maks. 5 MB</span>
+                    <input ref={fileRef} type="file" accept=".xlsx,.csv" className="hidden" onChange={(e) => onUpload(e.target.files?.[0])} aria-label="Unggah template data" />
+                  </label>
+                  {busy && <p className="text-sm text-gray-500 mt-3">{busy}</p>}
+                </>
+              ) : (
+                <>
+                  <p className="text-xs text-gray-500 mb-3">Isi semua kolom. Angka {prevRow.tahun} tampil sebagai contoh.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-3">
+                    {SERIES.map((s) => (
+                      <label key={s.key} className="block">
+                        <span className="flex items-baseline justify-between gap-2 text-xs mb-1">
+                          <span className="font-semibold text-gray-700">{s.label}</span>
+                          <span className="text-[11px] text-gray-400 whitespace-nowrap">{s.satuan}</span>
+                        </span>
+                        <input
+                          inputMode="decimal"
+                          value={form[s.key]}
+                          onChange={(e) => setForm({ ...form, [s.key]: e.target.value })}
+                          placeholder={`${prevRow.tahun}: ${fmtNum(prevRow[s.key])}`}
+                          title={s.sumber}
+                          className="w-full h-10 rounded-lg border border-gray-200 px-3 text-sm focus:outline-none focus:border-blue-400"
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <div className="mt-4">
+                    <button className="btn btn-primary" onClick={onFormCheck}>Periksa data</button>
+                  </div>
+                </>
+              )}
+            </Step>
+
+            <Step n={3} title="Periksa lalu terapkan" note={candidate ? "Hasil pemeriksaan ada di bawah." : "Hasil pemeriksaan muncul setelah data dimasukkan."} last />
           </div>
 
-          {/* ── LANGKAH 3: VALIDASI & PRATINJAU ───────────────── */}
+          {/* Hasil pemeriksaan (langkah 3) */}
           {candidate && (
             <Preview
               candidate={candidate}
@@ -355,71 +329,56 @@ export default function PembaruanDataPage() {
             />
           )}
 
-          {/* ── SIMPAN / PINDAHKAN ──────────────────────────── */}
-          <div className="card overflow-hidden">
-            <div className="px-5 sm:px-6 py-4" style={{ borderBottom: "1px solid #f0f4f8" }}>
-              <p className="section-label mb-0.5">Opsional</p>
-              <h2 className="font-display font-bold text-gray-900">Simpan atau pindahkan data dasar</h2>
-              <p className="text-sm text-gray-500 mt-1">
-                Data hasil pembaruan hanya tersimpan di peramban ini. Simpan ke berkas sebagai cadangan, atau untuk dibuka di perangkat lain.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="p-5 sm:p-6 md:border-r" style={{ borderColor: "#f0f4f8" }}>
-                <p className="font-semibold text-gray-900 text-sm mb-1">Simpan ke berkas</p>
-                <p className="text-sm text-gray-500 mb-3">
-                  Mengunduh data dasar yang sedang dipakai beserta parameternya sebagai berkas <code>.json</code>.
-                </p>
-                {isCustom ? (
-                  <button className="btn btn-outline" onClick={onExport}>Simpan ke berkas</button>
-                ) : (
-                  <p className="text-xs rounded-lg px-3 py-2 inline-block" style={{ background: "#f1f5f9", color: "#64748b" }}>
-                    Tersedia setelah Anda menerapkan data tahun baru. Data penelitian selalu tersedia tanpa perlu disimpan.
-                  </p>
-                )}
-              </div>
-              <div className="p-5 sm:p-6 border-t md:border-t-0" style={{ borderColor: "#f0f4f8" }}>
-                <p className="font-semibold text-gray-900 text-sm mb-1">Buka berkas tersimpan</p>
-                <p className="text-sm text-gray-500 mb-3">
-                  Memakai kembali data dasar dari berkas <code>.json</code> yang pernah disimpan. Datanya diperiksa dan dipratinjau dulu sebelum diterapkan.
-                </p>
-                <button className="btn btn-outline" onClick={() => jsonRef.current?.click()}>Buka berkas tersimpan</button>
-                <input ref={jsonRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => onImportJson(e.target.files?.[0])} aria-label="Impor konfigurasi JSON" />
-              </div>
-            </div>
-          </div>
-
-          {/* ── PARAMETER TETAP ─────────────────────────────── */}
+          {/* ── OPSI LANJUTAN ─────────────────────────────── */}
           <details className="card overflow-hidden">
-            <summary className="px-5 sm:px-6 py-4 cursor-pointer select-none">
-              <span className="section-label">Tidak ikut berubah saat data diperbarui</span>
-              <span className="block font-display font-bold text-gray-900 mt-0.5">Angka tetap yang dipakai model</span>
+            <summary className="px-5 sm:px-6 py-4 cursor-pointer select-none font-display font-semibold text-gray-800">
+              Opsi lanjutan
+              <span className="ml-2 text-xs font-normal text-gray-400">simpan/buka berkas data, angka tetap model</span>
             </summary>
-            <div className="px-5 sm:px-6 pb-6">
-              <p className="text-sm rounded-xl px-4 py-3 mb-5 leading-relaxed" style={{ background: "#fff8eb", color: "#8a5300", border: "1px solid #fde3b0" }}>
-                Selain data tahunan yang Anda masukkan, model memakai angka-angka tetap berikut, misalnya seberapa cepat hotel tutup
-                atau seberapa besar peran objek wisata terhadap daya tarik. Angka ini ditetapkan peneliti dan tidak dihitung dari data
-                tahunan, jadi tidak ikut berubah. Bila BPS mengubah cara atau cakupan pendataannya, angka ini perlu dihitung ulang oleh peneliti.
-              </p>
+            <div className="px-5 sm:px-6 pb-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-xl border border-slate-100 p-4">
+                  <p className="font-semibold text-gray-900 text-sm">Simpan ke berkas</p>
+                  <p className="text-xs text-gray-500 mt-1 mb-3">Cadangan data yang sedang dipakai (.json), bisa dibuka di perangkat lain.</p>
+                  {isCustom ? (
+                    <button className="btn btn-outline" onClick={onExport}>Simpan ke berkas</button>
+                  ) : (
+                    <p className="text-xs text-gray-400">Tersedia setelah data tahun baru diterapkan.</p>
+                  )}
+                </div>
+                <div className="rounded-xl border border-slate-100 p-4">
+                  <p className="font-semibold text-gray-900 text-sm">Buka berkas tersimpan</p>
+                  <p className="text-xs text-gray-500 mt-1 mb-3">Pakai lagi data dari berkas .json. Data diperiksa dulu sebelum diterapkan.</p>
+                  <button className="btn btn-outline" onClick={() => jsonRef.current?.click()}>Buka berkas</button>
+                  <input ref={jsonRef} type="file" accept=".json,application/json" className="hidden" onChange={(e) => onImportJson(e.target.files?.[0])} aria-label="Impor konfigurasi JSON" />
+                </div>
+              </div>
+
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Angka tetap yang dipakai model</p>
+                <p className="text-xs text-gray-500 mt-1 mb-4">
+                  Ditetapkan peneliti dan tidak ikut berubah saat data diperbarui.
+                </p>
               <div className="space-y-6">
-                {FIXED_PARAMS.map((g) => (
-                  <div key={g.kategori}>
-                    <p className="text-sm font-semibold text-gray-900">{g.kategori}</p>
-                    <p className="text-xs text-gray-400 mb-2">{g.penjelasan}</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
-                      {g.items.map((it) => (
-                        <div key={it.nama} className="flex items-start justify-between gap-4 py-2.5" style={{ borderBottom: "1px solid #f1f5f9" }}>
-                          <div className="min-w-0">
-                            <p className="text-sm text-gray-800">{it.label}</p>
-                            <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{it.keterangan}</p>
-                            <p className="text-[11px] text-gray-400 mt-0.5">Nama di model: {it.nama}</p>
+                  {FIXED_PARAMS.map((g) => (
+                    <div key={g.kategori}>
+                      <p className="text-sm font-semibold text-gray-900">{g.kategori}</p>
+                      <p className="text-xs text-gray-400 mb-2">{g.penjelasan}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                        {g.items.map((it) => (
+                          <div key={it.nama} className="flex items-start justify-between gap-4 py-2.5" style={{ borderBottom: "1px solid #f1f5f9" }}>
+                            <div className="min-w-0">
+                              <p className="text-sm text-gray-800">{it.label}</p>
+                              <p className="text-xs text-gray-500 leading-relaxed mt-0.5">{it.keterangan}</p>
+                              <p className="text-[11px] text-gray-400 mt-0.5">Nama di model: {it.nama}</p>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900 text-right shrink-0 whitespace-nowrap">{it.tampil}</p>
                           </div>
-                          <p className="text-sm font-semibold text-gray-900 text-right shrink-0 whitespace-nowrap">{it.tampil}</p>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
           </details>
@@ -461,9 +420,8 @@ function Preview({
   return (
     <div className="card overflow-hidden" id="pratinjau">
       <div className="px-5 sm:px-6 py-4" style={{ borderBottom: "1px solid #f0f4f8" }}>
-        <p className="section-label mb-0.5">Langkah 3</p>
-        <h2 className="font-display font-bold text-gray-900">Validasi dan pratinjau</h2>
-        <p className="text-xs text-gray-500 mt-1">
+        <h2 className="font-display font-bold text-gray-900">Hasil pemeriksaan</h2>
+        <p className="text-xs text-gray-500 mt-0.5">
           {candidate.label} · {rows.length} baris ({rows[0]?.tahun}–{rows[rows.length - 1]?.tahun})
         </p>
       </div>
@@ -473,14 +431,16 @@ function Preview({
         {warnings.length > 0 && <IssueList title="Peringatan, periksa kembali" items={warnings} tone="warning" />}
         {ok && errors.length === 0 && warnings.length === 0 && (
           <div className="rounded-xl px-4 py-3 text-sm" style={{ background: "#e8f6ef", color: "#1f7a52", border: "1px solid #bfe5d1" }}>
-            Semua pemeriksaan lolos.
+            Data lolos pemeriksaan dan siap diterapkan.
           </div>
         )}
 
         {newRows.length > 0 && (
-          <div>
-            <p className="text-sm font-semibold text-gray-800 mb-2">Data tahun baru</p>
-            <div className="overflow-x-auto rounded-xl border border-gray-100">
+          <details className="group">
+            <summary className="cursor-pointer text-sm font-semibold text-gray-800 select-none">
+              Lihat data yang dimasukkan
+            </summary>
+            <div className="mt-2 overflow-x-auto rounded-xl border border-gray-100">
               <table className="w-full">
                 <thead style={{ background: "#f8fafc" }}>
                   <tr>
@@ -498,15 +458,19 @@ function Preview({
                 </tbody>
               </table>
             </div>
-          </div>
+          </details>
         )}
 
         {ok && computed && (
-          <div>
-            <p className="text-sm font-semibold text-gray-800 mb-2">
-              Parameter: tahun dasar {activeBaseYear} → {computed.baseYear}
-            </p>
-            <div className="overflow-x-auto rounded-xl border border-gray-100">
+          <details>
+            <summary className="cursor-pointer text-sm font-semibold text-gray-800 select-none">
+              Lihat angka model yang berubah{" "}
+              <span className="font-normal text-gray-500">
+                ({PARAM_DEFS.filter((d) => computed.values[d.key] !== activeParams[d.key]).length} dari {PARAM_DEFS.length},
+                tahun dasar {activeBaseYear} → {computed.baseYear})
+              </span>
+            </summary>
+            <div className="mt-2 overflow-x-auto rounded-xl border border-gray-100">
               <table className="w-full">
                 <thead style={{ background: "#f8fafc" }}>
                   <tr className="text-gray-500">
@@ -548,7 +512,7 @@ function Preview({
             <p className="text-[11px] text-gray-400 mt-2">
               Nilai baru dibulatkan seperti di model penelitian: 6 angka penting; Proporsi Wisatawan Menginap 4 desimal; Malam Tersedia per Kamar 2 desimal.
             </p>
-          </div>
+          </details>
         )}
 
         <div className="flex flex-wrap gap-2 pt-1">

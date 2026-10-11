@@ -1,21 +1,41 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const navLinks = [
   { href: "/", label: "Beranda" },
   { href: "/model", label: "Model" },
   { href: "/skenario", label: "Skenario" },
   { href: "/simulasi", label: "Eksplorasi Simulasi" },
-  { href: "/pencarian-target", label: "Pencarian Target" },
-  { href: "/pembaruan-data", label: "Pembaruan Data" },
+];
+
+// Fitur pendukung (bukan menu utama) dikumpulkan dalam satu menu tarik-turun.
+export const toolLinks = [
+  { href: "/pencarian-target", label: "Pencarian Target", desc: "Cari nilai kebijakan untuk target tertentu" },
+  { href: "/pembaruan-data", label: "Pembaruan Data", desc: "Masukkan data BPS tahun terbaru" },
 ];
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
   const isSimulasiPage = pathname === "/simulasi";
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const toolsRef = useRef<HTMLDivElement>(null);
+  const onToolPage = toolLinks.some((t) => t.href === pathname);
+  useEffect(() => {
+    if (!toolsOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!toolsRef.current?.contains(e.target as Node)) setToolsOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setToolsOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [toolsOpen]);
 
   return (
     <>
@@ -107,6 +127,41 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <div className="relative flex" ref={toolsRef}>
+              <button
+                type="button"
+                onClick={() => setToolsOpen((o) => !o)}
+                aria-expanded={toolsOpen}
+                aria-haspopup="menu"
+                className={`nav-link ${onToolPage ? "active" : ""}`}
+                data-label="Alat Lanjutan ▾"
+                style={{ background: "none", border: "none", cursor: "pointer", margin: 0 }}
+              >
+                Alat Lanjutan ▾
+              </button>
+              {toolsOpen && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full mt-3 w-72 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl"
+                >
+                  {toolLinks.map((t) => (
+                    <Link
+                      key={t.href}
+                      href={t.href}
+                      role="menuitem"
+                      onClick={() => setToolsOpen(false)}
+                      className="block rounded-xl px-3 py-2.5 hover:bg-slate-50"
+                      style={{ background: pathname === t.href ? "#eff6ff" : undefined }}
+                    >
+                      <span className="block text-sm font-semibold" style={{ color: "#1D5A8C", fontFamily: "Sora, sans-serif" }}>
+                        {t.label}
+                      </span>
+                      <span className="block text-xs text-gray-500">{t.desc}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* CTA + Mobile Toggle */}
@@ -152,6 +207,19 @@ export default function Navbar() {
                   }}
                 >
                   {link.label}
+                </Link>
+              ))}
+              <p className="px-4 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">Alat lanjutan</p>
+              {toolLinks.map((t) => (
+                <Link
+                  key={t.href}
+                  href={t.href}
+                  onClick={() => setIsOpen(false)}
+                  className="px-4 py-2.5 rounded-xl transition-colors"
+                  style={{ background: pathname === t.href ? '#eff6ff' : 'transparent', fontFamily: 'DM Sans, sans-serif' }}
+                >
+                  <span className="block text-sm font-medium" style={{ color: pathname === t.href ? '#1D5A8C' : '#4a5568' }}>{t.label}</span>
+                  <span className="block text-xs text-gray-400">{t.desc}</span>
                 </Link>
               ))}
               {!isSimulasiPage && (

@@ -15,7 +15,7 @@ target tersebut dengan intervensi sekecil mungkin dari kondisi Business-as-Usual
 | `components/TargetHeatmap.tsx` | Peta (heatmap) 41 × 41 ruang dua tuas: wilayah yang memenuhi semua target, wilayah yang hanya memenuhi target utama, dan titik rekomendasi/alternatif. |
 | `components/ApplyLeversFromUrl.tsx`, `app/simulasi/page.tsx` | Halaman Simulasi membaca `?insentif=…&konservasi=…` (dan, bila ada, perubahan asumsi `a_lama`, `a_pengeluaran`, `a_odtw` dalam persen, dibatasi ±10%) dari tombol "Coba di halaman Simulasi". Nilai tuas dimuat ke panel; perubahan asumsi ditampilkan pada kotak kuning "Kondisi lain yang diubah" dengan tombol "Kembalikan ke kondisi dasar", ikut dipakai saat simulasi dijalankan, dan disebut dalam ringkasan serta interpretasi. Pembanding tetap BAU dengan asumsi dasar. |
 | `lib/model.ts` | `runModel` menerima daftar konstanta tambahan opsional (dipakai hanya untuk asumsi tambahan). Pemanggilan lama tidak berubah. |
-| `components/Navbar.tsx` | Menu baru "Pencarian Target". |
+| `components/Navbar.tsx` | Menu "Alat Lanjutan ▾" berisi Pencarian Target dan Pembaruan Data. |
 | `tests/goalSeek.test.ts` | 19 tes: evaluasi target, validasi, pembulatan saran, LHS, uji balik SUS dan DP, target mustahil, saran tahun, constraint kepadatan dan saran pelonggarannya, batasan yang tidak terpenuhi di titik mana pun, target yang sudah dipenuhi BAU, pencarian dengan asumsi tambahan, kesamaan hasil asumsi yang dibawa ke Simulasi. |
 
 Persamaan model dan nilai parameter tidak diubah. Pencarian hanya menjalankan model
@@ -117,7 +117,7 @@ validasi isian kosong, dan tampilan ponsel tanpa geser horizontal.
 
 | No | Fungsi | Masukan | Hasil yang diharapkan |
 |---|---|---|---|
-| BT-01 | Membuka halaman | Klik menu "Pencarian Target" | Halaman "Cari Nilai Kebijakan yang Dibutuhkan" tampil dengan hasil yang dicari bawaan (PDRB 2045 lebih tinggi minimal 5% dari tanpa kebijakan) dan satu syarat tambahan (Lahan Tersedia untuk Konservasi 2045 tidak lebih rendah daripada tanpa kebijakan) |
+| BT-01 | Membuka halaman | Klik menu "Alat Lanjutan ▾" lalu "Pencarian Target" (atau pintasan di Eksplorasi Simulasi) | Halaman "Pencarian Target" tampil dengan hasil yang dicari bawaan (PDRB 2045 lebih tinggi minimal 5% dari tanpa kebijakan) dan satu syarat tambahan (Lahan Tersedia untuk Konservasi 2045 tidak lebih rendah daripada tanpa kebijakan) |
 | BT-02 | Kalimat "Artinya" dan gambaran | Ganti indikator, bentuk target, angka, atau tahun pada satu baris | Kalimat "Artinya: …" dan nilai "bila tanpa kebijakan tambahan" ikut berubah |
 | BT-03 | Menambah syarat | Klik "+ Tambah syarat" hingga 3 baris | Baris syarat bertambah; tombol hilang setelah 3 target |
 | BT-04 | Menghapus syarat | Klik "Hapus" pada baris syarat tambahan | Baris terhapus; baris hasil yang dicari tidak memiliki tombol Hapus |
@@ -146,4 +146,8 @@ validasi isian kosong, dan tampilan ponsel tanpa geser horizontal.
 | BT-27 | Mengembalikan kondisi dasar | Pada BT-26 klik "Kembalikan ke kondisi dasar" atau "Reset ke BAU" | Kotak kondisi lain hilang; simulasi berikutnya memakai asumsi dasar |
 | BT-28 | Data dasar berubah | Jalankan pencarian, lalu terapkan data dasar baru di Pembaruan Data dan kembali | Hasil lama disembunyikan; pilihan tahun dimulai dari tahun dasar baru + 1 |
 | BT-29 | Tampilan ponsel | Buka halaman pada lebar layar 390 px dan jalankan pencarian | Semua bagian terbaca tanpa geser horizontal halaman; tabel lebar dapat digeser di dalam kartunya |
-| BT-30 | Catatan tetap | Buka halaman | Catatan bahwa hasil adalah gambaran, bukan ramalan, dibandingkan dengan kondisi tanpa kebijakan tambahan, dan hanya memperhitungkan hal di dalam model selalu tampil |
+| BT-30 | Catatan tetap | Buka halaman | Catatan bahwa hasil adalah gambaran, bukan ramalan, dibandingkan dengan kondisi tanpa kebijakan tambahan (BAU) selalu tampil di bawah halaman |
+| BT-31 | Susunan form | Buka halaman | Form tersusun dalam tiga langkah bernomor: 1 Tentukan target, 2 Kebijakan yang dicari, 3 Cari; tiap baris target berisi Indikator, Bentuk target, Angka, Tahun dalam satu baris dan satu kalimat "Artinya: …" |
+| BT-32 | Menu Alat Lanjutan | Di layar lebar klik "Alat Lanjutan ▾" di header | Muncul daftar Pencarian Target dan Pembaruan Data dengan keterangan singkat; menutup dengan klik di luar atau Esc; menu aktif bergaris bawah saat berada di salah satu halaman itu |
+| BT-33 | Pintasan dari Eksplorasi Simulasi | Buka Eksplorasi Simulasi, lihat panel kiri di bawah tombol Reset | Kartu "Alat lanjutan" berisi tautan ke Pencarian Target dan Pembaruan Data |
+| BT-34 | Menu di ponsel | Lebar 390 px, buka menu ☰ | Bagian "ALAT LANJUTAN" berisi Pencarian Target dan Pembaruan Data |

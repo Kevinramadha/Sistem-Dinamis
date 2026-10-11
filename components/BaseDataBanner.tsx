@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useBaseData } from "./BaseDataProvider";
 
-// Penanda data dasar yang sedang dipakai simulasi, tampil di semua halaman.
+// Penanda data dasar yang sedang dipakai simulasi; hanya di halaman yang menjalankan simulasi.
+const SHOW_ON = ["/skenario", "/simulasi"];
 export default function BaseDataBanner() {
   const { baseYear, isCustom, ready } = useBaseData();
   const pathname = usePathname();
-  const onUpdatePage = pathname === "/pembaruan-data";
+  if (!SHOW_ON.includes(pathname)) return null;
 
   return (
     <div
@@ -27,11 +28,9 @@ export default function BaseDataBanner() {
           Data dasar: <strong>{isCustom ? `tahun ${baseYear} (pembaruan pengguna)` : `${baseYear} (data penelitian)`}</strong>
           {" · "}simulasi {baseYear}–2050
         </span>
-        {!onUpdatePage && (
-          <Link href="/pembaruan-data" className="font-semibold underline-offset-2 hover:underline" style={{ color: isCustom ? "#8a5300" : "#1D5A8C" }}>
-            {isCustom ? "Kelola data dasar →" : "Perbarui data tahunan →"}
-          </Link>
-        )}
+        <Link href="/pembaruan-data" className="font-semibold underline-offset-2 hover:underline" style={{ color: isCustom ? "#8a5300" : "#1D5A8C" }}>
+          {isCustom ? "Kelola data dasar →" : "Perbarui data tahunan →"}
+        </Link>
       </div>
     </div>
   );

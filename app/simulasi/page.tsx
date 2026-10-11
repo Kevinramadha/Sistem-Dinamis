@@ -11,6 +11,8 @@ import { summarizeSingle } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
 import { ChoiceDialog, StaleHint, Toast, revealElement, toastError, toastInfo, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
+import Link from "next/link";
+import { toolLinks } from "@/components/Navbar";
 import ApplyLeversFromUrl, { type AssumptionChanges } from "@/components/ApplyLeversFromUrl";
 import { ASSUMPTIONS, assumptionBaseValues, assumptionConstants, describeAssumptionChanges } from "@/lib/goalSeek";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
@@ -691,6 +693,19 @@ export default function SimulasiPage() {
                 <button onClick={resetToBau} className="reset-btn">
                   ↺ Reset ke BAU
                 </button>
+              </div>
+
+              {/* Pintasan ke alat lanjutan */}
+              <div className="rounded-2xl border border-gray-100 bg-white p-4" style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                <p className="section-label mb-2">Alat lanjutan</p>
+                <div className="space-y-1">
+                  {toolLinks.map((t) => (
+                    <Link key={t.href} href={t.href} className="block rounded-lg px-2 py-1.5 hover:bg-slate-50">
+                      <span className="block text-sm font-semibold" style={{ color: '#1D5A8C' }}>{t.label} →</span>
+                      <span className="block text-xs text-gray-500">{t.desc}</span>
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
 

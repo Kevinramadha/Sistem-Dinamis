@@ -14,7 +14,7 @@ terbaru yang dirilis BPS sehingga simulasi dijalankan dari tahun dasar terbaru s
 | `lib/baseData.ts` | Seri data 2015–2025 (13 seri) dari Master Data, sheet "Data Tahunan", beserta satuan dan sumber. |
 | `lib/parameterUpdate.ts` | Rumus kelompok B, aturan pembulatan, validasi, daftar parameter kelompok C. |
 | `lib/templateIO.ts` | Membuat dan membaca template `.xlsx` (ExcelJS) dan `.csv`. |
-| `components/BaseDataProvider.tsx`, `components/BaseDataBanner.tsx` | Status data dasar global, penyimpanan `localStorage`, penanda data dasar di setiap halaman. |
+| `components/BaseDataProvider.tsx`, `components/BaseDataBanner.tsx` | Status data dasar global, penyimpanan `localStorage`, penanda data dasar di halaman Skenario dan Eksplorasi Simulasi. |
 | `app/pembaruan-data/page.tsx` | Halaman baru: unduh template, unggah atau isi form, validasi, pratinjau, terapkan, simpan ke berkas / buka berkas tersimpan (`.json`), kembali ke data penelitian. |
 | Halaman Skenario dan Simulasi | Simulasi memakai data dasar aktif; judul periode menjadi dinamis (`t0–2050`); hasil lama disembunyikan bila data dasar berubah. |
 | Pengujian | Vitest: 57 tes (unit, regression, template). ESLint flat config (`npm run lint`). |
@@ -118,7 +118,7 @@ cp build/*.js lib/model-final.js
 
 | ID | Fungsi | Masukan / langkah | Hasil yang diharapkan | Hasil uji |
 |---|---|---|---|---|
-| BB-01 | Penanda data dasar | Buka halaman mana pun tanpa pembaruan data | Muncul "Data dasar: 2025 (data penelitian) · simulasi 2025–2050" | Sesuai |
+| BB-01 | Penanda data dasar | Buka halaman Skenario atau Eksplorasi Simulasi tanpa pembaruan data | Muncul "Data dasar: 2025 (data penelitian) · simulasi 2025–2050"; di halaman lain penanda tidak muncul | Sesuai |
 | BB-02 | Unduh template .xlsx | Klik "Unduh .xlsx" | Berkas `template-pembaruan-data-simdiy-2025.xlsx` berisi sheet Data (2015–2025, satuan, sumber) dan Petunjuk | Sesuai |
 | BB-03 | Unduh template .csv | Klik "Unduh .csv" | Berkas `.csv` dengan baris kode kolom, nama, satuan, sumber, dan data 2015–2025 | Sesuai |
 | BB-04 | Unggah tanpa perubahan | Unggah template apa adanya | Validasi lolos; seluruh parameter lama = baru (selisih 0) | Sesuai |
@@ -134,7 +134,7 @@ cp build/*.js lib/model-final.js
 | BB-14 | Peringatan perubahan ekstrem | Lahan terbangun 2026 naik 63,5% | Peringatan "Lahan Terbangun berubah +63,5% …"; Terapkan tetap aktif | Sesuai |
 | BB-15 | Format berkas salah | Unggah berkas `.pdf` | Pesan "Format berkas tidak didukung. Gunakan .xlsx atau .csv" | Sesuai |
 | BB-16 | Template tidak dikenali | CSV tanpa baris kode kolom | Pesan "Baris kode kolom … tidak ditemukan" | Sesuai |
-| BB-17 | Isi form tahun baru | Tab "Isi form tahun …", isi 13 kolom, klik "Periksa data" | Validasi dan pratinjau tampil seperti unggah berkas | Sesuai |
+| BB-17 | Isi form tahun baru | Tab "Isi form tahun …", isi 13 kolom, klik "Periksa data" | Kartu "Hasil pemeriksaan" tampil seperti unggah berkas | Sesuai |
 | BB-18 | Terapkan data dasar | Klik "Terapkan data dasar 2026" | Pesan berhasil; penanda menjadi "tahun 2026 (pembaruan pengguna) · simulasi 2026–2050" | Sesuai |
 | BB-19 | Simulasi dari tahun dasar baru | Jalankan simulasi di Eksplorasi Simulasi dan Skenario | Grafik dan tabel dimulai 2026 dan berakhir 2050; ringkasan menyebut "… kali lipat 2026" | Sesuai |
 | BB-20 | Penyimpanan | Muat ulang halaman | Data dasar 2026 tetap dipakai | Sesuai |
@@ -147,3 +147,5 @@ cp build/*.js lib/model-final.js
 | BB-27 | Informasi angka tetap (kelompok C) | Buka panel "Angka tetap yang dipakai model" | Setiap angka tampil dengan nama sehari-hari, penjelasan satu kalimat, satuan yang mudah dipahami (misalnya "5% per tahun"), dan nama variabel di model; disertai keterangan bahwa angka ini perlu dihitung ulang peneliti bila cara pendataan BPS berubah | Sesuai |
 | BB-28 | Penyimpanan tidak tersedia | `localStorage` diblokir peramban, lalu terapkan data 2026 | Aplikasi tetap berjalan; data dasar 2026 berlaku selama halaman terbuka | Sesuai |
 | BB-29 | Fitur lama tetap berjalan | Buka Beranda dan Model; jalankan 3 skenario dengan data penelitian | Halaman tampil normal; hasil 2025–2050 identik dengan sebelum fitur ditambahkan | Sesuai |
+| BB-30 | Susunan halaman | Buka halaman | Tiga langkah bernomor (Unduh template, Masukkan data tahun berikutnya, Periksa lalu terapkan); simpan/buka berkas dan angka tetap model berada di "Opsi lanjutan" yang tertutup | Sesuai |
+| BB-31 | Hasil pemeriksaan ringkas | Unggah berkas valid | Kartu "Hasil pemeriksaan" menampilkan peringatan/status dan tombol Terapkan; tabel data dan angka model yang berubah dapat dibuka lewat "Lihat …" | Sesuai |
