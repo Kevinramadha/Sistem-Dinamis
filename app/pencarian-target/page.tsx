@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useBaseData } from "@/components/BaseDataProvider";
 import InfoTip from "@/components/InfoTip";
 import TargetHeatmap from "@/components/TargetHeatmap";
-import { DoneToast, revealElement, withMinDuration } from "@/components/RunFeedback";
+import { Toast, revealElement, toastError, toastInfo, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
 import { ASSUMPTION_QUERY } from "@/components/ApplyLeversFromUrl";
 import {
   ASSUMPTIONS,
@@ -94,8 +94,8 @@ export default function PencarianTargetPage() {
   const [runRaw, setRun] = useState<RunState | null>(null);
   // Hasil disembunyikan bila data dasar berubah setelah pencarian dijalankan.
   const run = runRaw && runRaw.base === override ? runRaw : null;
-  const [doneMessage, setDoneMessage] = useState<string | null>(null);
-  const closeDone = useCallback(() => setDoneMessage(null), []);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const closeToast = useCallback(() => setToast(null), []);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [revealTick, setRevealTick] = useState(0);
   useEffect(() => {
@@ -133,22 +133,26 @@ export default function PencarianTargetPage() {
     setUseAssumptions(withAssumptions);
     const v = validateTargets(nextTargets, baseYear);
     setErrors(v);
-    if (v.length) return;
+    if (v.length) {
+      setToast(toastError("Ada isian target yang perlu diperbaiki. Lihat pesan merah di atas tombol pencarian."));
+      return;
+    }
     const dims = dimsFor(withAssumptions);
     setRunning(true);
     setProgress(0);
-    setDoneMessage(null);
+    setToast(null);
     try {
       const { result, ms } = await withMinDuration(searchTargets(nextTargets, dims, override, setProgress));
       setRun({ targets: nextTargets, dims, result, ms, base: override });
-      setDoneMessage(
+      setToast(
         result.status === "tercapai"
-          ? "Pencarian selesai: target bisa dicapai. Lihat saran kebijakan di bawah."
-          : "Pencarian selesai: target belum bisa dicapai. Lihat saran perbaikan di bawah."
+          ? toastOk("Pencarian selesai: target bisa dicapai. Lihat saran kebijakan di bawah.")
+          : toastInfo("Pencarian selesai: target belum bisa dicapai. Lihat saran perbaikan di bawah.")
       );
       setRevealTick((t) => t + 1);
     } catch (err) {
-      if (!(err instanceof SearchCancelled)) setErrors([`Pencarian gagal: ${err instanceof Error ? err.message : String(err)}`]);
+      if (err instanceof SearchCancelled) setToast(toastInfo("Pencarian dibatalkan."));
+      else setToast(toastError(`Pencarian gagal: ${err instanceof Error ? err.message : String(err)}`));
     } finally {
       setRunning(false);
     }
@@ -300,7 +304,7 @@ export default function PencarianTargetPage() {
             )}
           </section>
 
-          <DoneToast message={doneMessage} onClose={closeDone} />
+          <Toast toast={toast} onClose={closeToast} />
           <div ref={resultsRef} className="scroll-mt-28">
           {run && (
             <Results

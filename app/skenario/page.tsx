@@ -10,7 +10,7 @@ import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle, summarizeCompare } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
-import { DoneToast, StaleNotice, resultsClass, revealElement, withMinDuration } from "@/components/RunFeedback";
+import { StalePopup, Toast, revealElement, toastError, toastInfo, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
 import type { CompareInput } from "@/lib/comparison";
 
@@ -36,9 +36,8 @@ export default function SkenarioPage() {
   const [isLoading, setIsLoading] = useState(false);
   // Umpan balik status: pesan selesai, gulir ke hasil, dan penanda hasil lama.
   const [runConfig, setRunConfig] = useState<{ activeScenario: string; compareAll: boolean } | null>(null);
-  const [doneMessage, setDoneMessage] = useState<string | null>(null);
-  const [runError, setRunError] = useState<string | null>(null);
-  const closeDone = useCallback(() => setDoneMessage(null), []);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const closeToast = useCallback(() => setToast(null), []);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [revealTick, setRevealTick] = useState(0);
   useEffect(() => {
@@ -55,8 +54,7 @@ export default function SkenarioPage() {
 
   const runSimulation = async () => {
     setIsLoading(true);
-    setRunError(null);
-    setDoneMessage(null);
+    setToast(null);
     try {
       if (compareAll) {
         const results = await withMinDuration(Promise.all(scenariosList.map((sc) => runModel(sc.params, override))));
@@ -65,7 +63,7 @@ export default function SkenarioPage() {
         setSimulationData(allData);
         setBaselineData(null);
         setResultBase(override);
-        setDoneMessage(`Simulasi selesai: ketiga skenario dibandingkan · ${baseYear}–2050.`);
+        setToast(toastOk(`Simulasi selesai: ketiga skenario dibandingkan · ${baseYear}–2050.`));
       } else {
         const activeScenarioObj = scenariosList.find((s) => s.id === activeScenario);
         if (activeScenarioObj) {
@@ -78,14 +76,14 @@ export default function SkenarioPage() {
           setSimulationData({ [activeScenarioObj.label]: data });
           setBaselineData(baseline);
           setResultBase(override);
-          setDoneMessage(`Simulasi selesai: skenario ${activeScenarioObj.label} · ${baseYear}–2050.`);
+          setToast(toastOk(`Simulasi selesai: skenario ${activeScenarioObj.label} · ${baseYear}–2050.`));
         }
       }
       setRunConfig({ activeScenario, compareAll });
       setRevealTick((t) => t + 1);
     } catch (error) {
       console.error("Simulation error:", error);
-      setRunError("Simulasi gagal dijalankan. Muat ulang halaman lalu coba lagi.");
+      setToast(toastError("Simulasi gagal dijalankan. Muat ulang halaman lalu coba lagi."));
     } finally {
       setIsLoading(false);
     }
@@ -386,12 +384,8 @@ export default function SkenarioPage() {
 
         {/* ── MAIN CONTENT ─────────────────────────────────── */}
         <div className="max-w-6xl mx-auto px-6 py-12">
-          <DoneToast message={stale ? null : doneMessage} onClose={closeDone} />
-          {runError && (
-            <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-              {runError}
-            </div>
-          )}
+          <Toast toast={stale ? null : toast} onClose={closeToast} />
+          <StalePopup show={stale} onRun={runSimulation} busy={isLoading} what={staleWhat} />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
             {/* ── CONTROL PANEL ────────────────────────────── */}
@@ -414,7 +408,12 @@ export default function SkenarioPage() {
                       return (
                         <button
                           key={scenario.id}
-                          onClick={() => { setActiveScenario(scenario.id); setCompareAll(false); }}
+                          onClick={() => {
+                            setActiveScenario(scenario.id);
+                            setCompareAll(false);
+                            if (!simulationData)
+                              setToast(toastInfo(`Skenario ${scenario.label} dipilih. Klik Jalankan Simulasi untuk melihat hasilnya.`));
+                          }}
                           className={`scenario-btn ${isActive ? "active" : "inactive"}`}
                           style={isActive ? { background: scenario.color, color: 'white' } : { color: '#374151' }}
                         >
@@ -443,7 +442,17 @@ export default function SkenarioPage() {
                 {/* Compare toggle */}
                 <div>
                   <button
-                    onClick={() => setCompareAll(!compareAll)}
+                    onClick={() => {
+                      setCompareAll(!compareAll);
+                      if (!simulationData)
+                        setToast(
+                          toastInfo(
+                            compareAll
+                              ? "Mode perbandingan dimatikan. Klik Jalankan Simulasi untuk melihat skenario yang dipilih."
+                              : "Mode perbandingan 3 skenario aktif. Klik Jalankan Simulasi untuk melihat hasilnya."
+                          )
+                        );
+                    }}
                     className="compare-toggle"
                     style={compareAll
                       ? { background: '#E89D3E', borderColor: '#E89D3E', color: 'white' }
@@ -578,8 +587,7 @@ export default function SkenarioPage() {
                 </div>
               )}
 
-              {simulationData && stale && <StaleNotice onRun={runSimulation} busy={isLoading} what={staleWhat} />}
-              <div ref={resultsRef} className={resultsClass(stale)}>
+              <div ref={resultsRef} className="space-y-5 scroll-mt-28">
               {summary && <SimulationSummary summary={summary} />}
 
               {/* Chart or placeholder */}
@@ -721,6 +729,7 @@ export default function SkenarioPage() {
                                 const blob = new Blob([csv], { type: "text/csv" });
                                 const url = URL.createObjectURL(blob);
                                 const a = document.createElement("a"); a.href = url; a.download = "skenario.csv"; a.click();
+                                setToast(toastOk("Tabel data diunduh sebagai skenario.csv."));
                               }}
                               style={{
                                 display: 'flex', alignItems: 'center', gap: 6,
@@ -842,6 +851,7 @@ export default function SkenarioPage() {
                                   const blob = new Blob([csv], { type: "text/csv" });
                                   const url = URL.createObjectURL(blob);
                                   const a = document.createElement("a"); a.href = url; a.download = "skenario-komparasi.csv"; a.click();
+                                  setToast(toastOk("Tabel perbandingan diunduh sebagai skenario-komparasi.csv."));
                                 }}
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: 6,

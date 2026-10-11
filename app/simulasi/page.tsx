@@ -10,7 +10,7 @@ import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
-import { DoneToast, StaleNotice, resultsClass, revealElement, withMinDuration } from "@/components/RunFeedback";
+import { StalePopup, Toast, revealElement, toastError, toastInfo, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
 import ApplyLeversFromUrl, { type AssumptionChanges } from "@/components/ApplyLeversFromUrl";
 import { ASSUMPTIONS, assumptionBaseValues, assumptionConstants, describeAssumptionChanges } from "@/lib/goalSeek";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
@@ -49,9 +49,8 @@ export default function SimulasiPage() {
   const [runAssumptionsRaw, setRunAssumptions] = useState<AssumptionChanges>({});
   const runAssumptions = fresh ? runAssumptionsRaw : {};
   // Umpan balik status: pesan selesai, gulir ke hasil, dan penanda hasil lama.
-  const [doneMessage, setDoneMessage] = useState<string | null>(null);
-  const [runError, setRunError] = useState<string | null>(null);
-  const closeDone = useCallback(() => setDoneMessage(null), []);
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const closeToast = useCallback(() => setToast(null), []);
   const resultsRef = useRef<HTMLDivElement>(null);
   const [revealTick, setRevealTick] = useState(0);
   useEffect(() => {
@@ -84,8 +83,7 @@ export default function SimulasiPage() {
 
   const runSimulation = async () => {
     setIsLoading(true);
-    setRunError(null);
-    setDoneMessage(null);
+    setToast(null);
     try {
       const isBau =
         params.insentif_kebijakan === bau.params.insentif_kebijakan &&
@@ -103,20 +101,29 @@ export default function SimulasiPage() {
       setRunParams(params);
       setRunAssumptions(assumptions);
       const note = describeAssumptionChanges(assumptions);
-      setDoneMessage(
+      setToast(toastOk(
         `Simulasi selesai: Insentif ${(params.insentif_kebijakan * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%, ` +
           `Konservasi ${(params.kebijakan_konservasi_lahan * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%` +
           `${note ? `, ${note}` : ""} · ${baseYear}–2050.`
-      );
+      ));
       setRevealTick((t) => t + 1);
       setBaselineData(baseline);
     } catch (error) {
       console.error("Simulation error:", error);
-      setDoneMessage(null);
-      setRunError("Simulasi gagal dijalankan. Muat ulang halaman lalu coba lagi.");
+      setToast(toastError("Simulasi gagal dijalankan. Muat ulang halaman lalu coba lagi."));
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const pctText = (v: number) => `${(v * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
+
+  /** Menghapus hasil simulasi yang sedang tampil. */
+  const clearResults = () => {
+    setSimulationData(null);
+    setBaselineData(null);
+    setRunParams(null);
+    setRunAssumptions({});
   };
 
   const loadScenario = (scenarioKey: string) => {
@@ -124,7 +131,23 @@ export default function SimulasiPage() {
     if (scenario) {
       setParams(scenario.params);
       setActivePreset(scenarioKey);
+      // Bila sudah ada hasil, popup "Perbarui hasil" yang tampil; bila belum, beri tahu langkah berikutnya.
+      if (!runParams) setToast(toastInfo(`Preset ${scenario.label} dimuat. Klik Jalankan Simulasi untuk melihat hasilnya.`));
     }
+  };
+
+  const resetToBau = () => {
+    setParams(bau.params);
+    setActivePreset("BAU");
+    setAssumptions({});
+    clearResults();
+    setToast(toastOk("Pengaturan dikembalikan ke kondisi tanpa kebijakan tambahan (BAU). Hasil sebelumnya dihapus."));
+  };
+
+  const resetAssumptions = () => {
+    setAssumptions({});
+    clearResults();
+    setToast(toastOk("Berhasil kembali ke kondisi dasar. Hasil sebelumnya dihapus; klik Jalankan Simulasi untuk melihat hasil baru."));
   };
 
   const chartData = useMemo(() => {
@@ -458,15 +481,20 @@ export default function SimulasiPage() {
                 setParams(applied.levers);
                 setAssumptions(applied.assumptions);
                 setActivePreset("");
+                clearResults();
+                const note = describeAssumptionChanges(applied.assumptions);
+                setToast(
+                  toastInfo(
+                    `Nilai dari Pencarian Target dimuat: Insentif ${pctText(applied.levers.insentif_kebijakan)}, ` +
+                      `Konservasi ${pctText(applied.levers.kebijakan_konservasi_lahan)}${note ? `, ${note}` : ""}. ` +
+                      "Klik Jalankan Simulasi untuk melihat hasilnya."
+                  )
+                );
               }}
             />
           </Suspense>
-          <DoneToast message={stale ? null : doneMessage} onClose={closeDone} />
-          {runError && (
-            <div role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-              {runError}
-            </div>
-          )}
+          <Toast toast={stale ? null : toast} onClose={closeToast} />
+          <StalePopup show={stale} onRun={runSimulation} busy={isLoading} what={staleWhat} />
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
 
             {/* ── LEFT PANEL ───────────────────────────────── */}
@@ -584,7 +612,7 @@ export default function SimulasiPage() {
                     Dibawa dari Pencarian Target. Ini <strong>bukan kebijakan</strong>, melainkan pengandaian bila kondisi tersebut
                     berbeda dari data. Hasil tetap dibandingkan dengan kondisi tanpa kebijakan pada data asli.
                   </p>
-                  <button type="button" onClick={() => setAssumptions({})} className="mt-2 text-xs font-semibold underline">
+                  <button type="button" onClick={resetAssumptions} className="mt-2 text-xs font-semibold underline">
                     Kembalikan ke kondisi dasar
                   </button>
                 </div>
@@ -605,7 +633,7 @@ export default function SimulasiPage() {
                     <>Jalankan Simulasi</>
                   )}
                 </button>
-                <button onClick={() => { loadScenario("BAU"); setAssumptions({}); }} className="reset-btn">
+                <button onClick={resetToBau} className="reset-btn">
                   ↺ Reset ke BAU
                 </button>
               </div>
@@ -670,8 +698,7 @@ export default function SimulasiPage() {
                 </div>
               </div>
 
-              {simulationData && stale && <StaleNotice onRun={runSimulation} busy={isLoading} what={staleWhat} />}
-              <div ref={resultsRef} className={resultsClass(stale)}>
+              <div ref={resultsRef} className="space-y-5 scroll-mt-28">
               {summary && <SimulationSummary summary={summary} />}
 
               {/* Chart */}
@@ -789,6 +816,7 @@ export default function SimulasiPage() {
                         const blob = new Blob([csv], { type: "text/csv" });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement("a"); a.href = url; a.download = "simulasi.csv"; a.click();
+                        setToast(toastOk("Tabel data diunduh sebagai simulasi.csv."));
                       }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 6,

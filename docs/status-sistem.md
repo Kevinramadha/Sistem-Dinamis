@@ -4,36 +4,57 @@ Perbaikan ini mengikuti heuristik Nielsen pertama, *visibility of system status*
 klik pengguna harus segera diikuti tanda bahwa sistem sedang memproses, sudah selesai,
 atau gagal. Sebelumnya beberapa klik terasa "tidak terjadi apa-apa".
 
+Semua pemberitahuan memakai **popup** di bagian bawah layar agar halaman tetap bersih:
+
+| Jenis popup | Warna | Perilaku |
+|---|---|---|
+| Berhasil | hijau, ikon ✓ | hilang sendiri setelah ±5 detik, bisa ditutup |
+| Info (langkah berikutnya) | biru, ikon i | hilang sendiri setelah ±5 detik, bisa ditutup |
+| Galat | merah, ikon ! | tetap tampil sampai ditutup |
+| Hasil perlu diperbarui | kuning, tombol **Perbarui hasil** | tetap tampil selama hasil di layar tidak sesuai pengaturan |
+
+Popup berhasil/info memakai `role="status"` dan popup galat memakai `role="alert"`,
+sehingga juga dibacakan pembaca layar.
+
 ## Masalah dan perbaikan
 
 | Masalah sebelumnya | Perbaikan | Halaman |
 |---|---|---|
-| Satu simulasi hanya ±0,2 ms, sehingga tulisan "Menjalankan…" tidak sempat terlihat dan grafik berganti tanpa tanda. | Indikator proses tampil minimal 0,6 detik (`withMinDuration`), lalu muncul pesan **"✓ Simulasi selesai: …"** berisi pengaturan yang dipakai. Pesan hilang sendiri setelah ±4,5 detik atau bisa ditutup. | Skenario, Eksplorasi Simulasi, Pencarian Target |
-| Di ponsel hasil muncul jauh di bawah panel tuas, jadi setelah klik layar tidak berubah. | Setelah proses selesai, layar otomatis bergulir ke hasil bila hasil belum terlihat (gulir halus, atau langsung bila pengguna memilih *reduce motion*). | Skenario, Eksplorasi Simulasi, Pencarian Target |
-| Setelah slider/preset (atau kartu skenario) diganti, grafik tetap menampilkan hasil lama tanpa keterangan. | Muncul banner kuning **"Nilai tuas kebijakan sudah berubah"** / **"Pilihan skenario sudah berubah"** dengan tombol **Perbarui hasil**, dan area hasil dipudarkan sampai simulasi dijalankan ulang. Mengganti variabel yang ditampilkan tidak memicu banner karena grafik langsung menyesuaikan. | Eksplorasi Simulasi, Skenario |
-| Kesalahan saat simulasi hanya tercatat di konsol. | Pesan galat ditampilkan di halaman. | Eksplorasi Simulasi, Skenario |
-| Pada koneksi lambat, klik menu tidak menunjukkan apa pun sampai halaman berikutnya muncul. | Garis progres tipis di bagian atas layar sejak tautan diklik sampai halaman tujuan tampil (tidak muncul bila perpindahan < 0,12 detik). | Semua halaman |
+| Satu simulasi hanya ±0,2 ms, sehingga "Menjalankan…" tidak sempat terlihat dan grafik berganti tanpa tanda. | Indikator proses tampil minimal 0,6 detik, lalu popup **"Simulasi selesai: …"** berisi pengaturan yang dipakai. | Skenario, Eksplorasi Simulasi, Pencarian Target |
+| Di ponsel hasil muncul jauh di bawah panel tuas. | Setelah selesai, layar bergulir ke hasil bila hasil belum terlihat. | Skenario, Eksplorasi Simulasi, Pencarian Target |
+| Setelah tuas/preset/skenario diganti, grafik tetap menampilkan hasil lama tanpa keterangan. | Popup kuning **"… sudah berubah"** dengan tombol **Perbarui hasil**. Popup hilang begitu hasil diperbarui. | Eksplorasi Simulasi, Skenario |
+| Memilih preset atau skenario sebelum ada hasil tidak memberi tanda langkah berikutnya. | Popup info, mis. "Preset Sustainable dimuat. Klik Jalankan Simulasi…". | Eksplorasi Simulasi, Skenario |
+| "Kembalikan ke kondisi dasar" dan "Reset ke BAU" tidak memberi tanda, dan hasil lama tetap tampil. | Hasil lama **dihapus** dan popup berhasil tampil ("Berhasil kembali ke kondisi dasar…", "Pengaturan dikembalikan ke kondisi tanpa kebijakan tambahan (BAU)…"). | Eksplorasi Simulasi |
+| Pemberitahuan "Nilai dari Pencarian Target sudah dimuat" berupa kotak permanen yang tidak hilang. | Diganti popup info sekali tampil; parameter di alamat halaman dihapus sehingga tidak dimuat ulang. | Eksplorasi Simulasi |
+| Unduh tabel CSV, template, atau berkas konfigurasi tidak memberi konfirmasi. | Popup berhasil berisi nama berkas dan langkah berikutnya. | Eksplorasi Simulasi, Skenario, Pembaruan Data |
+| Berkas unggahan selesai dibaca tanpa pemberitahuan; pesan berhasil/galat hanya di atas halaman. | Popup info/berhasil/galat untuk unggah, periksa isian, buka berkas, terapkan, dan kembali ke data penelitian. | Pembaruan Data |
+| Isian target tidak valid, pembatalan, atau kegagalan pencarian kurang terlihat. | Popup galat/info ("Ada isian target yang perlu diperbaiki…", "Pencarian dibatalkan."). | Pencarian Target |
+| Pada koneksi lambat, klik menu tidak menunjukkan apa pun. | Garis progres tipis di bagian atas layar sampai halaman tujuan tampil. | Semua halaman |
 
-Pesan selesai dan banner memakai `role="status"` dan pesan galat memakai `role="alert"`,
-sehingga juga dibacakan oleh pembaca layar.
-
-Berkas: `components/RunFeedback.tsx` (indikator minimum, pesan selesai, banner hasil lama,
-gulir ke hasil), `components/RouteProgress.tsx` (garis progres pindah halaman),
+Berkas: `components/RunFeedback.tsx` (popup status, popup perbarui hasil, indikator minimum,
+gulir ke hasil), `components/RouteProgress.tsx`, `components/ApplyLeversFromUrl.tsx`,
 `app/layout.tsx`, `app/simulasi/page.tsx`, `app/skenario/page.tsx`,
-`app/pencarian-target/page.tsx`.
+`app/pencarian-target/page.tsx`, `app/pembaruan-data/page.tsx`.
 
 ## Kasus uji black-box
 
 | No | Fungsi | Masukan | Hasil yang diharapkan |
 |---|---|---|---|
 | SS-01 | Indikator proses | Klik "Jalankan Simulasi" di Eksplorasi Simulasi | Tombol berubah menjadi "Menjalankan…" dan nonaktif selama ±0,6 detik |
-| SS-02 | Pesan selesai | Tunggu simulasi SS-01 selesai | Muncul pesan "✓ Simulasi selesai: Insentif …%, Konservasi …% · 2025–2050."; hilang sendiri setelah beberapa detik atau saat tombol ✕ diklik |
+| SS-02 | Popup selesai | Tunggu simulasi SS-01 selesai | Popup hijau "Simulasi selesai: Insentif …%, Konservasi …% · 2025–2050."; hilang sendiri atau saat ✕ diklik |
 | SS-03 | Gulir ke hasil (ponsel) | Lebar layar 390 px, klik "Jalankan Simulasi" | Layar bergulir ke "Ringkasan Hasil" |
-| SS-04 | Penanda hasil lama | Setelah SS-02, klik preset SUS atau geser slider | Banner kuning "Nilai tuas kebijakan sudah berubah" muncul, area hasil dipudarkan, pesan selesai lama hilang |
-| SS-05 | Perbarui hasil | Pada SS-04 klik "Perbarui hasil" | Simulasi berjalan, banner hilang, hasil kembali jelas, pesan selesai menyebut nilai tuas baru |
-| SS-06 | Variabel yang ditampilkan | Setelah simulasi, centang/hapus centang variabel output | Grafik langsung menyesuaikan; tidak ada banner hasil lama |
-| SS-07 | Pesan selesai Skenario | Di halaman Skenario klik "Jalankan Simulasi" | Pesan "✓ Simulasi selesai: skenario … · 2025–2050." (atau "ketiga skenario dibandingkan") |
-| SS-08 | Hasil lama Skenario | Setelah SS-07, klik kartu skenario lain atau "Bandingkan Semua Skenario" | Banner "Pilihan skenario sudah berubah" dengan tombol "Perbarui hasil" |
-| SS-09 | Pencarian Target | Klik "Cari kombinasi kebijakan" | Progress bar tampil; setelah selesai muncul pesan "Pencarian selesai: target bisa/belum bisa dicapai…" dan layar bergulir ke hasil |
-| SS-10 | Pindah halaman | Pada koneksi lambat, klik salah satu menu | Garis progres tampil di atas layar sampai halaman tujuan muncul, lalu hilang |
-| SS-11 | Tombol kembali peramban | Tekan tombol Back saat garis progres tampil | Garis progres hilang |
+| SS-04 | Popup perbarui hasil | Setelah SS-02, klik preset SUS atau geser slider | Popup kuning "Nilai tuas kebijakan sudah berubah" dengan tombol "Perbarui hasil"; hasil tidak dipudarkan |
+| SS-05 | Perbarui hasil | Pada SS-04 klik "Perbarui hasil" | Simulasi berjalan, popup kuning hilang, popup hijau menyebut nilai tuas baru |
+| SS-06 | Preset tanpa hasil | Sebelum menjalankan simulasi, klik preset DP | Popup info "Preset Development Priority dimuat. Klik Jalankan Simulasi…" |
+| SS-07 | Reset ke BAU | Setelah ada hasil, klik "Reset ke BAU" | Tuas kembali 0, hasil dihapus (tampil "Belum ada hasil simulasi"), popup hijau "Pengaturan dikembalikan ke kondisi tanpa kebijakan tambahan (BAU)…" |
+| SS-08 | Nilai dari Pencarian Target | Klik "Coba di halaman Simulasi →" di Pencarian Target | Popup info berisi nilai tuas dan kondisi lain yang dimuat; alamat halaman menjadi `/simulasi` tanpa parameter; tidak ada kotak pemberitahuan permanen |
+| SS-09 | Kembali ke kondisi dasar | Pada SS-08, jalankan simulasi lalu klik "Kembalikan ke kondisi dasar" | Kotak kondisi lain hilang, hasil dihapus, popup hijau "Berhasil kembali ke kondisi dasar…" |
+| SS-10 | Unduh tabel | Setelah simulasi, klik tombol unduh CSV | Berkas `simulasi.csv` terunduh dan popup hijau "Tabel data diunduh sebagai simulasi.csv." |
+| SS-11 | Variabel yang ditampilkan | Setelah simulasi, centang/hapus centang variabel output | Grafik langsung menyesuaikan; tidak ada popup perbarui hasil |
+| SS-12 | Skenario tanpa hasil | Di halaman Skenario, klik kartu Sustainable sebelum menjalankan simulasi | Popup info "Skenario Sustainable dipilih. Klik Jalankan Simulasi…" |
+| SS-13 | Skenario berubah | Setelah simulasi Skenario, klik kartu skenario lain atau "Bandingkan Semua Skenario" | Popup kuning "Pilihan skenario sudah berubah" dengan tombol "Perbarui hasil" |
+| SS-14 | Unduh template | Di Pembaruan Data klik "Unduh .csv" atau "Unduh .xlsx" | Berkas terunduh dan popup hijau "Template … diunduh…" |
+| SS-15 | Terapkan data dasar | Di Pembaruan Data terapkan data tahun baru yang valid | Popup hijau "Data dasar tahun … diterapkan…" |
+| SS-16 | Validasi Pencarian Target | Kosongkan angka target lalu klik "Cari kombinasi kebijakan" | Pesan merah di form dan popup galat "Ada isian target yang perlu diperbaiki…" |
+| SS-17 | Pencarian selesai | Klik "Cari kombinasi kebijakan" dengan isian valid | Progress bar tampil; popup "Pencarian selesai: target bisa/belum bisa dicapai…"; layar bergulir ke hasil |
+| SS-18 | Pindah halaman | Pada koneksi lambat, klik salah satu menu | Garis progres tampil di atas layar sampai halaman tujuan muncul |

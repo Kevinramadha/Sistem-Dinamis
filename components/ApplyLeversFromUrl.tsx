@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ASSUMPTIONS, ASSUMPTION_RANGE, type AssumptionKey } from "@/lib/goalSeek";
 import type { SimulationParams } from "@/lib/model";
 
@@ -45,29 +45,24 @@ export function leversFromQuery(q: URLSearchParams): AppliedFromUrl | null {
 
 /**
  * Memuat nilai tuas (dan asumsi, bila ada) yang dikirim halaman Pencarian
- * Target lewat URL ke panel Simulasi. Dibungkus <Suspense> oleh pemanggil
- * karena memakai useSearchParams.
+ * Target lewat URL ke panel Simulasi, lalu menghapus parameter itu dari
+ * alamat halaman agar tidak dimuat ulang. Pemberitahuan ditampilkan oleh
+ * pemanggil (popup). Dibungkus <Suspense> karena memakai useSearchParams.
  */
 export default function ApplyLeversFromUrl({ onApply }: { onApply: (applied: AppliedFromUrl) => void }) {
   const query = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const queryString = query.toString();
 
   useEffect(() => {
     const applied = leversFromQuery(new URLSearchParams(queryString));
-    if (applied) onApply(applied);
+    if (!applied) return;
+    onApply(applied);
+    router.replace(pathname, { scroll: false });
     // Hanya dijalankan saat isi URL berubah.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryString]);
 
-  const applied = leversFromQuery(new URLSearchParams(queryString));
-  if (!applied) return null;
-  const pct = (v: number) => `${(v * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
-  return (
-    <div role="status" className="mb-6 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
-      Nilai dari <strong>Pencarian Target</strong> sudah dimuat: Insentif Kebijakan {pct(applied.levers.insentif_kebijakan)} dan
-      Kebijakan Konservasi Lahan {pct(applied.levers.kebijakan_konservasi_lahan)}
-      {Object.keys(applied.assumptions).length > 0 && ", ditambah perubahan kondisi lain (lihat panel kiri)"}. Klik{" "}
-      <strong>Jalankan Simulasi</strong> untuk melihat hasilnya.
-    </div>
-  );
+  return null;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { RESEARCH_BASE_YEAR, RESEARCH_DATA, SERIES, type SeriesKey, type YearRow } from "@/lib/baseData";
 import {
   FIXED_PARAMS,
@@ -22,6 +22,7 @@ import {
   parseTemplateFile,
 } from "@/lib/templateIO";
 import { parseConfig, useBaseData } from "@/components/BaseDataProvider";
+import { Toast, toastError, toastInfo, toastOk, type ToastMessage } from "@/components/RunFeedback";
 
 type Source = "unggah" | "form" | "impor";
 
@@ -59,6 +60,13 @@ export default function PembaruanDataPage() {
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  // Popup status; pesan di bagian atas halaman tetap ditampilkan bersamaan.
+  const [toast, setToast] = useState<ToastMessage | null>(null);
+  const closeToast = useCallback(() => setToast(null), []);
+  const notify = (m: { kind: "ok" | "error"; text: string }) => {
+    setMessage(m);
+    setToast(m.kind === "ok" ? toastOk(m.text) : toastError(m.text));
+  };
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [mode, setMode] = useState<"unggah" | "form">("unggah");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -75,8 +83,9 @@ export default function PembaruanDataPage() {
     setBusy("Menyiapkan template .xlsx…");
     try {
       downloadBlob(await buildTemplateXlsx(activeRows), `${TEMPLATE_BASENAME}-${baseYear}.xlsx`);
+      setToast(toastOk("Template .xlsx diunduh. Tambahkan baris tahun baru, lalu unggah kembali di Langkah 2."));
     } catch (e) {
-      setMessage({ kind: "error", text: `Gagal membuat template: ${(e as Error).message}` });
+      notify({ kind: "error", text: `Gagal membuat template: ${(e as Error).message}` });
     } finally {
       setBusy(null);
     }
@@ -84,6 +93,7 @@ export default function PembaruanDataPage() {
 
   const downloadCsv = () => {
     downloadBlob(new Blob([buildTemplateCsv(activeRows)], { type: "text/csv;charset=utf-8" }), `${TEMPLATE_BASENAME}-${baseYear}.csv`);
+    setToast(toastOk("Template .csv diunduh. Tambahkan baris tahun baru, lalu unggah kembali di Langkah 2."));
   };
 
   const onUpload = async (file: File | undefined) => {
@@ -93,9 +103,10 @@ export default function PembaruanDataPage() {
     try {
       const rows = await parseTemplateFile(file);
       setCandidate(makeCandidate("unggah", `Berkas: ${file.name}`, rows));
+      setToast(toastInfo(`Berkas ${file.name} terbaca. Periksa hasil pemeriksaan di Langkah 3 sebelum menerapkan.`));
     } catch (e) {
       setCandidate(null);
-      setMessage({ kind: "error", text: (e as Error).message });
+      notify({ kind: "error", text: (e as Error).message });
     } finally {
       setBusy(null);
       if (fileRef.current) fileRef.current.value = "";
@@ -111,6 +122,7 @@ export default function PembaruanDataPage() {
       row[s.key] = t === "" ? NaN : Number.isNaN(n) ? Infinity : n;
     }
     setCandidate(makeCandidate("form", `Isian form tahun ${nextYear}`, [...activeRows.map((r) => ({ ...r })), row]));
+    setToast(toastInfo(`Isian tahun ${nextYear} diperiksa. Lihat hasilnya di Langkah 3.`));
   };
 
   const onImportJson = async (file: File | undefined) => {
@@ -119,9 +131,10 @@ export default function PembaruanDataPage() {
     try {
       const cfg = parseConfig(JSON.parse(await file.text()));
       setCandidate(makeCandidate("impor", `Konfigurasi: ${file.name}`, cfg.rows));
+      setToast(toastInfo(`Berkas ${file.name} terbaca. Periksa hasil pemeriksaan di Langkah 3 sebelum menerapkan.`));
     } catch (e) {
       setCandidate(null);
-      setMessage({ kind: "error", text: `Konfigurasi tidak dapat diimpor. ${(e as Error).message}` });
+      notify({ kind: "error", text: `Konfigurasi tidak dapat diimpor. ${(e as Error).message}` });
     } finally {
       if (jsonRef.current) jsonRef.current.value = "";
     }
@@ -133,10 +146,10 @@ export default function PembaruanDataPage() {
       const cfg = apply(candidate.rows);
       setCandidate(null);
       setForm(Object.fromEntries(SERIES.map((s) => [s.key, ""])) as Record<SeriesKey, string>);
-      setMessage({ kind: "ok", text: `Data dasar tahun ${cfg.baseYear} diterapkan. Simulasi di halaman Skenario dan Eksplorasi Simulasi kini berjalan ${cfg.baseYear}–2050.` });
+      notify({ kind: "ok", text: `Data dasar tahun ${cfg.baseYear} diterapkan. Simulasi di halaman Skenario dan Eksplorasi Simulasi kini berjalan ${cfg.baseYear}–2050.` });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
-      setMessage({ kind: "error", text: (e as Error).message });
+      notify({ kind: "error", text: (e as Error).message });
     }
   };
 
@@ -144,12 +157,13 @@ export default function PembaruanDataPage() {
     if (!window.confirm(`Kembalikan ke data penelitian (${RESEARCH_BASE_YEAR})? Data dasar hasil pembaruan akan dihapus dari peramban ini. Ekspor konfigurasi terlebih dahulu bila masih diperlukan.`)) return;
     reset();
     setCandidate(null);
-    setMessage({ kind: "ok", text: `Data dasar dikembalikan ke data penelitian (${RESEARCH_BASE_YEAR}).` });
+    notify({ kind: "ok", text: `Data dasar dikembalikan ke data penelitian (${RESEARCH_BASE_YEAR}).` });
   };
 
   const onExport = () => {
     if (!config) return;
     downloadBlob(new Blob([JSON.stringify(config, null, 2)], { type: "application/json" }), `konfigurasi-data-dasar-simdiy-${config.baseYear}.json`);
+    setToast(toastOk(`Data dasar ${config.baseYear} disimpan ke berkas .json. Buka berkas ini nanti untuk memakainya lagi.`));
   };
 
   return (
@@ -175,6 +189,7 @@ export default function PembaruanDataPage() {
       `}</style>
 
       <div className="pd min-h-screen" style={{ background: "#f8fafc" }}>
+        <Toast toast={toast} onClose={closeToast} />
         <section className="page-hero text-white">
           <div className="relative z-10 max-w-6xl mx-auto px-6 py-16">
             <p className="section-label mb-4" style={{ color: "#F4CD53" }}>Pembaruan Data Tahunan</p>
