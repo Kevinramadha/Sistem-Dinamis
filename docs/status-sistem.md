@@ -12,7 +12,7 @@ judul, penjelasan singkat, dan tombol, dengan latar halaman sedikit digelapkan.
 | Berhasil | hijau ✓, tombol "Oke" | tertutup sendiri setelah ±4 detik (ada garis hitung mundur) |
 | Info (langkah berikutnya) | biru i, tombol "Mengerti" | tertutup sendiri setelah ±4 detik |
 | Galat | merah !, tombol "Tutup" | tetap tampil sampai ditutup |
-| Hasil perlu diperbarui | oranye ↻, tombol "Perbarui hasil" dan "Nanti saja" | muncul ±0,7 detik setelah pengguna berhenti mengubah pengaturan (tidak menghalangi saat menggeser slider); "Nanti saja" mengubahnya menjadi tombol kecil "… berubah · Perbarui hasil" di pojok kanan bawah |
+| Hasil perlu diperbarui | oranye ↻, tombol "Perbarui hasil" dan "Nanti saja" (bila kondisi lain dari Pencarian Target aktif: pilihan "tetap pakai kondisi dari Pencarian Target" atau "kondisi dasar") | muncul ±0,7 detik setelah pengguna berhenti mengubah pengaturan (tidak menghalangi saat menggeser slider); "Nanti saja" mengubahnya menjadi tombol kecil "… berubah · Perbarui hasil" di pojok kanan bawah |
 
 Semua popup dapat ditutup lewat tombol ✕, klik di luar kartu, atau tombol Esc; tombol utama
 langsung mendapat fokus sehingga bisa ditutup dengan Enter. Popup memakai `role="dialog"`
@@ -52,6 +52,9 @@ gulir ke hasil), `components/RouteProgress.tsx`, `components/ApplyLeversFromUrl.
 | SS-07 | Reset ke BAU | Setelah ada hasil, klik "Reset ke BAU" | Tuas kembali 0, hasil dihapus (tampil "Belum ada hasil simulasi"), popup hijau "Pengaturan dikembalikan ke kondisi tanpa kebijakan tambahan (BAU)…" |
 | SS-08 | Nilai dari Pencarian Target | Klik "Coba di halaman Simulasi →" di Pencarian Target | Popup info berisi nilai tuas dan kondisi lain yang dimuat; alamat halaman menjadi `/simulasi` tanpa parameter; tidak ada kotak pemberitahuan permanen |
 | SS-09 | Kembali ke kondisi dasar | Pada SS-08, jalankan simulasi lalu klik "Kembalikan ke kondisi dasar" | Kotak kondisi lain hilang, hasil dihapus, popup hijau "Berhasil kembali ke kondisi dasar…" |
+| SS-09b | Pilih kondisi sebelum ada hasil | Setelah SS-08 (belum menjalankan simulasi), ubah nilai Insentif | ±0,7 detik setelah berhenti mengubah muncul popup "Pakai kondisi yang mana?" dengan pilihan "Tetap pakai kondisi dari Pencarian Target" dan "Pakai kondisi dasar (data asli)"; memilih kondisi dasar menghapus kotak kondisi lain. Popup hanya ditanyakan sekali |
+| SS-09c | Pilih kondisi saat memperbarui hasil | Setelah SS-08 dan simulasi dijalankan, ubah nilai Insentif | Popup "Nilai tuas kebijakan sudah berubah" menyebut kondisi lain yang aktif dan memberi tiga pilihan: "Perbarui, tetap pakai kondisi dari Pencarian Target", "Perbarui dengan kondisi dasar (data asli)", "Nanti saja"; pilihan kedua menjalankan simulasi tanpa kondisi lain dan kotak kondisi lain hilang |
+| SS-09d | Angka kondisi lain | Bandingkan angka kondisi lain di Pencarian Target dan di kotak kuning Simulasi | Sama persis, dua desimal (mis. +4,26%) |
 | SS-10 | Unduh tabel | Setelah simulasi, klik tombol unduh CSV | Berkas `simulasi.csv` terunduh dan popup hijau "Tabel data diunduh sebagai simulasi.csv." |
 | SS-11 | Variabel yang ditampilkan | Setelah simulasi, centang/hapus centang variabel output | Grafik langsung menyesuaikan; tidak ada popup perbarui hasil |
 | SS-12 | Skenario tanpa hasil | Di halaman Skenario, klik kartu Sustainable sebelum menjalankan simulasi | Popup info "Skenario Sustainable dipilih. Klik Jalankan Simulasi…" |

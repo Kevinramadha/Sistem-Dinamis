@@ -170,26 +170,28 @@ export function StalePopup({
   onRun,
   busy,
   what = "Pengaturan",
+  text = "Hasil yang tampil masih memakai pengaturan sebelumnya. Perbarui hasil agar sesuai dengan pengaturan baru.",
+  primaryLabel = "Perbarui hasil",
+  secondary,
 }: {
   /** Berubah setiap kali pengaturan berubah; dipakai untuk menunda popup. */
   changeKey: string;
   onRun: () => void;
   busy: boolean;
   what?: string;
+  text?: string;
+  primaryLabel?: string;
+  /** Pilihan kedua, mis. memperbarui hasil dengan kondisi dasar. */
+  secondary?: { label: string; onClick: () => void };
 }) {
-  const [mode, setMode] = useState<"wait" | "dialog" | "mini">("wait");
-  useEffect(() => {
-    const t = setTimeout(() => setMode((m) => (m === "wait" ? "dialog" : m)), 700);
-    return () => clearTimeout(t);
-  }, [changeKey]);
-  const later = useCallback(() => setMode("mini"), []);
+  const mode = useDelayedOpen(changeKey);
+  const [dismissed, setDismissed] = useState(false);
+  const later = useCallback(() => setDismissed(true), []);
 
-  if (mode === "dialog")
+  if (mode && !dismissed)
     return (
       <CenterDialog role="dialog" color="#d97706" soft="#fef3c7" icon="↻" title={`${what} sudah berubah`} onDismiss={later}>
-        <p className="text-sm text-gray-600 leading-relaxed mb-5">
-          Hasil yang tampil masih memakai pengaturan sebelumnya. Perbarui hasil agar sesuai dengan pengaturan baru.
-        </p>
+        <p className="text-sm text-gray-600 leading-relaxed mb-5">{text}</p>
         <div className="flex flex-col gap-2">
           <button
             type="button"
@@ -198,8 +200,18 @@ export function StalePopup({
             disabled={busy}
             className="w-full rounded-xl bg-amber-600 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
           >
-            {busy ? "Menjalankan…" : "Perbarui hasil"}
+            {busy ? "Menjalankan…" : primaryLabel}
           </button>
+          {secondary && (
+            <button
+              type="button"
+              onClick={secondary.onClick}
+              disabled={busy}
+              className="w-full rounded-xl border border-amber-600 py-2.5 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50"
+            >
+              {secondary.label}
+            </button>
+          )}
           <button type="button" onClick={later} className="w-full rounded-xl py-2 text-sm font-semibold text-gray-500 hover:bg-slate-50">
             Nanti saja
           </button>
@@ -209,7 +221,7 @@ export function StalePopup({
 
   return (
     <div role="status" aria-live="polite" className="fixed right-4 bottom-4 z-40">
-      {mode === "mini" && (
+      {dismissed && (
         <button
           type="button"
           onClick={onRun}
@@ -221,5 +233,57 @@ export function StalePopup({
         </button>
       )}
     </div>
+  );
+}
+
+/** true setelah `changeKey` tidak berubah selama `ms` milidetik (pengguna berhenti mengubah pengaturan). */
+function useDelayedOpen(changeKey: string, ms = 700): boolean {
+  const [openedFor, setOpenedFor] = useState<string | null>(null);
+  useEffect(() => {
+    const t = setTimeout(() => setOpenedFor(changeKey), ms);
+    return () => clearTimeout(t);
+  }, [changeKey, ms]);
+  return openedFor !== null;
+}
+
+/**
+ * Popup pilihan di tengah layar, mis. kondisi mana yang dipakai setelah tuas
+ * diubah. Muncul setelah pengguna berhenti mengubah pengaturan. Menutup popup
+ * (✕, Esc, klik di luar) sama dengan memilih opsi pertama.
+ */
+export function ChoiceDialog({
+  changeKey,
+  title,
+  text,
+  options,
+}: {
+  changeKey: string;
+  title: string;
+  text: string;
+  options: { label: string; onSelect: () => void }[];
+}) {
+  const open = useDelayedOpen(changeKey);
+  if (!open) return null;
+  return (
+    <CenterDialog role="dialog" color="#1D5A8C" soft="#e8f1fa" icon="?" title={title} onDismiss={options[0].onSelect}>
+      <p className="text-sm text-gray-600 leading-relaxed mb-5">{text}</p>
+      <div className="flex flex-col gap-2">
+        {options.map((o, i) => (
+          <button
+            key={o.label}
+            type="button"
+            data-primary={i === 0 ? true : undefined}
+            onClick={o.onSelect}
+            className={
+              i === 0
+                ? "w-full rounded-xl bg-[#1D5A8C] py-2.5 text-sm font-semibold text-white hover:bg-[#174a73]"
+                : "w-full rounded-xl border border-[#1D5A8C] py-2.5 text-sm font-semibold text-[#1D5A8C] hover:bg-blue-50"
+            }
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </CenterDialog>
   );
 }

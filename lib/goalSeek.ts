@@ -569,7 +569,7 @@ export function describeAssumptionChanges(changesPct: Partial<Record<AssumptionK
   return ASSUMPTIONS.filter((a) => changesPct[a.key] !== undefined)
     .map((a) => {
       const p = changesPct[a.key]!;
-      return `${a.plain.toLowerCase()} ${p >= 0 ? "+" : "−"}${Math.abs(p).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%`;
+      return `${a.plain.toLowerCase()} ${p >= 0 ? "+" : "−"}${Math.abs(p).toLocaleString("id-ID", { maximumFractionDigits: 2 })}%`;
     })
     .join(", ");
 }

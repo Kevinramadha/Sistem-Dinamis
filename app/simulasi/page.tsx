@@ -10,7 +10,7 @@ import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
-import { StalePopup, Toast, revealElement, toastError, toastInfo, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
+import { ChoiceDialog, StalePopup, Toast, revealElement, toastError, toastInfo, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
 import ApplyLeversFromUrl, { type AssumptionChanges } from "@/components/ApplyLeversFromUrl";
 import { ASSUMPTIONS, assumptionBaseValues, assumptionConstants, describeAssumptionChanges } from "@/lib/goalSeek";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
@@ -46,6 +46,11 @@ export default function SimulasiPage() {
   // Perubahan asumsi model (persen dari nilai dasar) yang dibawa dari Pencarian Target.
   // Bukan tuas kebijakan; kosong pada pemakaian biasa.
   const [assumptions, setAssumptions] = useState<AssumptionChanges>({});
+  const currentAssumptions = assumptions;
+  // Nilai tuas yang dibawa dari Pencarian Target, untuk mendeteksi bila pengguna mengubah tuas
+  // sementara kondisi lain dari Pencarian Target masih aktif.
+  const [loadedLevers, setLoadedLevers] = useState<SimulationParams | null>(null);
+  const [choiceMade, setChoiceMade] = useState(false);
   const [runAssumptionsRaw, setRunAssumptions] = useState<AssumptionChanges>({});
   const runAssumptions = fresh ? runAssumptionsRaw : {};
   // Umpan balik status: pesan selesai, gulir ke hasil, dan penanda hasil lama.
@@ -62,6 +67,17 @@ export default function SimulasiPage() {
       params.kebijakan_konservasi_lahan !== runParams.kebijakan_konservasi_lahan ||
       JSON.stringify(assumptions) !== JSON.stringify(runAssumptions));
   const staleWhat = "Nilai tuas kebijakan";
+  const hasAssumptions = Object.keys(assumptions).length > 0;
+  const assumptionNote = describeAssumptionChanges(assumptions);
+  // Sebelum ada hasil: tanyakan sekali kondisi mana yang dipakai bila tuas diubah
+  // dari nilai bawaan Pencarian Target. Setelah ada hasil, pilihan ada di popup perbarui hasil.
+  const askAssumptionChoice =
+    hasAssumptions &&
+    !runParams &&
+    !choiceMade &&
+    !!loadedLevers &&
+    (params.insentif_kebijakan !== loadedLevers.insentif_kebijakan ||
+      params.kebijakan_konservasi_lahan !== loadedLevers.kebijakan_konservasi_lahan);
 
   const describeRun = (p: SimulationParams, a: AssumptionChanges) => {
     const note = describeAssumptionChanges(a);
@@ -81,7 +97,17 @@ export default function SimulasiPage() {
     setActivePreset("");
   };
 
-  const runSimulation = async () => {
+  /**
+   * Menjalankan simulasi dengan pengaturan di panel kiri. `opts.assumptions`
+   * dipakai bila pengguna memilih kondisi lain yang berbeda (mis. kembali ke
+   * kondisi dasar) langsung dari popup.
+   */
+  const runSimulation = async (opts?: { assumptions?: AssumptionChanges }) => {
+    const assumptions = opts?.assumptions ?? currentAssumptions;
+    if (opts?.assumptions) {
+      setAssumptions(opts.assumptions);
+      if (Object.keys(opts.assumptions).length === 0) setLoadedLevers(null);
+    }
     setIsLoading(true);
     setToast(null);
     try {
@@ -138,6 +164,7 @@ export default function SimulasiPage() {
   };
 
   const resetToBau = () => {
+    setLoadedLevers(null);
     setParams(bau.params);
     setActivePreset("BAU");
     setAssumptions({});
@@ -146,6 +173,7 @@ export default function SimulasiPage() {
   };
 
   const resetAssumptions = () => {
+    setLoadedLevers(null);
     setAssumptions({});
     clearResults();
     setToast(toastOk("Kondisi lain kembali sesuai data dan hasil sebelumnya dihapus. Klik Jalankan Simulasi untuk melihat hasil baru.", "Berhasil kembali ke kondisi dasar"));
@@ -479,6 +507,8 @@ export default function SimulasiPage() {
           <Suspense fallback={null}>
             <ApplyLeversFromUrl
               onApply={(applied) => {
+                setLoadedLevers(Object.keys(applied.assumptions).length ? applied.levers : null);
+                setChoiceMade(false);
                 setParams(applied.levers);
                 setAssumptions(applied.assumptions);
                 setActivePreset("");
@@ -499,9 +529,36 @@ export default function SimulasiPage() {
           {stale && (
             <StalePopup
               changeKey={`${params.insentif_kebijakan}|${params.kebijakan_konservasi_lahan}|${JSON.stringify(assumptions)}`}
-              onRun={runSimulation}
+              onRun={() => runSimulation()}
               busy={isLoading}
               what={staleWhat}
+              {...(hasAssumptions && {
+                text: `Hasil yang tampil masih memakai pengaturan sebelumnya. Kondisi lain dari Pencarian Target (${assumptionNote}) masih aktif. Mau diperbarui dengan kondisi yang mana?`,
+                primaryLabel: "Perbarui, tetap pakai kondisi dari Pencarian Target",
+                secondary: {
+                  label: "Perbarui dengan kondisi dasar (data asli)",
+                  onClick: () => runSimulation({ assumptions: {} }),
+                },
+              })}
+            />
+          )}
+          {askAssumptionChoice && (
+            <ChoiceDialog
+              changeKey={`${params.insentif_kebijakan}|${params.kebijakan_konservasi_lahan}`}
+              title="Pakai kondisi yang mana?"
+              text={`Nilai tuas sudah diubah, sedangkan kondisi lain dari Pencarian Target (${assumptionNote}) masih aktif. Pilih kondisi yang dipakai saat simulasi dijalankan.`}
+              options={[
+                { label: "Tetap pakai kondisi dari Pencarian Target", onSelect: () => setChoiceMade(true) },
+                {
+                  label: "Pakai kondisi dasar (data asli)",
+                  onSelect: () => {
+                    setChoiceMade(true);
+                    setLoadedLevers(null);
+                    setAssumptions({});
+                    setToast(toastOk("Kondisi lain kembali sesuai data. Klik Jalankan Simulasi untuk melihat hasilnya.", "Memakai kondisi dasar"));
+                  },
+                },
+              ]}
             />
           )}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
@@ -611,7 +668,7 @@ export default function SimulasiPage() {
                       const base = assumptionBaseValues(baseConfig?.params)[a.key];
                       return (
                         <li key={a.key}>
-                          {a.plain}: <strong>{pct >= 0 ? "+" : "−"}{Math.abs(pct).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%</strong>{" "}
+                          {a.plain}: <strong>{pct >= 0 ? "+" : "−"}{Math.abs(pct).toLocaleString("id-ID", { maximumFractionDigits: 2 })}%</strong>{" "}
                           <span className="text-xs">(menjadi {a.show(base * (1 + pct / 100))})</span>
                         </li>
                       );
@@ -629,7 +686,7 @@ export default function SimulasiPage() {
 
               {/* Action buttons */}
               <div className="space-y-2">
-                <button onClick={runSimulation} disabled={isLoading} className="run-btn">
+                <button onClick={() => runSimulation()} disabled={isLoading} className="run-btn">
                   {isLoading ? (
                     <>
                       <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
