@@ -55,8 +55,9 @@ Penurunan Dasar, Sensitivitas Konstruksi terhadap TPK, TPK Ambang, Sensitivitas 
 Investasi, Laju Pembangunan ODTW Non Investasi, Laju Penutupan Dasar ODTW, Laju Konversi
 Dasar); parameter regulasi (Laju Demolisi Dasar, Laju Keluar Dasar TK); parameter asumsi
 (bobot daya tarik, elastisitas, batas efek ODTW, lahan per hotel/ODTW, waktu penyesuaian TK);
-dan tuas kebijakan. Halaman Pembaruan Data menampilkan keterangan bahwa parameter ini
-ditetapkan peneliti dan perlu diturunkan ulang secara terpisah bila struktur data berubah.
+dan tuas kebijakan. Halaman Pembaruan Data menampilkannya di panel "Angka tetap yang dipakai
+model" dengan nama sehari-hari, penjelasan singkat, dan satuan yang mudah dipahami, disertai
+keterangan bahwa angka ini perlu dihitung ulang peneliti bila cara pendataan BPS berubah.
 
 ## 3. Keputusan desain
 
@@ -143,6 +144,6 @@ cp build/*.js lib/model-final.js
 | BB-24 | Buka berkas tersimpan (rusak) | Pilih `.json` yang datanya tidak lengkap | Pesan "Konfigurasi tidak dapat diimpor …"; data dasar tidak berubah | Sesuai |
 | BB-25 | Kembali ke data penelitian | Klik "Kembali ke data penelitian (2025)" lalu konfirmasi | Penanda kembali "2025 (data penelitian)"; data tersimpan dihapus | Sesuai |
 | BB-26 | Tampilan saat data penelitian | Buka halaman tanpa pembaruan data | Kartu status menjelaskan bahwa data asli penelitian dipakai; tombol "Kembali ke data penelitian" tidak ditampilkan; bagian "Simpan ke berkas" berisi keterangan bahwa fitur tersedia setelah data tahun baru diterapkan | Sesuai |
-| BB-27 | Informasi kelompok C | Buka panel "Parameter yang tidak diubah aplikasi" | Daftar parameter tetap dan keterangan perlu diturunkan ulang peneliti tampil | Sesuai |
+| BB-27 | Informasi angka tetap (kelompok C) | Buka panel "Angka tetap yang dipakai model" | Setiap angka tampil dengan nama sehari-hari, penjelasan satu kalimat, satuan yang mudah dipahami (misalnya "5% per tahun"), dan nama variabel di model; disertai keterangan bahwa angka ini perlu dihitung ulang peneliti bila cara pendataan BPS berubah | Sesuai |
 | BB-28 | Penyimpanan tidak tersedia | `localStorage` diblokir peramban, lalu terapkan data 2026 | Aplikasi tetap berjalan; data dasar 2026 berlaku selama halaman terbuka | Sesuai |
 | BB-29 | Fitur lama tetap berjalan | Buka Beranda dan Model; jalankan 3 skenario dengan data penelitian | Halaman tampil normal; hasil 2025–2050 identik dengan sebelum fitur ditambahkan | Sesuai |
