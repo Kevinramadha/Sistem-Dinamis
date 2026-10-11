@@ -10,7 +10,7 @@ import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle, summarizeCompare } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
-import { StalePopup, Toast, revealElement, toastError, toastInfo, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
+import { StaleHint, Toast, revealElement, toastError, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
 import type { CompareInput } from "@/lib/comparison";
 
@@ -47,7 +47,6 @@ export default function SkenarioPage() {
     !!simulationData &&
     !!runConfig &&
     (compareAll !== runConfig.compareAll || (!compareAll && activeScenario !== runConfig.activeScenario));
-  const staleWhat = "Pilihan skenario";
   const [showCombinedChart, setShowCombinedChart] = useState(false);
   const [activeTableVariable, setActiveTableVariable] = useState<string>("");
   const [sortConfig, setSortConfig] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null);
@@ -63,7 +62,7 @@ export default function SkenarioPage() {
         setSimulationData(allData);
         setBaselineData(null);
         setResultBase(override);
-        setToast(toastOk(`Ketiga skenario dibandingkan · periode ${baseYear}–2050. Hasilnya ada di bawah.`, "Simulasi selesai"));
+        setToast(toastOk(`3 skenario dibandingkan · ${baseYear}–2050.`, "Simulasi selesai"));
       } else {
         const activeScenarioObj = scenariosList.find((s) => s.id === activeScenario);
         if (activeScenarioObj) {
@@ -76,14 +75,14 @@ export default function SkenarioPage() {
           setSimulationData({ [activeScenarioObj.label]: data });
           setBaselineData(baseline);
           setResultBase(override);
-          setToast(toastOk(`Skenario ${activeScenarioObj.label} · periode ${baseYear}–2050. Hasilnya ada di bawah.`, "Simulasi selesai"));
+          setToast(toastOk(`Skenario ${activeScenarioObj.label} · ${baseYear}–2050.`, "Simulasi selesai"));
         }
       }
       setRunConfig({ activeScenario, compareAll });
       setRevealTick((t) => t + 1);
     } catch (error) {
       console.error("Simulation error:", error);
-      setToast(toastError("Muat ulang halaman lalu coba lagi.", "Simulasi gagal dijalankan"));
+      setToast(toastError("Muat ulang halaman, lalu coba lagi.", "Simulasi gagal"));
     } finally {
       setIsLoading(false);
     }
@@ -385,9 +384,7 @@ export default function SkenarioPage() {
         {/* ── MAIN CONTENT ─────────────────────────────────── */}
         <div className="max-w-6xl mx-auto px-6 py-12">
           <Toast toast={stale ? null : toast} onClose={closeToast} />
-          {stale && (
-            <StalePopup changeKey={`${activeScenario}|${compareAll}`} onRun={runSimulation} busy={isLoading} what={staleWhat} />
-          )}
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
             {/* ── CONTROL PANEL ────────────────────────────── */}
@@ -413,8 +410,6 @@ export default function SkenarioPage() {
                           onClick={() => {
                             setActiveScenario(scenario.id);
                             setCompareAll(false);
-                            if (!simulationData)
-                              setToast(toastInfo("Klik Jalankan Simulasi untuk melihat hasilnya.", `Skenario ${scenario.label} dipilih`));
                           }}
                           className={`scenario-btn ${isActive ? "active" : "inactive"}`}
                           style={isActive ? { background: scenario.color, color: 'white' } : { color: '#374151' }}
@@ -446,14 +441,6 @@ export default function SkenarioPage() {
                   <button
                     onClick={() => {
                       setCompareAll(!compareAll);
-                      if (!simulationData)
-                        setToast(
-                          toastInfo(
-                            compareAll
-                              ? "Mode perbandingan dimatikan. Klik Jalankan Simulasi untuk melihat skenario yang dipilih."
-                              : "Mode perbandingan 3 skenario aktif. Klik Jalankan Simulasi untuk melihat hasilnya."
-                          )
-                        );
                     }}
                     className="compare-toggle"
                     style={compareAll
@@ -547,6 +534,7 @@ export default function SkenarioPage() {
                   )}
                 </button>
 
+                <StaleHint show={stale && !isLoading} />
                 {selectedVariables.length === 0 && (
                   <p className="text-[11px] text-center" style={{ color: '#E89D3E' }}>
                     ⚠ Pilih minimal 1 variabel output
@@ -731,7 +719,7 @@ export default function SkenarioPage() {
                                 const blob = new Blob([csv], { type: "text/csv" });
                                 const url = URL.createObjectURL(blob);
                                 const a = document.createElement("a"); a.href = url; a.download = "skenario.csv"; a.click();
-                                setToast(toastOk("Berkas skenario.csv tersimpan di folder unduhan.", "Tabel diunduh"));
+                                setToast(toastOk("skenario.csv tersimpan di folder unduhan.", "Tabel diunduh"));
                               }}
                               style={{
                                 display: 'flex', alignItems: 'center', gap: 6,
@@ -853,7 +841,7 @@ export default function SkenarioPage() {
                                   const blob = new Blob([csv], { type: "text/csv" });
                                   const url = URL.createObjectURL(blob);
                                   const a = document.createElement("a"); a.href = url; a.download = "skenario-komparasi.csv"; a.click();
-                                  setToast(toastOk("Berkas skenario-komparasi.csv tersimpan di folder unduhan.", "Tabel diunduh"));
+                                  setToast(toastOk("skenario-komparasi.csv tersimpan di folder unduhan.", "Tabel diunduh"));
                                 }}
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: 6,

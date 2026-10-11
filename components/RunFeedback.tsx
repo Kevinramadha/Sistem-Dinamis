@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef } from "react";
 
 // Umpan balik status sistem (heuristik "visibility of system status"):
 // proses yang sangat cepat tetap terlihat berjalan, setiap aksi penting
@@ -158,114 +158,32 @@ export function Toast({ toast, onClose }: { toast: ToastMessage | null; onClose:
   );
 }
 
-/**
- * Pemberitahuan bahwa hasil di layar dibuat dengan pengaturan lama. Dipasang
- * hanya selama hasil tidak sesuai pengaturan (pemanggil memakai `stale && …`).
- * Popup tengah baru muncul setelah pengguna berhenti mengubah pengaturan,
- * agar tidak menghalangi saat menggeser slider. "Nanti saja" mengecilkannya
- * menjadi tombol kecil di pojok bawah.
- */
-export function StalePopup({
-  changeKey,
-  onRun,
-  busy,
-  what = "Pengaturan",
-  text = "Hasil yang tampil masih memakai pengaturan sebelumnya. Perbarui hasil agar sesuai dengan pengaturan baru.",
-  primaryLabel = "Perbarui hasil",
-  secondary,
-}: {
-  /** Berubah setiap kali pengaturan berubah; dipakai untuk menunda popup. */
-  changeKey: string;
-  onRun: () => void;
-  busy: boolean;
-  what?: string;
-  text?: string;
-  primaryLabel?: string;
-  /** Pilihan kedua, mis. memperbarui hasil dengan kondisi dasar. */
-  secondary?: { label: string; onClick: () => void };
-}) {
-  const mode = useDelayedOpen(changeKey);
-  const [dismissed, setDismissed] = useState(false);
-  const later = useCallback(() => setDismissed(true), []);
-
-  if (mode && !dismissed)
-    return (
-      <CenterDialog role="dialog" color="#d97706" soft="#fef3c7" icon="↻" title={`${what} sudah berubah`} onDismiss={later}>
-        <p className="text-sm text-gray-600 leading-relaxed mb-5">{text}</p>
-        <div className="flex flex-col gap-2">
-          <button
-            type="button"
-            data-primary
-            onClick={onRun}
-            disabled={busy}
-            className="w-full rounded-xl bg-amber-600 py-2.5 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
-          >
-            {busy ? "Menjalankan…" : primaryLabel}
-          </button>
-          {secondary && (
-            <button
-              type="button"
-              onClick={secondary.onClick}
-              disabled={busy}
-              className="w-full rounded-xl border border-amber-600 py-2.5 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:opacity-50"
-            >
-              {secondary.label}
-            </button>
-          )}
-          <button type="button" onClick={later} className="w-full rounded-xl py-2 text-sm font-semibold text-gray-500 hover:bg-slate-50">
-            Nanti saja
-          </button>
-        </div>
-      </CenterDialog>
-    );
-
+/** Keterangan kecil di bawah tombol Jalankan Simulasi bila hasil di layar memakai pengaturan lama. */
+export function StaleHint({ show }: { show: boolean }) {
   return (
-    <div role="status" aria-live="polite" className="fixed right-4 bottom-4 z-40">
-      {dismissed && (
-        <button
-          type="button"
-          onClick={onRun}
-          disabled={busy}
-          className="flex items-center gap-2 rounded-full bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-amber-700 disabled:opacity-60"
-        >
-          <span aria-hidden="true">↻</span>
-          {busy ? "Menjalankan…" : `${what} berubah · Perbarui hasil`}
-        </button>
-      )}
-    </div>
+    <p role="status" aria-live="polite" className="text-[11px] text-center leading-snug" style={{ color: "#b45309" }}>
+      {show && "Pengaturan berubah. Klik Jalankan Simulasi untuk memperbarui hasil."}
+    </p>
   );
 }
 
-/** true setelah `changeKey` tidak berubah selama `ms` milidetik (pengguna berhenti mengubah pengaturan). */
-function useDelayedOpen(changeKey: string, ms = 700): boolean {
-  const [openedFor, setOpenedFor] = useState<string | null>(null);
-  useEffect(() => {
-    const t = setTimeout(() => setOpenedFor(changeKey), ms);
-    return () => clearTimeout(t);
-  }, [changeKey, ms]);
-  return openedFor !== null;
-}
-
 /**
- * Popup pilihan di tengah layar, mis. kondisi mana yang dipakai setelah tuas
- * diubah. Muncul setelah pengguna berhenti mengubah pengaturan. Menutup popup
- * (✕, Esc, klik di luar) sama dengan memilih opsi pertama.
+ * Popup pilihan di tengah layar, mis. kondisi mana yang dipakai sebelum
+ * simulasi dijalankan. ✕, Esc, atau klik di luar kartu membatalkan.
  */
 export function ChoiceDialog({
-  changeKey,
   title,
   text,
   options,
+  onCancel,
 }: {
-  changeKey: string;
   title: string;
   text: string;
   options: { label: string; onSelect: () => void }[];
+  onCancel: () => void;
 }) {
-  const open = useDelayedOpen(changeKey);
-  if (!open) return null;
   return (
-    <CenterDialog role="dialog" color="#1D5A8C" soft="#e8f1fa" icon="?" title={title} onDismiss={options[0].onSelect}>
+    <CenterDialog role="dialog" color="#1D5A8C" soft="#e8f1fa" icon="?" title={title} onDismiss={onCancel}>
       <p className="text-sm text-gray-600 leading-relaxed mb-5">{text}</p>
       <div className="flex flex-col gap-2">
         {options.map((o, i) => (
@@ -283,6 +201,9 @@ export function ChoiceDialog({
             {o.label}
           </button>
         ))}
+        <button type="button" onClick={onCancel} className="w-full rounded-xl py-2 text-sm font-semibold text-gray-500 hover:bg-slate-50">
+          Batal
+        </button>
       </div>
     </CenterDialog>
   );

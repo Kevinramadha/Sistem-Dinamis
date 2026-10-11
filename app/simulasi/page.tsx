@@ -10,7 +10,7 @@ import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
 import { useBaseData } from "@/components/BaseDataProvider";
-import { ChoiceDialog, StalePopup, Toast, revealElement, toastError, toastInfo, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
+import { ChoiceDialog, StaleHint, Toast, revealElement, toastError, toastInfo, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
 import ApplyLeversFromUrl, { type AssumptionChanges } from "@/components/ApplyLeversFromUrl";
 import { ASSUMPTIONS, assumptionBaseValues, assumptionConstants, describeAssumptionChanges } from "@/lib/goalSeek";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
@@ -50,7 +50,9 @@ export default function SimulasiPage() {
   // Nilai tuas yang dibawa dari Pencarian Target, untuk mendeteksi bila pengguna mengubah tuas
   // sementara kondisi lain dari Pencarian Target masih aktif.
   const [loadedLevers, setLoadedLevers] = useState<SimulationParams | null>(null);
-  const [choiceMade, setChoiceMade] = useState(false);
+  // Pengguna sudah memilih tetap memakai kondisi Pencarian Target; tidak ditanya ulang sampai nilai baru dimuat.
+  const [keepChosen, setKeepChosen] = useState(false);
+  const [choiceOpen, setChoiceOpen] = useState(false);
   const [runAssumptionsRaw, setRunAssumptions] = useState<AssumptionChanges>({});
   const runAssumptions = fresh ? runAssumptionsRaw : {};
   // Umpan balik status: pesan selesai, gulir ke hasil, dan penanda hasil lama.
@@ -66,18 +68,17 @@ export default function SimulasiPage() {
     (params.insentif_kebijakan !== runParams.insentif_kebijakan ||
       params.kebijakan_konservasi_lahan !== runParams.kebijakan_konservasi_lahan ||
       JSON.stringify(assumptions) !== JSON.stringify(runAssumptions));
-  const staleWhat = "Nilai tuas kebijakan";
   const hasAssumptions = Object.keys(assumptions).length > 0;
   const assumptionNote = describeAssumptionChanges(assumptions);
-  // Sebelum ada hasil: tanyakan sekali kondisi mana yang dipakai bila tuas diubah
-  // dari nilai bawaan Pencarian Target. Setelah ada hasil, pilihan ada di popup perbarui hasil.
-  const askAssumptionChoice =
+  // Saat Jalankan Simulasi diklik: bila tuas sudah diubah dari nilai Pencarian Target
+  // sementara kondisinya masih aktif, tanyakan dulu kondisi mana yang dipakai.
+  const needsChoice =
     hasAssumptions &&
-    !runParams &&
-    !choiceMade &&
     !!loadedLevers &&
+    !keepChosen &&
     (params.insentif_kebijakan !== loadedLevers.insentif_kebijakan ||
       params.kebijakan_konservasi_lahan !== loadedLevers.kebijakan_konservasi_lahan);
+  const onRunClick = () => (needsChoice ? setChoiceOpen(true) : runSimulation());
 
   const describeRun = (p: SimulationParams, a: AssumptionChanges) => {
     const note = describeAssumptionChanges(a);
@@ -130,14 +131,14 @@ export default function SimulasiPage() {
       setToast(toastOk(
         `Insentif ${(params.insentif_kebijakan * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%, ` +
           `Konservasi ${(params.kebijakan_konservasi_lahan * 100).toLocaleString("id-ID", { maximumFractionDigits: 1 })}%` +
-          `${note ? `, ${note}` : ""} · periode ${baseYear}–2050. Hasilnya ada di bawah.`,
+          `${note ? `, ${note}` : ""} · ${baseYear}–2050.`,
         "Simulasi selesai"
       ));
       setRevealTick((t) => t + 1);
       setBaselineData(baseline);
     } catch (error) {
       console.error("Simulation error:", error);
-      setToast(toastError("Muat ulang halaman lalu coba lagi.", "Simulasi gagal dijalankan"));
+      setToast(toastError("Muat ulang halaman, lalu coba lagi.", "Simulasi gagal"));
     } finally {
       setIsLoading(false);
     }
@@ -158,8 +159,6 @@ export default function SimulasiPage() {
     if (scenario) {
       setParams(scenario.params);
       setActivePreset(scenarioKey);
-      // Bila sudah ada hasil, popup "Perbarui hasil" yang tampil; bila belum, beri tahu langkah berikutnya.
-      if (!runParams) setToast(toastInfo("Klik Jalankan Simulasi untuk melihat hasilnya.", `Preset ${scenario.label} dimuat`));
     }
   };
 
@@ -169,14 +168,14 @@ export default function SimulasiPage() {
     setActivePreset("BAU");
     setAssumptions({});
     clearResults();
-    setToast(toastOk("Semua tuas kembali ke 0% (tanpa kebijakan tambahan) dan hasil sebelumnya dihapus.", "Kembali ke kondisi BAU"));
+    setToast(toastOk("Tuas kembali ke 0% dan hasil lama dihapus.", "Kembali ke BAU"));
   };
 
   const resetAssumptions = () => {
     setLoadedLevers(null);
     setAssumptions({});
     clearResults();
-    setToast(toastOk("Kondisi lain kembali sesuai data dan hasil sebelumnya dihapus. Klik Jalankan Simulasi untuk melihat hasil baru.", "Berhasil kembali ke kondisi dasar"));
+    setToast(toastOk("Kondisi lain kembali sesuai data. Hasil lama dihapus.", "Kembali ke kondisi asli"));
   };
 
   const chartData = useMemo(() => {
@@ -508,7 +507,7 @@ export default function SimulasiPage() {
             <ApplyLeversFromUrl
               onApply={(applied) => {
                 setLoadedLevers(Object.keys(applied.assumptions).length ? applied.levers : null);
-                setChoiceMade(false);
+                setKeepChosen(false);
                 setParams(applied.levers);
                 setAssumptions(applied.assumptions);
                 setActivePreset("");
@@ -518,44 +517,33 @@ export default function SimulasiPage() {
                   toastInfo(
                     `Insentif ${pctText(applied.levers.insentif_kebijakan)}, ` +
                       `Konservasi ${pctText(applied.levers.kebijakan_konservasi_lahan)}${note ? `, ${note}` : ""}. ` +
-                      "Klik Jalankan Simulasi untuk melihat hasilnya.",
-                    "Nilai dari Pencarian Target dimuat"
+                      "Klik Jalankan Simulasi.",
+                    "Nilai dari Pencarian Target"
                   )
                 );
               }}
             />
           </Suspense>
           <Toast toast={stale ? null : toast} onClose={closeToast} />
-          {stale && (
-            <StalePopup
-              changeKey={`${params.insentif_kebijakan}|${params.kebijakan_konservasi_lahan}|${JSON.stringify(assumptions)}`}
-              onRun={() => runSimulation()}
-              busy={isLoading}
-              what={staleWhat}
-              {...(hasAssumptions && {
-                text: `Hasil yang tampil masih memakai pengaturan sebelumnya. Kondisi lain dari Pencarian Target (${assumptionNote}) masih aktif. Mau diperbarui dengan kondisi yang mana?`,
-                primaryLabel: "Perbarui, tetap pakai kondisi dari Pencarian Target",
-                secondary: {
-                  label: "Perbarui dengan kondisi dasar (data asli)",
-                  onClick: () => runSimulation({ assumptions: {} }),
-                },
-              })}
-            />
-          )}
-          {askAssumptionChoice && (
+          {choiceOpen && (
             <ChoiceDialog
-              changeKey={`${params.insentif_kebijakan}|${params.kebijakan_konservasi_lahan}`}
               title="Pakai kondisi yang mana?"
-              text={`Nilai tuas sudah diubah, sedangkan kondisi lain dari Pencarian Target (${assumptionNote}) masih aktif. Pilih kondisi yang dipakai saat simulasi dijalankan.`}
+              text={`Tuas sudah diubah, tetapi kondisi dari Pencarian Target (${assumptionNote}) masih aktif.`}
+              onCancel={() => setChoiceOpen(false)}
               options={[
-                { label: "Tetap pakai kondisi dari Pencarian Target", onSelect: () => setChoiceMade(true) },
                 {
-                  label: "Pakai kondisi dasar (data asli)",
+                  label: "Tetap pakai kondisi itu",
                   onSelect: () => {
-                    setChoiceMade(true);
-                    setLoadedLevers(null);
-                    setAssumptions({});
-                    setToast(toastOk("Kondisi lain kembali sesuai data. Klik Jalankan Simulasi untuk melihat hasilnya.", "Memakai kondisi dasar"));
+                    setChoiceOpen(false);
+                    setKeepChosen(true);
+                    runSimulation();
+                  },
+                },
+                {
+                  label: "Pakai kondisi asli",
+                  onSelect: () => {
+                    setChoiceOpen(false);
+                    runSimulation({ assumptions: {} });
                   },
                 },
               ]}
@@ -675,18 +663,18 @@ export default function SimulasiPage() {
                     })}
                   </ul>
                   <p className="text-xs mt-2 leading-relaxed">
-                    Dibawa dari Pencarian Target. Ini <strong>bukan kebijakan</strong>, melainkan pengandaian bila kondisi tersebut
-                    berbeda dari data. Hasil tetap dibandingkan dengan kondisi tanpa kebijakan pada data asli.
+                    Dari Pencarian Target. Ini pengandaian, <strong>bukan kebijakan</strong>. Hasil tetap dibandingkan dengan
+                    kondisi tanpa kebijakan.
                   </p>
                   <button type="button" onClick={resetAssumptions} className="mt-2 text-xs font-semibold underline">
-                    Kembalikan ke kondisi dasar
+                    Kembalikan ke kondisi asli
                   </button>
                 </div>
               )}
 
               {/* Action buttons */}
               <div className="space-y-2">
-                <button onClick={() => runSimulation()} disabled={isLoading} className="run-btn">
+                <button onClick={onRunClick} disabled={isLoading} className="run-btn">
                   {isLoading ? (
                     <>
                       <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
@@ -699,6 +687,7 @@ export default function SimulasiPage() {
                     <>Jalankan Simulasi</>
                   )}
                 </button>
+                <StaleHint show={stale && !isLoading} />
                 <button onClick={resetToBau} className="reset-btn">
                   ↺ Reset ke BAU
                 </button>
@@ -882,7 +871,7 @@ export default function SimulasiPage() {
                         const blob = new Blob([csv], { type: "text/csv" });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement("a"); a.href = url; a.download = "simulasi.csv"; a.click();
-                        setToast(toastOk("Berkas simulasi.csv tersimpan di folder unduhan.", "Tabel diunduh"));
+                        setToast(toastOk("simulasi.csv tersimpan di folder unduhan.", "Tabel diunduh"));
                       }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 6,

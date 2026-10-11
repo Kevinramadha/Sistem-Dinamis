@@ -63,9 +63,10 @@ export default function PembaruanDataPage() {
   // Popup status; pesan di bagian atas halaman tetap ditampilkan bersamaan.
   const [toast, setToast] = useState<ToastMessage | null>(null);
   const closeToast = useCallback(() => setToast(null), []);
-  const notify = (m: { kind: "ok" | "error"; text: string }) => {
+  /** Pesan di atas halaman (lengkap) sekaligus popup (judul dan teks ringkas). */
+  const notify = (m: { kind: "ok" | "error"; text: string }, title: string, short = m.text) => {
     setMessage(m);
-    setToast(m.kind === "ok" ? toastOk(m.text) : toastError(m.text));
+    setToast(m.kind === "ok" ? toastOk(short, title) : toastError(short, title));
   };
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const [mode, setMode] = useState<"unggah" | "form">("unggah");
@@ -83,9 +84,9 @@ export default function PembaruanDataPage() {
     setBusy("Menyiapkan template .xlsx…");
     try {
       downloadBlob(await buildTemplateXlsx(activeRows), `${TEMPLATE_BASENAME}-${baseYear}.xlsx`);
-      setToast(toastOk("Tambahkan baris tahun baru, lalu unggah kembali berkasnya di Langkah 2.", "Template .xlsx diunduh"));
+      setToast(toastOk("Isi baris tahun baru, lalu unggah di Langkah 2.", "Template diunduh"));
     } catch (e) {
-      notify({ kind: "error", text: `Gagal membuat template: ${(e as Error).message}` });
+      notify({ kind: "error", text: `Gagal membuat template: ${(e as Error).message}` }, "Template gagal dibuat", (e as Error).message);
     } finally {
       setBusy(null);
     }
@@ -93,7 +94,7 @@ export default function PembaruanDataPage() {
 
   const downloadCsv = () => {
     downloadBlob(new Blob([buildTemplateCsv(activeRows)], { type: "text/csv;charset=utf-8" }), `${TEMPLATE_BASENAME}-${baseYear}.csv`);
-    setToast(toastOk("Tambahkan baris tahun baru, lalu unggah kembali berkasnya di Langkah 2.", "Template .csv diunduh"));
+    setToast(toastOk("Isi baris tahun baru, lalu unggah di Langkah 2.", "Template diunduh"));
   };
 
   const onUpload = async (file: File | undefined) => {
@@ -103,10 +104,10 @@ export default function PembaruanDataPage() {
     try {
       const rows = await parseTemplateFile(file);
       setCandidate(makeCandidate("unggah", `Berkas: ${file.name}`, rows));
-      setToast(toastInfo(`Periksa hasil pemeriksaan ${file.name} di Langkah 3 sebelum menerapkan.`, "Berkas terbaca"));
+      setToast(toastInfo("Cek hasil pemeriksaan di Langkah 3.", "Berkas terbaca"));
     } catch (e) {
       setCandidate(null);
-      notify({ kind: "error", text: (e as Error).message });
+      notify({ kind: "error", text: (e as Error).message }, "Berkas tidak bisa dibaca");
     } finally {
       setBusy(null);
       if (fileRef.current) fileRef.current.value = "";
@@ -122,7 +123,7 @@ export default function PembaruanDataPage() {
       row[s.key] = t === "" ? NaN : Number.isNaN(n) ? Infinity : n;
     }
     setCandidate(makeCandidate("form", `Isian form tahun ${nextYear}`, [...activeRows.map((r) => ({ ...r })), row]));
-    setToast(toastInfo("Lihat hasil pemeriksaan di Langkah 3 sebelum menerapkan.", `Isian tahun ${nextYear} diperiksa`));
+    setToast(toastInfo("Cek hasil pemeriksaan di Langkah 3.", "Isian diperiksa"));
   };
 
   const onImportJson = async (file: File | undefined) => {
@@ -131,10 +132,10 @@ export default function PembaruanDataPage() {
     try {
       const cfg = parseConfig(JSON.parse(await file.text()));
       setCandidate(makeCandidate("impor", `Konfigurasi: ${file.name}`, cfg.rows));
-      setToast(toastInfo(`Periksa hasil pemeriksaan ${file.name} di Langkah 3 sebelum menerapkan.`, "Berkas terbaca"));
+      setToast(toastInfo("Cek hasil pemeriksaan di Langkah 3.", "Berkas terbaca"));
     } catch (e) {
       setCandidate(null);
-      notify({ kind: "error", text: `Konfigurasi tidak dapat diimpor. ${(e as Error).message}` });
+      notify({ kind: "error", text: `Konfigurasi tidak dapat diimpor. ${(e as Error).message}` }, "Berkas tidak bisa dibuka", (e as Error).message);
     } finally {
       if (jsonRef.current) jsonRef.current.value = "";
     }
@@ -146,10 +147,14 @@ export default function PembaruanDataPage() {
       const cfg = apply(candidate.rows);
       setCandidate(null);
       setForm(Object.fromEntries(SERIES.map((s) => [s.key, ""])) as Record<SeriesKey, string>);
-      notify({ kind: "ok", text: `Data dasar tahun ${cfg.baseYear} diterapkan. Simulasi di halaman Skenario dan Eksplorasi Simulasi kini berjalan ${cfg.baseYear}–2050.` });
+      notify(
+        { kind: "ok", text: `Data dasar tahun ${cfg.baseYear} diterapkan. Simulasi di halaman Skenario dan Eksplorasi Simulasi kini berjalan ${cfg.baseYear}–2050.` },
+        "Data diterapkan",
+        `Simulasi kini berjalan ${cfg.baseYear}–2050.`
+      );
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
-      notify({ kind: "error", text: (e as Error).message });
+      notify({ kind: "error", text: (e as Error).message }, "Data gagal diterapkan");
     }
   };
 
@@ -157,13 +162,17 @@ export default function PembaruanDataPage() {
     if (!window.confirm(`Kembalikan ke data penelitian (${RESEARCH_BASE_YEAR})? Data dasar hasil pembaruan akan dihapus dari peramban ini. Ekspor konfigurasi terlebih dahulu bila masih diperlukan.`)) return;
     reset();
     setCandidate(null);
-    notify({ kind: "ok", text: `Data dasar dikembalikan ke data penelitian (${RESEARCH_BASE_YEAR}).` });
+    notify(
+      { kind: "ok", text: `Data dasar dikembalikan ke data penelitian (${RESEARCH_BASE_YEAR}).` },
+      "Kembali ke data penelitian",
+      `Simulasi memakai data ${RESEARCH_BASE_YEAR} lagi.`
+    );
   };
 
   const onExport = () => {
     if (!config) return;
     downloadBlob(new Blob([JSON.stringify(config, null, 2)], { type: "application/json" }), `konfigurasi-data-dasar-simdiy-${config.baseYear}.json`);
-    setToast(toastOk("Buka berkas .json ini nanti untuk memakai data dasar yang sama lagi.", `Data dasar ${config.baseYear} disimpan`));
+    setToast(toastOk("Buka berkas ini kapan saja untuk memakai data yang sama.", "Data disimpan"));
   };
 
   return (
