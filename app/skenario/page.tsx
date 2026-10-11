@@ -9,20 +9,27 @@ import ChartInterpretation, { InterpretationNote } from "@/components/ChartInter
 import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle, summarizeCompare } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
+import { useBaseData } from "@/components/BaseDataProvider";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 
 export default function SkenarioPage() {
+  const { override, baseYear } = useBaseData();
   const [activeScenario, setActiveScenario] = useState<string>("BAU");
   const [selectedVariables, setSelectedVariables] = useState<string[]>([
     "jumlah_wisatawan",
     "jumlah_hotel_dan_akomodasi",
   ]);
   const [compareAll, setCompareAll] = useState(false);
-  const [simulationData, setSimulationData] = useState<any>(null);
+  const [simulationDataRaw, setSimulationData] = useState<any>(null);
   // Hasil BAU sebagai pembanding interpretasi saat hanya satu skenario non-BAU dijalankan.
-  const [baselineData, setBaselineData] = useState<any>(null);
+  const [baselineDataRaw, setBaselineData] = useState<any>(null);
+  // Data dasar yang dipakai saat simulasi terakhir; hasil lama disembunyikan bila data dasar berubah.
+  const [resultBase, setResultBase] = useState<typeof override | undefined>(undefined);
+  const fresh = resultBase === override;
+  const simulationData = fresh ? simulationDataRaw : null;
+  const baselineData = fresh ? baselineDataRaw : null;
   const [isLoading, setIsLoading] = useState(false);
   const [showCombinedChart, setShowCombinedChart] = useState(false);
   const [activeTableVariable, setActiveTableVariable] = useState<string>("");
@@ -34,18 +41,20 @@ export default function SkenarioPage() {
       if (compareAll) {
         const allData: any = {};
         for (const scenario of scenariosList) {
-          const data = await runModel(scenario.params);
+          const data = await runModel(scenario.params, override);
           allData[scenario.label] = data;
         }
         setSimulationData(allData);
         setBaselineData(null);
+        setResultBase(override);
       } else {
         const activeScenarioObj = scenariosList.find((s) => s.id === activeScenario);
         if (activeScenarioObj) {
-          const data = await runModel(activeScenarioObj.params);
-          const baseline = activeScenarioObj.id === "BAU" ? null : await runModel(scenarios.BAU.params);
+          const data = await runModel(activeScenarioObj.params, override);
+          const baseline = activeScenarioObj.id === "BAU" ? null : await runModel(scenarios.BAU.params, override);
           setSimulationData({ [activeScenarioObj.label]: data });
           setBaselineData(baseline);
+          setResultBase(override);
         }
       }
     } catch (error) {
@@ -327,7 +336,7 @@ export default function SkenarioPage() {
                   <span style={{ color: '#2BB3B6' }}>Skenario</span>
                 </h1>
                 <p className="text-blue-200 text-base max-w-lg leading-relaxed">
-                  Jalankan dan bandingkan hasil simulasi dari 3 skenario kebijakan pariwisata DIY (2025–2050)
+                  Jalankan dan bandingkan hasil simulasi dari 3 skenario kebijakan pariwisata DIY ({baseYear}–2050)
                 </p>
               </div>
             </div>
@@ -651,7 +660,7 @@ export default function SkenarioPage() {
                               <p className="section-label mb-0.5">Tabel Data</p>
                               <h3 className="font-display font-bold text-gray-900 text-sm">
                                 Detail Output Simulasi
-                                <span className="ml-2 text-xs font-normal text-gray-400">· Proyeksi 2025–2050</span>
+                                <span className="ml-2 text-xs font-normal text-gray-400">· Proyeksi {baseYear}–2050</span>
                               </h3>
                             </div>
                             <button

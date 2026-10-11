@@ -51,7 +51,7 @@ export const VARIABLE_CONTEXT: Record<string, string> = {
   pdrb_sektor_pariwisata:
     "Nilai tambah ekonomi yang dihasilkan sektor pariwisata (bagian dari PDRB). Makin besar, makin baik dari sisi ekonomi.",
   akumulasi_investasi:
-    "Jumlah seluruh investasi pariwisata yang masuk sejak 2025. Kebijakan insentif bekerja dengan menambah investasi ini. Angka ini hanya menggambarkan kondisi, tidak dinilai baik atau buruk.",
+    "Jumlah seluruh investasi pariwisata yang masuk sejak tahun dasar simulasi. Kebijakan insentif bekerja dengan menambah investasi ini. Angka ini hanya menggambarkan kondisi, tidak dinilai baik atau buruk.",
   tpk:
     "Persentase kamar hotel yang terisi. Angka ini hanya menggambarkan kondisi, karena belum ada patokan berapa tingkat hunian yang dianggap ideal.",
   rasio_daya_dukung_lahan:
@@ -59,11 +59,11 @@ export const VARIABLE_CONTEXT: Record<string, string> = {
   lahan_terbangun:
     "Luas seluruh lahan yang sudah dibangun di DIY, termasuk untuk permukiman dan kegiatan selain pariwisata. Makin kecil, makin baik dari sisi lingkungan. Kebijakan konservasi lahan hanya mengatur lahan untuk pariwisata, sehingga pengaruhnya pada angka ini kecil.",
   akumulasi_konversi_lahan_pariwisata:
-    "Total lahan yang berubah fungsi menjadi hotel dan objek wisata sejak 2025. Makin kecil, makin baik dari sisi lingkungan. Kebijakan konservasi lahan 100% berarti fasilitas pariwisata baru dibangun tanpa membuka lahan baru, misalnya memakai bangunan yang sudah ada atau membangun ke atas (vertikal).",
+    "Total lahan yang berubah fungsi menjadi hotel dan objek wisata sejak tahun dasar simulasi. Makin kecil, makin baik dari sisi lingkungan. Kebijakan konservasi lahan 100% berarti fasilitas pariwisata baru dibangun tanpa membuka lahan baru, misalnya memakai bangunan yang sudah ada atau membangun ke atas (vertikal).",
   indeks_kepadatan:
     "Seberapa padat wisatawan di DIY dibanding kondisi tahun 2025. Nilai 2 berarti dua kali lebih padat dari 2025. Makin kecil, makin baik dari sisi sosial. Batas 2 kali lipat ditetapkan dalam penelitian ini sebagai tanda kepadatan sudah perlu diwaspadai.",
   daya_tarik_wisata:
-    "Ukuran seberapa menarik DIY bagi wisatawan, dihitung dari jumlah objek wisata, tingkat kepadatan, dan ketersediaan lahan. Kondisi 2025 diberi nilai 1,00. Makin besar, makin baik. Bertambahnya objek wisata bisa menutupi penurunan akibat kepadatan.",
+    "Ukuran seberapa menarik DIY bagi wisatawan, dihitung dari jumlah objek wisata, tingkat kepadatan, dan ketersediaan lahan. Kondisi tahun dasar simulasi diberi nilai 1,00. Makin besar, makin baik. Bertambahnya objek wisata bisa menutupi penurunan akibat kepadatan.",
   jumlah_hotel_dan_akomodasi:
     "Banyaknya hotel dan akomodasi di DIY. Ini variabel pendukung model untuk transparansi, bukan ukuran keberhasilan kebijakan.",
   jumlah_odtw:
@@ -145,7 +145,7 @@ function trendPoints(v: OutputVariable, years: number[], values: number[], lead:
   if (p === null) return out;
 
   if (v.id === "indeks_kepadatan") {
-    out.push(`${lead} pada ${y1} ${subj} mencapai **${nf(last, 2)} kali lipat** kondisi tahun ${y0}.`);
+    out.push(`${lead} pada ${y1} ${subj} mencapai **${nf(last, 2)} kali lipat** kondisi tahun 2025.`);
   } else if (v.id === "daya_tarik_wisata") {
     out.push(
       Math.abs(p) < SMALL_PCT

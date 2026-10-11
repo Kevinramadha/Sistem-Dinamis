@@ -9,6 +9,7 @@ import ChartInterpretation, { InterpretationNote } from "@/components/ChartInter
 import SimulationSummary from "@/components/SimulationSummary";
 import { summarizeSingle } from "@/lib/summary";
 import InfoTip from "@/components/InfoTip";
+import { useBaseData } from "@/components/BaseDataProvider";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
@@ -24,11 +25,18 @@ const sliderColor = "#1D5A8C";
 
 export default function SimulasiPage() {
   const bau = scenarios.BAU;
+  const { override, baseYear } = useBaseData();
   const [params, setParams] = useState<SimulationParams>(bau.params);
-  const [simulationData, setSimulationData] = useState<any>(null);
+  const [simulationDataRaw, setSimulationData] = useState<any>(null);
   // Parameter saat simulasi terakhir dijalankan dan hasil BAU sebagai pembanding interpretasi.
-  const [runParams, setRunParams] = useState<SimulationParams | null>(null);
-  const [baselineData, setBaselineData] = useState<any>(null);
+  const [runParamsRaw, setRunParams] = useState<SimulationParams | null>(null);
+  const [baselineDataRaw, setBaselineData] = useState<any>(null);
+  // Data dasar yang dipakai saat simulasi terakhir; hasil lama disembunyikan bila data dasar berubah.
+  const [resultBase, setResultBase] = useState<typeof override | undefined>(undefined);
+  const fresh = resultBase === override;
+  const simulationData = fresh ? simulationDataRaw : null;
+  const baselineData = fresh ? baselineDataRaw : null;
+  const runParams = fresh ? runParamsRaw : null;
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVariables, setSelectedVariables] = useState<string[]>([
     "jumlah_wisatawan",
@@ -49,9 +57,10 @@ export default function SimulasiPage() {
       const isBau =
         params.insentif_kebijakan === bau.params.insentif_kebijakan &&
         params.kebijakan_konservasi_lahan === bau.params.kebijakan_konservasi_lahan;
-      const data = await runModel(params);
-      const baseline = isBau ? null : await runModel(bau.params);
+      const data = await runModel(params, override);
+      const baseline = isBau ? null : await runModel(bau.params, override);
       setSimulationData(data);
+      setResultBase(override);
       setRunParams(params);
       setBaselineData(baseline);
     } catch (error) {
@@ -375,7 +384,7 @@ export default function SimulasiPage() {
                   <span style={{ color: '#2BB3B6' }}>Simulasi</span>
                 </h1>
                 <p className="text-blue-200 text-base max-w-lg leading-relaxed">
-                  Atur bebas dua tuas kebijakan resmi — Insentif Kebijakan dan Kebijakan Konservasi Lahan — dan lihat dampaknya terhadap sistem pariwisata DIY 2025–2050
+                  Atur bebas dua tuas kebijakan resmi — Insentif Kebijakan dan Kebijakan Konservasi Lahan — dan lihat dampaknya terhadap sistem pariwisata DIY {baseYear}–2050
                 </p>
               </div>
             </div>
@@ -587,7 +596,7 @@ export default function SimulasiPage() {
                       <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #f0f4f8' }}>
                         <div>
                           <p className="section-label mb-0.5">Hasil Proyeksi</p>
-                          <h3 className="font-display font-bold text-gray-900 text-sm">Perbandingan Semua Variabel - 2025 – 2050</h3>
+                          <h3 className="font-display font-bold text-gray-900 text-sm">Perbandingan Semua Variabel - {baseYear} – 2050</h3>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-green-400"></div>
@@ -612,7 +621,7 @@ export default function SimulasiPage() {
                           <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #f0f4f8' }}>
                             <div>
                               <p className="section-label mb-0.5" style={{ color: '#1D5A8C' }}>{chartItem.variable?.label}</p>
-                              <h3 className="font-display font-bold text-gray-900 text-sm">Simulasi 2025 – 2050</h3>
+                              <h3 className="font-display font-bold text-gray-900 text-sm">Simulasi {baseYear} – 2050</h3>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-green-400"></div>
@@ -667,7 +676,7 @@ export default function SimulasiPage() {
                       <p className="section-label mb-0.5">Tabel Data</p>
                       <h3 className="font-display font-bold text-gray-900 text-sm">
                         Detail Output Simulasi
-                        <span className="ml-2 text-xs font-normal text-gray-400">· Proyeksi 2025–2050</span>
+                        <span className="ml-2 text-xs font-normal text-gray-400">· Proyeksi {baseYear}–2050</span>
                       </h3>
                     </div>
                     <button

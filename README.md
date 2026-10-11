@@ -12,8 +12,9 @@ dummy — sehingga proyeksi 2025–2050 di situs ini benar-benar hasil simulasi 
 |---|---|---|
 | Beranda | `/` | Ringkasan proyek, peta lokasi studi (batas Provinsi DIY di-highlight), ringkasan skenario |
 | Model | `/model` | Tab **Struktur Model** (CLD, SFD, 6 feedback loop) dan tab **Evaluasi Model** (hasil uji struktural, perilaku, kondisi ekstrem, dan sensitivitas) |
-| Skenario | `/skenario` | Perbandingan 3 skenario kebijakan resmi, dengan overlay data aktual 2016–2025 |
+| Skenario | `/skenario` | Perbandingan 3 skenario kebijakan resmi, dengan interpretasi dan ringkasan hasil otomatis |
 | Eksplorasi Simulasi | `/simulasi` | Simulasi bebas dengan 2 tuas kebijakan resmi |
+| Pembaruan Data | `/pembaruan-data` | Memasukkan data tahun baru (template .xlsx/.csv atau form) sehingga simulasi berjalan dari tahun dasar terbaru. Lihat [docs/pembaruan-data.md](docs/pembaruan-data.md) |
 
 ## Model sistem dinamis
 
@@ -29,8 +30,8 @@ dummy — sehingga proyeksi 2025–2050 di situs ini benar-benar hasil simulasi 
 - **Tiga skenario resmi**: Business-as-Usual, Sustainable, Development Priority (definisi
   lengkap di `lib/scenarios.ts`).
 - Indikator kinerja dikelompokkan 4 dimensi: Ekonomi, Lingkungan, Sosial, dan Skala.
-- Data historis 2016–2025 (`lib/historicalData.ts`) ditampilkan sebagai overlay validasi di
-  chart Skenario dan Eksplorasi Simulasi.
+- Nilai awal kelima stok dipisahkan sebagai konstanta (`Nilai Awal …`) agar dapat diperbarui
+  saat data tahun baru dirilis lewat halaman Pembaruan Data.
 
 ## Evaluasi model
 
@@ -65,6 +66,13 @@ npm run build
 npm start
 ```
 
+### Pengujian
+
+```bash
+npm test       # unit test, regression test model, dan template (Vitest)
+npm run lint   # ESLint
+```
+
 ## Struktur proyek
 
 ```
@@ -73,16 +81,23 @@ app/
   model/page.tsx         Model (Struktur Model + Evaluasi Model)
   skenario/page.tsx       Skenario
   simulasi/page.tsx       Eksplorasi Simulasi
+  pembaruan-data/page.tsx  Pembaruan Data tahunan
 components/
   ModelEvaluation.tsx    Konten tab Evaluasi Model
   LineChart.tsx          Wrapper Chart.js
   MapComponent.tsx        Peta Leaflet + batas wilayah DIY
+  BaseDataProvider.tsx     Status data dasar (localStorage) + penanda di setiap halaman
 lib/
   model.ts               Runner simulasi (@sdeverywhere/runtime)
   model-final.js          Model hasil kompilasi SDEverywhere (dari research/*.mdl)
   scenarios.ts            Definisi 3 skenario resmi + daftar indikator kinerja
   historicalData.ts        Data aktual 2016-2025 untuk overlay chart
   evaluationData.ts        Data hasil uji struktural/perilaku/ekstrem/sensitivitas
+  baseData.ts              Seri data 2015-2025 untuk pembaruan data tahunan
+  parameterUpdate.ts       Rumus hitung ulang parameter, pembulatan, validasi
+  templateIO.ts            Template .xlsx/.csv pembaruan data
+tests/                     Vitest (rumus, regression model, template)
+docs/pembaruan-data.md     Dokumentasi fitur Pembaruan Data + kasus uji black-box
 public/
   CLD.png, SFD.png         Diagram model final
   diy-boundary.geojson      Batas Provinsi DIY untuk peta beranda

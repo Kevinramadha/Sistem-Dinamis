@@ -60,7 +60,7 @@ const isGood = (v: OutputVariable, d: number) => (v.arah === "Maksimum" ? d > 0 
 const joinList = (items: string[]) =>
   items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} dan ${items[items.length - 1]}`;
 
-// Uraian singkat perubahan 2025→2050 untuk kondisi tanpa pembanding (BAU).
+// Uraian singkat perubahan tahun dasar→2050 untuk kondisi tanpa pembanding (BAU).
 function trendShort(v: OutputVariable, values: number[]): string {
   const a = values[0];
   const b = last(values);
