@@ -22,7 +22,7 @@ export default function SimulationSummary({ summary }: { summary: Summary }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden" style={{ boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
       <div className="px-5 sm:px-6 py-4" style={{ borderBottom: "1px solid #f0f4f8" }}>
-        <p className="section-label mb-0.5" style={{ color: "#2BB3B6" }}>Ringkasan Hasil</p>
+        <p className="section-label mb-0.5" style={{ color: "#14787B" }}>Ringkasan Hasil</p>
         <p className="text-sm text-gray-600 leading-relaxed mt-1"><RichText text={summary.headline} /></p>
       </div>
 

@@ -172,7 +172,11 @@ export default function ComparisonChart({ years, inputs, title, heightPx = 450 }
 
       {result.lines.length > 0 ? (
         <div className="w-full" style={{ height: `${heightPx}px` }} role="img" aria-label={title}>
-          <Line data={{ labels: years.map(String), datasets }} options={options} />
+          <Line
+            data={{ labels: years.map(String), datasets }}
+            options={options}
+            aria-label={`Grafik perbandingan ${title}, ${years[0]}–${years[years.length - 1]}. Angka lengkap ada di tabel data.`}
+          />
         </div>
       ) : (
         <p className="text-sm text-gray-500 px-1">Pilih variabel lain untuk dibandingkan di grafik ini.</p>

@@ -17,6 +17,7 @@ import ApplyLeversFromUrl, { type AssumptionChanges } from "@/components/ApplyLe
 import { ASSUMPTIONS, assumptionBaseValues, assumptionConstants, describeAssumptionChanges } from "@/lib/goalSeek";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
 import type { CompareInput } from "@/lib/comparison";
+import { readableText } from "@/lib/a11yColors";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 const ComparisonChart = dynamic(() => import("@/components/ComparisonChart"), { ssr: false });
@@ -285,7 +286,7 @@ export default function SimulasiPage() {
           font-weight: 600;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: #2BB3B6;
+          color: #14787B;
         }
 
         .page-hero {
@@ -561,7 +562,7 @@ export default function SimulasiPage() {
                 style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                 <div className="px-5 py-4" style={{ borderBottom: '1px solid #f0f4f8' }}>
                   <p className="section-label mb-0.5">Preset Cepat</p>
-                  <h3 className="font-display font-bold text-gray-900 text-sm">Muat Skenario</h3>
+                  <h2 className="font-display font-bold text-gray-900 text-sm">Muat Skenario</h2>
                 </div>
                 <div className="p-4 grid grid-cols-3 gap-2">
                   {scenariosList.map((s) => (
@@ -571,8 +572,8 @@ export default function SimulasiPage() {
                       className="preset-btn"
                       title={s.label}
                       style={activePreset === s.id
-                        ? { background: s.color, color: 'white', border: `1.5px solid ${s.color}` }
-                        : { background: s.color + '15', color: s.color, border: `1.5px solid ${s.color}30` }
+                        ? { background: readableText(s.color), color: 'white', border: `1.5px solid ${readableText(s.color)}` }
+                        : { background: s.color + '15', color: readableText(s.color), border: `1.5px solid ${s.color}30` }
                       }
                     >
                       <span>{s.id}</span>
@@ -593,7 +594,7 @@ export default function SimulasiPage() {
                 style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                 <div className="px-5 py-4" style={{ borderBottom: '1px solid #f0f4f8' }}>
                   <p className="section-label mb-1">Tuas Kebijakan</p>
-                  <h3 className="font-display font-bold text-gray-900 text-sm">Parameter Simulasi</h3>
+                  <h2 className="font-display font-bold text-gray-900 text-sm">Parameter Simulasi</h2>
                 </div>
 
                 <div className="p-4 space-y-5">
@@ -603,13 +604,19 @@ export default function SimulasiPage() {
                     return (
                       <div key={config.id}>
                         <div className="flex items-center justify-between mb-2">
-                          <label className="text-xs font-semibold text-gray-600 leading-tight" style={{ maxWidth: '60%' }}>
+                          <label
+                            id={`label-${config.id}`}
+                            htmlFor={`nilai-${config.id}`}
+                            className="text-xs font-semibold text-gray-600 leading-tight"
+                            style={{ maxWidth: '60%' }}
+                          >
                             {config.label}
                             {GLOSSARY[config.id] && (
                               <span className="ml-1 inline-block"><InfoTip text={GLOSSARY[config.id]} label={config.label} /></span>
                             )}
                           </label>
                           <input
+                            id={`nilai-${config.id}`}
                             type="number"
                             min={config.min}
                             max={config.max}
@@ -631,6 +638,7 @@ export default function SimulasiPage() {
                           </div>
                           <input
                             type="range"
+                            aria-labelledby={`label-${config.id}`}
                             min={config.min}
                             max={config.max}
                             step={config.step}
@@ -639,7 +647,7 @@ export default function SimulasiPage() {
                             style={{ accentColor: sliderColor, marginTop: '-2px' }}
                           />
                         </div>
-                        <div className="flex justify-between text-[10px] text-gray-300 mt-1">
+                        <div className="flex justify-between text-[10px] text-gray-400 mt-1">
                           <span>{formatValue(config, config.min)}</span>
                           <span>{formatValue(config, config.max)}</span>
                         </div>
@@ -718,7 +726,7 @@ export default function SimulasiPage() {
                 <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #f0f4f8' }}>
                   <div>
                     <p className="section-label mb-0.5">Output Model</p>
-                    <h3 className="font-display font-bold text-gray-900 text-sm">Variabel yang Ditampilkan</h3>
+                    <h2 className="font-display font-bold text-gray-900 text-sm">Variabel yang Ditampilkan</h2>
                   </div>
                   <span className="font-display text-xs font-bold px-2.5 py-1 rounded-full"
                     style={{ background: '#eff6ff', color: '#1D5A8C', border: '1px solid #bfdbfe' }}>
@@ -794,7 +802,7 @@ export default function SimulasiPage() {
                       <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #f0f4f8' }}>
                         <div>
                           <p className="section-label mb-0.5">Hasil Proyeksi</p>
-                          <h3 className="font-display font-bold text-gray-900 text-sm">Perbandingan Semua Variabel - {baseYear} – 2050</h3>
+                          <h2 className="font-display font-bold text-gray-900 text-sm">Perbandingan Semua Variabel - {baseYear} – 2050</h2>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-green-400"></div>
@@ -818,7 +826,7 @@ export default function SimulasiPage() {
                           <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #f0f4f8' }}>
                             <div>
                               <p className="section-label mb-0.5" style={{ color: '#1D5A8C' }}>{chartItem.variable?.label}</p>
-                              <h3 className="font-display font-bold text-gray-900 text-sm">Simulasi {baseYear} – 2050</h3>
+                              <h2 className="font-display font-bold text-gray-900 text-sm">Simulasi {baseYear} – 2050</h2>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-green-400"></div>
@@ -850,9 +858,9 @@ export default function SimulasiPage() {
                       </svg>
                     ) : "📊"}
                   </div>
-                  <h3 className="font-display font-bold text-gray-700 text-lg mb-2">
+                  <h2 className="font-display font-bold text-gray-700 text-lg mb-2">
                     {isLoading ? "Menjalankan simulasi…" : "Belum ada hasil simulasi"}
-                  </h3>
+                  </h2>
                   <p className="text-sm text-gray-400 text-center max-w-xs leading-relaxed">
                     {isLoading
                       ? "Model sedang memproses parameter yang dipilih"
@@ -871,10 +879,10 @@ export default function SimulasiPage() {
                   <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #f0f4f8' }}>
                     <div>
                       <p className="section-label mb-0.5">Tabel Data</p>
-                      <h3 className="font-display font-bold text-gray-900 text-sm">
+                      <h2 className="font-display font-bold text-gray-900 text-sm">
                         Detail Output Simulasi
                         <span className="ml-2 text-xs font-normal text-gray-400">· Proyeksi {baseYear}–2050</span>
-                      </h3>
+                      </h2>
                     </div>
                     <button
                       onClick={() => {
@@ -903,7 +911,7 @@ export default function SimulasiPage() {
                   </div>
 
                   {/* Table */}
-                  <div style={{ overflowX: 'auto' }}>
+                  <div style={{ overflowX: 'auto' }} tabIndex={0} role="region" aria-label="Tabel data hasil simulasi">
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                       <thead>
                         <tr>
@@ -926,7 +934,7 @@ export default function SimulasiPage() {
                                 <div style={{ fontSize: 11, fontWeight: 600, color: 'white' }}>
                                   {variable?.label} <SortIcon colKey={varId} />
                                 </div>
-                                <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{displayUnit(variable?.unit)}</div>
+                                <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.85)', marginTop: 1 }}>{displayUnit(variable?.unit)}</div>
                               </th>
                             );
                           })}
@@ -947,7 +955,7 @@ export default function SimulasiPage() {
                               <span style={{
                                 display: 'inline-block', padding: '2px 7px', borderRadius: 4,
                                 background: yearIdx % 2 === 0 ? '#f1f5f9' : '#e2e8f0',
-                                fontSize: 11, color: '#64748b',
+                                fontSize: 11, color: '#4f5d6e',
                               }}>
                                 {year}
                               </span>
@@ -980,11 +988,11 @@ export default function SimulasiPage() {
                 style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                 <div className="px-6 py-4" style={{ borderBottom: '1px solid #f0f4f8' }}>
                   <p className="section-label mb-0.5">Konfigurasi Aktif</p>
-                  <h3 className="font-display font-bold text-gray-900 text-sm">
+                  <h2 className="font-display font-bold text-gray-900 text-sm">
                     {activePreset
                       ? `Preset: ${scenariosList.find(s => s.id === activePreset)?.label}`
                       : "Parameter Kustom"}
-                  </h3>
+                  </h2>
                 </div>
                 <div className="p-5 grid grid-cols-2 gap-3">
                   {sliderConfigs.map((config) => {

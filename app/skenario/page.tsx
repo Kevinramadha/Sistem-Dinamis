@@ -13,6 +13,7 @@ import { useBaseData } from "@/components/BaseDataProvider";
 import { StaleHint, Toast, revealElement, toastError, toastOk, withMinDuration, type ToastMessage } from "@/components/RunFeedback";
 import { GLOSSARY, displayUnit } from "@/lib/glossary";
 import type { CompareInput } from "@/lib/comparison";
+import { readableText } from "@/lib/a11yColors";
 
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 const ComparisonChart = dynamic(() => import("@/components/ComparisonChart"), { ssr: false });
@@ -195,7 +196,7 @@ export default function SkenarioPage() {
     const active = sortConfig?.key === colKey;
     const isAsc = sortConfig?.dir === 'asc';
     return (
-      <span style={{ marginLeft: 4, opacity: active ? 1 : 0.3, fontSize: 10 }}>
+      <span style={{ marginLeft: 4, opacity: active ? 1 : 0.75, fontSize: 10 }}>
         {active ? (isAsc ? '↑' : '↓') : '↕'}
       </span>
     );
@@ -243,7 +244,7 @@ export default function SkenarioPage() {
           font-weight: 600;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: #2BB3B6;
+          color: #14787B;
         }
 
         .page-hero {
@@ -412,16 +413,16 @@ export default function SkenarioPage() {
                             setCompareAll(false);
                           }}
                           className={`scenario-btn ${isActive ? "active" : "inactive"}`}
-                          style={isActive ? { background: scenario.color, color: 'white' } : { color: '#374151' }}
+                          style={isActive ? { background: readableText(scenario.color), color: 'white' } : { color: '#374151' }}
                         >
                           <div className="w-2 h-2 rounded-full shrink-0"
                             style={{ background: isActive ? 'rgba(255,255,255,0.7)' : scenario.color }}></div>
                           <div className="flex-1 min-w-0">
                             <div className="text-xs font-semibold leading-tight"
-                              style={{ fontFamily: 'Sora, sans-serif', opacity: isActive ? 0.8 : 1, color: isActive ? 'white' : scenario.color }}>
+                              style={{ fontFamily: 'Sora, sans-serif', color: isActive ? 'white' : readableText(scenario.color) }}>
                               {scenario.id}
                             </div>
-                            <div className="text-xs font-medium leading-snug truncate" style={{ opacity: isActive ? 0.95 : 0.85 }}>
+                            <div className="text-xs font-medium leading-snug truncate">
                               {scenario.label}
                             </div>
                           </div>
@@ -444,7 +445,7 @@ export default function SkenarioPage() {
                     }}
                     className="compare-toggle"
                     style={compareAll
-                      ? { background: '#E89D3E', borderColor: '#E89D3E', color: 'white' }
+                      ? { background: '#A35F0B', borderColor: '#A35F0B', color: 'white' }
                       : { background: 'white', borderColor: '#e2e8f0', color: '#374151' }
                     }
                   >
@@ -536,7 +537,7 @@ export default function SkenarioPage() {
 
                 <StaleHint show={stale && !isLoading} />
                 {selectedVariables.length === 0 && (
-                  <p className="text-[11px] text-center" style={{ color: '#E89D3E' }}>
+                  <p className="text-[11px] text-center" style={{ color: '#A35F0B' }}>
                     ⚠ Pilih minimal 1 variabel output
                   </p>
                 )}
@@ -735,7 +736,7 @@ export default function SkenarioPage() {
                             </button>
                           </div>
 
-                          <div style={{ overflowX: 'auto' }}>
+                          <div style={{ overflowX: 'auto' }} tabIndex={0} role="region" aria-label="Tabel data hasil simulasi">
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                               <thead>
                                 <tr>
@@ -758,7 +759,7 @@ export default function SkenarioPage() {
                                         <div style={{ fontSize: 11, fontWeight: 600, color: 'white' }}>
                                           {variable?.label} <SortIcon colKey={varId} />
                                         </div>
-                                        <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{displayUnit(variable?.unit)}</div>
+                                        <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.85)', marginTop: 1 }}>{displayUnit(variable?.unit)}</div>
                                       </th>
                                     );
                                   })}
@@ -779,7 +780,7 @@ export default function SkenarioPage() {
                                       <span style={{
                                         display: 'inline-block', padding: '2px 7px', borderRadius: 4,
                                         background: yearIdx % 2 === 0 ? '#f1f5f9' : '#e2e8f0',
-                                        fontSize: 11, color: '#64748b',
+                                        fontSize: 11, color: '#4f5d6e',
                                       }}>
                                         {year}
                                       </span>
@@ -879,21 +880,31 @@ export default function SkenarioPage() {
                                 <div className="font-display font-bold text-gray-900" style={{ fontSize: 15 }}>
                                   {currentVar?.label}
                                 </div>
-                                <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>
+                                <div style={{ fontSize: 11, color: '#5c6b7d', marginTop: 2 }}>
                                   ({displayUnit(currentVar?.unit)}) · {currentIdx + 1} dari {selectedVariables.length}
                                 </div>
-                                <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginTop: 6 }}>
+                                <div style={{ display: 'flex', justifyContent: 'center', marginTop: -4, marginBottom: -10 }}>
                                   {selectedVariables.map((id, i) => (
                                     <button
                                       key={i}
+                                      type="button"
+                                      aria-label={`Tampilkan tabel ${outputVariables.find((v) => v.id === id)?.label ?? id}`}
+                                      aria-current={i === currentIdx ? true : undefined}
                                       onClick={() => { setActiveTableVariable(selectedVariables[i]); setSortConfig(null); }}
                                       style={{
-                                        height: 3, width: i === currentIdx ? 16 : 6,
-                                        borderRadius: 99, border: 'none', padding: 0, cursor: 'pointer',
-                                        background: i === currentIdx ? '#1D5A8C' : '#e2e8f0',
-                                        transition: 'width 0.18s ease, background 0.18s ease',
+                                        minWidth: 24, height: 24, border: 'none', padding: 0, cursor: 'pointer',
+                                        background: 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                       }}
-                                    />
+                                    >
+                                      <span
+                                        aria-hidden="true"
+                                        style={{
+                                          display: 'block', height: 3, width: i === currentIdx ? 16 : 6, borderRadius: 99,
+                                          background: i === currentIdx ? '#1D5A8C' : '#e2e8f0',
+                                          transition: 'width 0.18s ease, background 0.18s ease',
+                                        }}
+                                      />
+                                    </button>
                                   ))}
                                 </div>
                               </div>
@@ -916,7 +927,7 @@ export default function SkenarioPage() {
                             </div>
                           </div>
 
-                          <div style={{ overflowX: 'auto' }}>
+                          <div style={{ overflowX: 'auto' }} tabIndex={0} role="region" aria-label="Tabel data hasil simulasi">
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                               <thead>
                                 <tr>
@@ -937,7 +948,7 @@ export default function SkenarioPage() {
                                       <div style={{ fontSize: 11, fontWeight: 600, color: 'white' }}>
                                         {scenarioName} <SortIcon colKey={scenarioName} />
                                       </div>
-                                      <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.6)', marginTop: 1 }}>{displayUnit(currentVar?.unit)}</div>
+                                      <div style={{ fontSize: 10, fontWeight: 400, color: 'rgba(255,255,255,0.85)', marginTop: 1 }}>{displayUnit(currentVar?.unit)}</div>
                                     </th>
                                   ))}
                                 </tr>
@@ -957,7 +968,7 @@ export default function SkenarioPage() {
                                       <span style={{
                                         display: 'inline-block', padding: '2px 7px', borderRadius: 4,
                                         background: yearIdx % 2 === 0 ? '#f1f5f9' : '#e2e8f0',
-                                        fontSize: 11, color: '#64748b',
+                                        fontSize: 11, color: '#4f5d6e',
                                       }}>
                                         {year}
                                       </span>

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import ModelEvaluation from "@/components/ModelEvaluation";
+import { readableText } from "@/lib/a11yColors";
 
 const feedbackLoops = [
   {
@@ -72,7 +73,7 @@ export default function ModelPage() {
           font-weight: 600;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: #2BB3B6;
+          color: #14787B;
         }
 
         .model-hero {
@@ -222,14 +223,14 @@ export default function ModelPage() {
             <button
               className="page-tab"
               onClick={() => setActiveTab('struktur')}
-              style={activeTab === 'struktur' ? { background: '#1D5A8C', color: 'white' } : { background: 'transparent', color: '#64748b' }}
+              style={activeTab === 'struktur' ? { background: '#1D5A8C', color: 'white' } : { background: 'transparent', color: '#5c6b7d' }}
             >
               Struktur Model
             </button>
             <button
               className="page-tab"
               onClick={() => setActiveTab('evaluasi')}
-              style={activeTab === 'evaluasi' ? { background: '#1D5A8C', color: 'white' } : { background: 'transparent', color: '#64748b' }}
+              style={activeTab === 'evaluasi' ? { background: '#1D5A8C', color: 'white' } : { background: 'transparent', color: '#5c6b7d' }}
             >
               Evaluasi Model
             </button>
@@ -292,11 +293,11 @@ export default function ModelPage() {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#2BB3B6' }}></div>
-                      <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#2BB3B6', fontFamily: 'Sora, sans-serif' }}>SFD</span>
+                      <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: '#14787B', fontFamily: 'Sora, sans-serif' }}>SFD</span>
                     </div>
                     <h3 className="font-display font-bold text-gray-900 text-lg">Stock & Flow Diagram</h3>
                   </div>
-                  <span className="tag-sm" style={{ background: '#e6fafa', color: '#2BB3B6', border: '1px solid #a5f0f0' }}>
+                  <span className="tag-sm" style={{ background: '#e6fafa', color: '#11696c', border: '1px solid #a5f0f0' }}>
                     DYNAMO Notation
                   </span>
                 </div>
@@ -342,11 +343,11 @@ export default function ModelPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="font-display font-bold text-sm" style={{ color: loop.color }}>{loop.code}</span>
+                        <span className="font-display font-bold text-sm" style={{ color: readableText(loop.color) }}>{loop.code}</span>
                         <span className="tag-sm text-[10px]"
                           style={{
                             background: loop.color + '12',
-                            color: loop.color,
+                            color: readableText(loop.color),
                             border: `1px solid ${loop.color}30`,
                           }}>
                           {loop.type}

@@ -68,10 +68,16 @@ export default function InfoTip({ text, label }: { text: string; label: string }
         onPointerLeave={(e) => e.pointerType === "mouse" && setOpen(false)}
         onFocus={(e) => e.currentTarget.matches(":focus-visible") && show()}
         onBlur={() => setOpen(false)}
-        className="inline-flex items-center justify-center shrink-0 w-4 h-4 rounded-full text-[10px] font-bold leading-none align-middle transition-colors"
-        style={{ color: "#1D5A8C", background: "#e6eef7" }}
+        // Area sentuh 24×24 px (WCAG 2.5.8); margin negatif menjaga tata letak dan ikon 16 px tetap sama.
+        className="inline-flex items-center justify-center shrink-0 w-6 h-6 -m-1 rounded-full align-middle"
       >
-        i
+        <span
+          aria-hidden="true"
+          className="inline-flex items-center justify-center w-4 h-4 rounded-full text-[10px] font-bold leading-none transition-colors"
+          style={{ color: "#1D5A8C", background: "#e6eef7" }}
+        >
+          i
+        </span>
       </button>
       {open && (
         <span

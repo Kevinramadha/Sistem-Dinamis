@@ -176,11 +176,15 @@ export default function Navbar() {
               Mulai Eksplorasi →
             </Link>
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? "Tutup menu navigasi" : "Buka menu navigasi"}
+              aria-expanded={isOpen}
+              aria-controls="menu-navigasi-seluler"
               className="md:hidden p-2 rounded-lg transition-colors"
               style={{ color: '#1D5A8C', background: isOpen ? '#eff6ff' : 'transparent' }}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 {isOpen
                   ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -192,7 +196,7 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden border-t" style={{ borderColor: '#f0f4f8', background: '#fafcff' }}>
+          <div id="menu-navigasi-seluler" className="md:hidden border-t" style={{ borderColor: '#f0f4f8', background: '#fafcff' }}>
             <div className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
               {navLinks.map((link) => (
                 <Link
