@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Aksesibilitas (WCAG 2.2 AA): abu-abu muda hanya dipakai untuk teks, jadi
+   digelapkan sedikit agar kontrasnya minimal 4,5:1 di latar putih/terang. */
+@theme {
+  --color-gray-400: #646c7b;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

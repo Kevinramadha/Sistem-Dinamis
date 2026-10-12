@@ -39,11 +39,11 @@ export default function Footer() {
               </p>
               <div className="flex gap-2">
                 {[
-                  { label: "Model", color: '#1D5A8C' },
-                  { label: "Simulasi", color: '#2BB3B6' },
-                  { label: "2025-2050", color: '#3A9C77' },
+                  { label: "Model", color: '#1D5A8C', text: '#7FB2E0' },
+                  { label: "Simulasi", color: '#2BB3B6', text: '#5FD0D2' },
+                  { label: "2025-2050", color: '#3A9C77', text: '#6FCFA8' },
                 ].map((tag, i) => (
-                  <span key={i} className="text-xs px-3 py-1 rounded-full font-medium shrink-0" style={{ background: tag.color + '25', color: tag.color, border: `1px solid ${tag.color}40`, fontFamily: 'DM Sans, sans-serif' }}>
+                  <span key={i} className="text-xs px-3 py-1 rounded-full font-medium shrink-0" style={{ background: tag.color + '25', color: tag.text, border: `1px solid ${tag.color}40`, fontFamily: 'DM Sans, sans-serif' }}>
                     {tag.label}
                   </span>
                 ))}
@@ -66,7 +66,7 @@ export default function Footer() {
                   { key: "Periode", val: "2025 – 2050" },
                 ].map((item, i) => (
                   <div key={i} className="flex gap-2" style={{ fontFamily: 'DM Sans, sans-serif' }}>
-                    <span className="text-xs w-16 shrink-0" style={{ color: '#5a7a96' }}>{item.key}</span>
+                    <span className="text-xs w-16 shrink-0" style={{ color: '#7d9bb5' }}>{item.key}</span>
                     <span className="text-xs" style={{ color: '#b8cfe0' }}>{item.val}</span>
                   </div>
                 ))}
@@ -98,7 +98,7 @@ export default function Footer() {
 
           {/* Bottom bar */}
           <div className="flex flex-col md:flex-row items-center justify-between pt-8 gap-4" style={{ borderTop: '1px solid #1e3a52' }}>
-            <p className="text-xs" style={{ color: '#4a6a84', fontFamily: 'DM Sans, sans-serif' }}>
+            <p className="text-xs" style={{ color: '#7d9bb5', fontFamily: 'DM Sans, sans-serif' }}>
               © {currentYear} SimDIY — Simulasi Sistem Dinamis DIY. Semua hak dilindungi.
             </p>
             <div className="flex items-center gap-1.5">

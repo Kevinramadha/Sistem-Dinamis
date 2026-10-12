@@ -164,7 +164,7 @@ export default function PencarianTargetPage() {
         @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
         .pt * { font-family: 'DM Sans', sans-serif; }
         .pt .font-display { font-family: 'Sora', sans-serif; }
-        .pt .section-label { font-family: 'Sora', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #2BB3B6; }
+        .pt .section-label { font-family: 'Sora', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: #14787B; }
         .page-hero { background: linear-gradient(135deg, #0d3554 0%, #1D5A8C 50%, #1a7a7c 100%); position: relative; overflow: hidden; }
         .page-hero::before { content: ''; position: absolute; inset: 0; background-image: radial-gradient(circle at 85% 30%, rgba(43,179,182,0.18) 0%, transparent 50%), radial-gradient(circle at 10% 80%, rgba(232,157,62,0.10) 0%, transparent 40%); }
         .pt .card { background: white; border: 1px solid #f1f5f9; border-radius: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
@@ -448,7 +448,7 @@ function PointSummary({ c, dims }: { c: Candidate; dims: Dim[] }) {
             key={d.key}
             className={`rounded-xl px-4 py-3 ${isLever ? "bg-blue-50 border border-blue-100" : "bg-amber-50 border border-amber-200"}`}
           >
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-600">
               {isLever ? d.label : `${assumptionOf(d.key as AssumptionKey).plain} · kondisi lain, bukan kebijakan`}
             </p>
             <p className="font-display font-bold text-lg text-gray-900">{text}</p>
@@ -461,7 +461,7 @@ function PointSummary({ c, dims }: { c: Candidate; dims: Dim[] }) {
 
 function EvalTable({ targets, evals }: { targets: Target[]; evals: TargetEval[] }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Tabel status target">
       <table className="min-w-full text-left">
         <thead className="text-gray-500 border-b border-slate-100">
           <tr>
@@ -718,7 +718,7 @@ function Results({
               Perubahan dibanding {TANPA} pada {primary.year}. R = saran utama.
             </p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Tabel pilihan lain">
             <table className="min-w-full text-left">
               <thead className="text-gray-500 border-b border-slate-100">
                 <tr>
@@ -733,7 +733,9 @@ function Results({
                   <th>Lahan terbangun</th>
                   <th>Kepadatan</th>
                   <th>Tenaga kerja</th>
-                  <th />
+                  <th>
+                    <span className="sr-only">Aksi</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>

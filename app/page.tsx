@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 import { scenariosList } from "@/lib/scenarios";
+import { readableText } from "@/lib/a11yColors";
 
 const MapComponent = dynamic(() => import("@/components/MapComponent"), {
   ssr: false,
@@ -116,7 +117,7 @@ export default function Home() {
           font-weight: 600;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: #2BB3B6;
+          color: #14787B;
         }
 
         .divider-dot {
@@ -191,7 +192,7 @@ export default function Home() {
                 <div className="w-10 h-10 rounded-xl mb-4 flex items-center justify-center" style={{ background: el.color + '18' }}>
                   <div className="w-4 h-4 rounded-md" style={{ background: el.color }}></div>
                 </div>
-                <div className="font-semibold text-gray-900 text-lg mb-3" style={{ color: el.color }}>{el.title}</div>
+                <div className="font-semibold text-gray-900 text-lg mb-3" style={{ color: readableText(el.color) }}>{el.title}</div>
                 <div className="text-sm text-gray-600 leading-relaxed">{el.desc}</div>
               </div>
             ))}
@@ -216,6 +217,7 @@ export default function Home() {
                   onFocus={() => setHoveredScenario(scenario.id)}
                   onBlur={() => setHoveredScenario(null)}
                   tabIndex={0}
+                  role="button"
                   aria-expanded={hoveredScenario === scenario.id}
                   className="scenario-card bg-white rounded-2xl overflow-hidden border border-gray-100"
                   style={{
@@ -225,7 +227,7 @@ export default function Home() {
                 >
                   <div className="h-1.5 w-full" style={{ background: scenario.color }}></div>
                   <div className="p-5">
-                    <div className="font-display text-xs font-bold mb-1" style={{ color: scenario.color }}>
+                    <div className="font-display text-xs font-bold mb-1" style={{ color: readableText(scenario.color) }}>
                       {scenario.id}
                     </div>
                     <h3 className="font-semibold text-gray-900 text-sm leading-snug mb-2">{scenario.label}</h3>

@@ -40,7 +40,7 @@ export const toastInfo = (text: string, title = DEFAULT_TITLE.info): ToastMessag
 export const toastError = (text: string, title = DEFAULT_TITLE.error): ToastMessage => ({ tone: "error", title, text });
 
 const TONE: Record<ToastTone, { color: string; soft: string; icon: string; button: string }> = {
-  success: { color: "#2f8f6b", soft: "#e8f6ef", icon: "✓", button: "Oke" },
+  success: { color: "#267a5a", soft: "#e8f6ef", icon: "✓", button: "Oke" },
   info: { color: "#1D5A8C", soft: "#e8f1fa", icon: "i", button: "Mengerti" },
   error: { color: "#c0392b", soft: "#fdecea", icon: "!", button: "Tutup" },
 };

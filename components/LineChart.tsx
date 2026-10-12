@@ -133,7 +133,11 @@ export default function LineChart({
 
   return (
     <div className="w-full" style={{ height: `${heightPx}px` }}>
-      <Line data={{ labels, datasets }} options={options} />
+      <Line
+        data={{ labels, datasets }}
+        options={options}
+        aria-label={`Grafik garis ${title}, ${years[0]}–${years[years.length - 1]}: ${Object.keys(data).join(", ")}. Angka lengkap ada di tabel data.`}
+      />
     </div>
   );
 }
