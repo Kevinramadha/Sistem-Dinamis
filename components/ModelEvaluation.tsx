@@ -230,7 +230,7 @@ const RAPOR = [
     badgeBg: "#dcfce7",
     badgeColor: "#15803d",
     jawaban:
-      "Ya. Kelima stok model (wisatawan, hotel, objek wisata, tenaga kerja, lahan terbangun) seimbang tanpa selisih, dan 16 lingkaran sebab-akibat (4 penguat, 12 penyeimbang) bekerja sesuai teori. Hasilnya juga stabil ketika langkah waktu perhitungan diperkecil.",
+      "Ya. Kelima stock model (wisatawan, hotel, objek wisata, tenaga kerja, lahan terbangun) seimbang tanpa selisih, dan 16 lingkaran sebab-akibat (4 reinforcing, 12 balancing) bekerja sesuai teori. Hasilnya juga stabil ketika time step perhitungan diperkecil.",
   },
   {
     uji: "Uji perilaku",
@@ -251,7 +251,7 @@ const RAPOR = [
       "Ya. Model diuji dengan 17 kondisi ekstrem, misalnya wisatawan nol atau investasi nol, dan tetap memberi hasil yang logis. Catatannya: model paling andal untuk lonjakan permintaan sampai sekitar 1,25 kali kondisi dasar; di atas itu hasilnya hanya dibaca sebagai arah kecenderungan.",
   },
   {
-    uji: "Sensitivitas & kekokohan",
+    uji: "Sensitivitas & robustness",
     pertanyaan: "Apakah kesimpulan berubah kalau asumsi yang tidak pasti digeser?",
     badge: "Urutan skenario tetap",
     badgeBg: "#dcfce7",
@@ -382,9 +382,9 @@ export default function ModelEvaluation() {
             <p className="section-label mb-2">1. Verifikasi</p>
             <h2 className="font-display text-2xl font-bold text-gray-900 mb-2">Uji Struktural</h2>
             <p className="text-sm text-gray-500 leading-relaxed">
-              <strong>Kekekalan materi</strong>: seluruh 5 stok model (Wisatawan, Hotel dan Akomodasi, ODTW, Tenaga
+              <strong>Kekekalan materi</strong>: seluruh 5 stock model (Wisatawan, Hotel dan Akomodasi, ODTW, Tenaga
               Kerja Pariwisata, Lahan Terbangun) kekal sepanjang 2025–2049 — selisih akumulasi inflow-outflow
-              terhadap perubahan stok = 0. Ini membuktikan model bebas dari kesalahan persamaan matematis.{" "}
+              terhadap perubahan stock = 0. Ini membuktikan model bebas dari kesalahan persamaan matematis.{" "}
               <strong>Uji loop umpan balik</strong>: ditemukan 16 loop unik (4 reinforcing, 12 balancing) yang
               seluruhnya berperilaku sesuai teori sistem dinamis — loop balancing menahan pertumbuhan (misalnya
               kepadatan wisatawan menekan daya tarik), loop reinforcing mempercepatnya (investasi → ODTW →
@@ -392,13 +392,13 @@ export default function ModelEvaluation() {
             </p>
           </div>
 
-          <Card title="Kekekalan Materi" subtitle="Selisih akumulasi inflow-outflow terhadap perubahan stok, 2025-2049">
+          <Card title="Kekekalan Materi" subtitle="Selisih akumulasi inflow-outflow terhadap perubahan stock, 2025-2049">
             <DataTable
               columns={[
-                { key: "stok", label: "Stok" },
+                { key: "stok", label: "Stock" },
                 { key: "inflow", label: "Inflow" },
                 { key: "outflow", label: "Outflow" },
-                { key: "stok2025", label: "Stok 2025", align: "right", render: (r) => fmt(r.stok2025, 0) },
+                { key: "stok2025", label: "Stock 2025", align: "right", render: (r) => fmt(r.stok2025, 0) },
                 { key: "simulasi2026", label: "Simulasi 2026", align: "right", render: (r) => fmt(r.simulasi2026, 2) },
                 { key: "selisihMaks", label: "Selisih Maks", align: "right", render: (r) => r.selisihMaks.toExponential(2) },
                 { key: "selisihRelatif", label: "Selisih Relatif", align: "right", render: (r) => fmt(r.selisihRelatif, 4) },
@@ -681,7 +681,7 @@ export default function ModelEvaluation() {
               variabel keluaran (memengaruhi Jumlah Wisatawan hingga 42,07%), diikuti <strong>Bobot ODTW</strong>{" "}
               (22,79%) dan <strong>Rasio Daya Dukung Lahan Referensi</strong> (11,48%). Parameter-parameter ini
               berstatus asumsi struktural, bukan tuas kebijakan — karena itu diuji lewat rentang penuh dan
-              pengujian kekokohan, bukan dijadikan skenario.
+              pengujian robustness, bukan dijadikan skenario.
             </p>
             <p className="text-sm text-gray-500 leading-relaxed mt-3">
               Pada tahap kedua, dua tuas kebijakan diuji pada rentang aktualnya. <strong>Insentif Kebijakan</strong>{" "}
@@ -764,8 +764,8 @@ export default function ModelEvaluation() {
         {/* ── KEKOKOHAN PERINGKAT SKENARIO ─────────────────── */}
         <section className="space-y-5">
           <div>
-            <p className="section-label mb-2">5. Kekokohan</p>
-            <h2 className="font-display text-2xl font-bold text-gray-900 mb-2">Kekokohan Peringkat Skenario</h2>
+            <p className="section-label mb-2">5. Robustness</p>
+            <h2 className="font-display text-2xl font-bold text-gray-900 mb-2">Robustness Peringkat Skenario</h2>
             <p className="text-sm text-gray-500 leading-relaxed">
               Tiga parameter dengan ketidakpastian terbesar menurut analisis sensitivitas, yaitu rasio laju penurunan
               terhadap laju pertumbuhan, bobot penyusun indeks daya tarik, dan laju konversi lahan dasar, digeser ke
@@ -780,7 +780,7 @@ export default function ModelEvaluation() {
               Priority pada indikator kepadatan.
             </p>
             <p className="text-sm text-gray-700 mt-3">
-              <strong>Status: peringkat kokoh.</strong> Kekokohan ini berlaku pada urutan, bukan pada besaran; nilai
+              <strong>Status: peringkat kokoh.</strong> Robustness ini berlaku pada urutan, bukan pada besaran; nilai
               absolut tahun 2050 berubah cukup besar antarkondisi, terutama ketika rasio laju penurunan terhadap laju
               pertumbuhan digeser.
             </p>

@@ -18,12 +18,12 @@ const MapComponent = dynamic(() => import("@/components/MapComponent"), {
 const modelElements = [
   { 
     title: "Stock", 
-    desc: "Stock adalah variabel yang merepresentasikan akumulasi atau jumlah suatu kondisi dalam sistem pada waktu tertentu, yang nilainya berubah seiring waktu akibat adanya aliran (flow).",
+    desc: "Stock adalah variabel yang merepresentasikan akumulasi atau jumlah suatu kondisi dalam sistem pada waktu tertentu, yang nilainya berubah seiring waktu akibat adanya flow.",
     color: "#1D5A8C" 
   },
   { 
     title: "Flow", 
-    desc: "Flow adalah variabel yang merepresentasikan laju perubahan suatu stock per satuan waktu, baik berupa aliran masuk (inflow) maupun aliran keluar (outflow).",
+    desc: "Flow adalah variabel yang merepresentasikan laju perubahan suatu stock per satuan waktu, baik berupa inflow maupun outflow.",
     color: "#2BB3B6" 
   },
   { 
