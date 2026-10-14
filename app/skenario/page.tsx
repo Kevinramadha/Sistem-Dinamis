@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
+import { scenarios, outputVariables, outputDimensions, dimensionInfo, scenariosList } from "@/lib/scenarios";
 import { runModel } from "@/lib/model";
 import { interpretSingle, interpretCompare, BAU_SUBJECT } from "@/lib/interpretation";
 import ChartInterpretation, { InterpretationNote } from "@/components/ChartInterpretation";
@@ -474,7 +474,10 @@ export default function SkenarioPage() {
                     style={{ scrollbarWidth: 'thin', scrollbarColor: '#e2e8f0 transparent' }}>
                     {outputDimensions.map((dim) => (
                       <div key={dim}>
-                        <p className="text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">{dim}</p>
+                        <p className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-gray-400 mb-0.5">
+                          {dimensionInfo[dim].title}
+                          <InfoTip text={dimensionInfo[dim].hint} label={dimensionInfo[dim].title} />
+                        </p>
                         {outputVariables.filter((v) => v.dimension === dim).map((variable) => {
                       const isChecked = selectedVariables.includes(variable.id);
                       return (

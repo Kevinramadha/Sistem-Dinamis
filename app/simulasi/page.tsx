@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { scenarios, outputVariables, outputDimensions, scenariosList } from "@/lib/scenarios";
+import { scenarios, outputVariables, outputDimensions, dimensionInfo, scenariosList } from "@/lib/scenarios";
 import { runModel, SimulationParams } from "@/lib/model";
 import { interpretSingle, describeParams, BAU_SUBJECT } from "@/lib/interpretation";
 import ChartInterpretation, { InterpretationNote } from "@/components/ChartInterpretation";
@@ -171,7 +171,7 @@ export default function SimulasiPage() {
     setActivePreset("BAU");
     setAssumptions({});
     clearResults();
-    setToast(toastOk("Tuas kembali ke 0% dan hasil lama dihapus.", "Kembali ke BAU"));
+    setToast(toastOk("Parameter kembali ke 0% dan hasil lama dihapus.", "Kembali ke BAU"));
   };
 
   const resetAssumptions = () => {
@@ -225,7 +225,7 @@ export default function SimulasiPage() {
     return summarizeSingle(simulationData, baselineData, {
       lead: baselineData ? describeRun(runParams, runAssumptions) : BAU_SUBJECT,
       hintWhenBaseline:
-        "Ini kondisi acuan tanpa kebijakan tambahan. Ubah tuas kebijakan atau pilih preset SUS/DP, lalu jalankan simulasi untuk melihat dampaknya.",
+        "Ini kondisi acuan tanpa kebijakan tambahan. Ubah parameter kebijakan atau pilih preset SUS/DP, lalu jalankan simulasi untuk melihat dampaknya.",
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [simulationData, baselineData, runParams, runAssumptionsRaw]);
@@ -497,7 +497,7 @@ export default function SimulasiPage() {
                   <span style={{ color: '#2BB3B6' }}>Simulasi</span>
                 </h1>
                 <p className="text-blue-200 text-base max-w-lg leading-relaxed">
-                  Atur bebas dua tuas kebijakan resmi — Insentif Kebijakan dan Kebijakan Konservasi Lahan — dan lihat dampaknya terhadap sistem pariwisata DIY {baseYear}–2050
+                  Atur bebas dua parameter kebijakan resmi — Insentif Kebijakan dan Kebijakan Konservasi Lahan — dan lihat dampaknya terhadap sistem pariwisata DIY {baseYear}–2050
                 </p>
               </div>
             </div>
@@ -531,7 +531,7 @@ export default function SimulasiPage() {
           {choiceOpen && (
             <ChoiceDialog
               title="Pakai kondisi yang mana?"
-              text={`Tuas sudah diubah, tetapi kondisi dari Pencarian Target (${assumptionNote}) masih aktif.`}
+              text={`Parameter sudah diubah, tetapi kondisi dari Pencarian Target (${assumptionNote}) masih aktif.`}
               onCancel={() => setChoiceOpen(false)}
               options={[
                 {
@@ -593,8 +593,8 @@ export default function SimulasiPage() {
               <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden"
                 style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                 <div className="px-5 py-4" style={{ borderBottom: '1px solid #f0f4f8' }}>
-                  <p className="section-label mb-1">Tuas Kebijakan</p>
-                  <h2 className="font-display font-bold text-gray-900 text-sm">Parameter Simulasi</h2>
+                  <p className="section-label mb-1">Parameter Kebijakan</p>
+                  <h2 className="font-display font-bold text-gray-900 text-sm">Atur Nilai Kebijakan</h2>
                 </div>
 
                 <div className="p-4 space-y-5">
@@ -736,7 +736,10 @@ export default function SimulasiPage() {
                 <div className="p-5 space-y-4">
                   {outputDimensions.map((dim) => (
                     <div key={dim}>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">{dim}</p>
+                      <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400 mb-1.5">
+                        {dimensionInfo[dim].title}
+                        <InfoTip text={dimensionInfo[dim].hint} label={dimensionInfo[dim].title} />
+                      </p>
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1">
                         {outputVariables.filter((v) => v.dimension === dim).map((variable) => {
                           const isChecked = selectedVariables.includes(variable.id);

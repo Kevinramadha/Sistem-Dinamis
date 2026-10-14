@@ -89,6 +89,34 @@ export const outputVariables: OutputVariable[] = [
   { id: "total_malam_menginap", label: "Total Malam Menginap", unit: "malam", dimension: "Struktur Model", arah: "Deskriptif" },
 ];
 
+/**
+ * Nama kelompok variabel untuk pengguna awam. Kunci `dimension` tetap memakai
+ * istilah skripsi (dipakai di logika ringkasan dan interpretasi); hanya tampilan
+ * panel pilihan variabel yang memakai nama di sini.
+ */
+export const dimensionInfo: Record<OutputVariable["dimension"], { title: string; hint: string }> = {
+  Skala: {
+    title: "Ukuran pariwisata",
+    hint: "Seberapa banyak wisatawan yang datang.",
+  },
+  Ekonomi: {
+    title: "Dampak ekonomi",
+    hint: "Lapangan kerja, nilai tambah (PDRB), investasi, dan tingkat hunian hotel.",
+  },
+  Lingkungan: {
+    title: "Dampak lingkungan",
+    hint: "Lahan yang masih tersedia dan lahan yang sudah terbangun.",
+  },
+  Sosial: {
+    title: "Dampak sosial",
+    hint: "Kepadatan wisatawan dan daya tarik (kualitas) destinasi.",
+  },
+  "Struktur Model": {
+    title: "Pendukung",
+    hint: "Angka pendukung yang membantu menjelaskan mengapa hasil berubah, misalnya jumlah hotel dan objek wisata. Tidak dipakai untuk menilai baik atau buruk.",
+  },
+};
+
 export const outputDimensions: OutputVariable["dimension"][] = [
   "Skala",
   "Ekonomi",

@@ -13,7 +13,7 @@ dummy — sehingga proyeksi 2025–2050 di situs ini benar-benar hasil simulasi 
 | Beranda | `/` | Ringkasan proyek, peta lokasi studi (batas Provinsi DIY di-highlight), ringkasan skenario |
 | Model | `/model` | Tab **Struktur Model** (CLD, SFD, 6 feedback loop) dan tab **Evaluasi Model** (hasil uji struktural, perilaku, kondisi ekstrem, dan sensitivitas) |
 | Skenario | `/skenario` | Perbandingan 3 skenario kebijakan resmi, dengan interpretasi dan ringkasan hasil otomatis |
-| Eksplorasi Simulasi | `/simulasi` | Simulasi bebas dengan 2 tuas kebijakan resmi |
+| Eksplorasi Simulasi | `/simulasi` | Simulasi bebas dengan 2 parameter kebijakan resmi |
 | Pencarian Target | `/pencarian-target` | Goal seeking: tentukan target indikator, aplikasi mencari nilai tuas dengan intervensi terkecil dari BAU. Lihat [docs/pencarian-target.md](docs/pencarian-target.md) |
 | Pembaruan Data | `/pembaruan-data` | Memasukkan data tahun baru (template .xlsx/.csv atau form) sehingga simulasi berjalan dari tahun dasar terbaru. Lihat [docs/pembaruan-data.md](docs/pembaruan-data.md) |
 
