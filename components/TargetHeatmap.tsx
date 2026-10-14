@@ -21,7 +21,7 @@ interface Marker {
 }
 
 /**
- * Peta ruang dua tuas: sumbu x Insentif Kebijakan, sumbu y Kebijakan
+ * Peta ruang dua parameter kebijakan: sumbu x Insentif Kebijakan, sumbu y Kebijakan
  * Konservasi Lahan. Setiap sel adalah satu titik grid simulasi, diwarnai
  * menurut target mana yang terpenuhi.
  */

@@ -44,7 +44,7 @@ export function leversFromQuery(q: URLSearchParams): AppliedFromUrl | null {
 }
 
 /**
- * Memuat nilai tuas (dan asumsi, bila ada) yang dikirim halaman Pencarian
+ * Memuat nilai parameter kebijakan (dan asumsi, bila ada) yang dikirim halaman Pencarian
  * Target lewat URL ke panel Simulasi, lalu menghapus parameter itu dari
  * alamat halaman agar tidak dimuat ulang. Pemberitahuan ditampilkan oleh
  * pemanggil (popup). Dibungkus <Suspense> karena memakai useSearchParams.

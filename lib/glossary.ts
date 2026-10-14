@@ -1,4 +1,4 @@
-// Penjelasan singkat istilah untuk ikon ⓘ di panel pilihan variabel dan tuas
+// Penjelasan singkat istilah untuk ikon ⓘ di panel pilihan variabel dan parameter kebijakan
 // kebijakan. Disarikan dari skripsi dan persamaan model (.mdl), ditulis dalam
 // bahasa awam.
 export const GLOSSARY: Record<string, string> = {
@@ -23,7 +23,7 @@ export const GLOSSARY: Record<string, string> = {
   investasi_sektor_pariwisata: "Investasi yang masuk ke sektor pariwisata setiap tahun, dalam miliar rupiah.",
   total_malam_menginap: "Jumlah malam yang dihabiskan seluruh wisatawan untuk menginap di DIY dalam setahun.",
 
-  // Tuas kebijakan
+  // Parameter kebijakan
   insentif_kebijakan:
     "Tambahan dorongan investasi pariwisata, misalnya insentif fiskal atau nonfiskal. Nilai 10% berarti investasi 10% lebih tinggi dari pola biasanya. Nilai skenario ditetapkan peneliti, bukan target resmi pemerintah.",
   kebijakan_konservasi_lahan:

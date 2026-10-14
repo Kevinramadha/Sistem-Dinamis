@@ -2,7 +2,7 @@ import { runModel, type BaseOverride, type ExtraConstant, type SimulationData } 
 import { FIXED_PARAMS, RESEARCH_PARAMS, type ParamValues } from "./parameterUpdate";
 
 // Pencarian Target (goal seeking): membalik arah simulasi. Pengguna menentukan
-// target indikator, lalu dicari kombinasi tuas kebijakan (dan, bila diizinkan,
+// target indikator, lalu dicari kombinasi parameter kebijakan (dan, bila diizinkan,
 // asumsi model) yang memenuhinya dengan intervensi sekecil mungkin dari BAU.
 // Modul ini tidak mengubah persamaan maupun parameter model; ia hanya
 // menjalankan model berulang kali dengan nilai input yang berbeda.
@@ -170,7 +170,7 @@ export interface Dim {
 
 export type Point = Record<string, number>;
 
-/** Dua tuas kebijakan resmi, dengan rentang yang sama seperti slider di halaman Simulasi. */
+/** Dua parameter kebijakan resmi, dengan rentang yang sama seperti slider di halaman Simulasi. */
 export const LEVER_DIMS: Dim[] = [
   { key: "insentif_kebijakan", label: "Insentif Kebijakan", min: 0, max: 0.5, base: 0, kind: "tuas" },
   { key: "kebijakan_konservasi_lahan", label: "Kebijakan Konservasi Lahan", min: 0, max: 1, base: 0, kind: "tuas" },
@@ -384,7 +384,7 @@ export async function goalSeek(
   let grid: GridResult | undefined;
 
   if (useGrid) {
-    // 1) Grid search pada ruang dua tuas.
+    // 1) Grid search pada ruang dua parameter kebijakan.
     const [dx, dy] = dims;
     const xs = linspace(dx.min, dx.max, gridSize);
     const ys = linspace(dy.min, dy.max, gridSize);
@@ -401,7 +401,7 @@ export async function goalSeek(
 
     // 2) Bisection pada pasangan titik bertetangga yang statusnya berbeda
     //    (layak vs tidak layak), dipilih yang paling dekat dengan BAU, untuk
-    //    mempertajam batas nilai tuas minimum yang memenuhi semua target.
+    //    mempertajam batas nilai parameter kebijakan minimum yang memenuhi semua target.
     const at = (i: number, j: number) => gridCands[j * gridSize + i];
     const pairs: [Candidate, Candidate][] = [];
     for (let j = 0; j < gridSize; j++)
