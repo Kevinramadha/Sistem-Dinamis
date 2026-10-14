@@ -1,7 +1,7 @@
 import { createSynchronousModelRunner, createConstantDef } from "@sdeverywhere/runtime";
 import { KEPADATAN_REFERENSI_2025, toModelConstants, type ParamValues } from "./parameterUpdate";
 
-// Dua tuas kebijakan resmi (lihat lib/scenarios.ts untuk kriteria penetapannya).
+// Dua parameter kebijakan resmi (lihat lib/scenarios.ts untuk kriteria penetapannya).
 // Parameter model lain (elastisitas, ambang TPK, laju demolisi, dsb.) adalah
 // hasil kalibrasi final dan sengaja TIDAK diekspos sebagai input pengguna,
 // karena skripsi memperlakukannya sebagai asumsi struktural yang diuji lewat

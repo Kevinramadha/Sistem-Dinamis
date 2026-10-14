@@ -14,7 +14,7 @@ dummy — sehingga proyeksi 2025–2050 di situs ini benar-benar hasil simulasi 
 | Model | `/model` | Tab **Struktur Model** (CLD, SFD, 6 feedback loop) dan tab **Evaluasi Model** (hasil uji struktural, perilaku, kondisi ekstrem, dan sensitivitas) |
 | Skenario | `/skenario` | Perbandingan 3 skenario kebijakan resmi, dengan interpretasi dan ringkasan hasil otomatis |
 | Eksplorasi Simulasi | `/simulasi` | Simulasi bebas dengan 2 parameter kebijakan resmi |
-| Pencarian Target | `/pencarian-target` | Goal seeking: tentukan target indikator, aplikasi mencari nilai tuas dengan intervensi terkecil dari BAU. Lihat [docs/pencarian-target.md](docs/pencarian-target.md) |
+| Pencarian Target | `/pencarian-target` | Goal seeking: tentukan target indikator, aplikasi mencari nilai parameter kebijakan dengan intervensi terkecil dari BAU. Lihat [docs/pencarian-target.md](docs/pencarian-target.md) |
 | Pembaruan Data | `/pembaruan-data` | Memasukkan data tahun baru (template .xlsx/.csv atau form) sehingga simulasi berjalan dari tahun dasar terbaru. Lihat [docs/pembaruan-data.md](docs/pembaruan-data.md) |
 
 ## Model sistem dinamis
@@ -23,14 +23,14 @@ dummy — sehingga proyeksi 2025–2050 di situs ini benar-benar hasil simulasi 
   dan Akomodasi, Jumlah Objek Daya Tarik Wisata, Tenaga Kerja Pariwisata, Lahan Terbangun).
 - Model final: `research/[FINAL] MODEL SISTEM DINAMIS.mdl`, dikompilasi ke
   `lib/model-final.js` via `@sdeverywhere/runtime`.
-- **Dua tuas kebijakan** yang bisa diatur pengguna — Insentif Kebijakan dan Kebijakan
+- **Dua parameter kebijakan** yang bisa diatur pengguna — Insentif Kebijakan dan Kebijakan
   Konservasi Lahan — hasil penyaringan tiga kriteria (relevansi struktural, dasar kebijakan,
   keterkendalian). Parameter lain sudah final hasil kalibrasi dan sengaja tidak diekspos
   sebagai input, karena berstatus asumsi struktural yang diuji lewat analisis sensitivitas,
   bukan instrumen kebijakan.
 - **Tiga skenario resmi**: Business-as-Usual, Sustainable, Development Priority (definisi
   lengkap di `lib/scenarios.ts`).
-- Indikator kinerja dikelompokkan 4 dimensi: Ekonomi, Lingkungan, Sosial, dan Skala.
+- Indikator kinerja dikelompokkan 4 dimensi: Ekonomi, Lingkungan, Sosial, dan Skala (di aplikasi tampil sebagai Dampak ekonomi, Dampak lingkungan, Dampak sosial, dan Ukuran pariwisata; variabel penjelas model ditampilkan sebagai Pendukung).
 - Nilai awal kelima stok dipisahkan sebagai konstanta (`Nilai Awal …`) agar dapat diperbarui
   saat data tahun baru dirilis lewat halaman Pembaruan Data.
 

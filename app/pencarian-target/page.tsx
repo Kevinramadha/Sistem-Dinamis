@@ -773,8 +773,8 @@ function Results({
           <p>
             Model dijalankan {result.runs.toLocaleString("id-ID")} kali dalam {nf(run.ms / 1000, 1)} detik.{" "}
             {result.method === "grid"
-              ? "Metode: grid search 41 × 41 titik pada ruang dua tuas, lalu bisection pada batas wilayah yang memenuhi target, lalu pattern search."
-              : "Metode: Latin Hypercube Sampling 2.000 sampel pada ruang lima dimensi (dua tuas dan tiga asumsi ±10%), lalu penyempurnaan lokal (pattern search)."}
+              ? "Metode: grid search 41 × 41 titik pada ruang dua parameter kebijakan, lalu bisection pada batas wilayah yang memenuhi target, lalu pattern search."
+              : "Metode: Latin Hypercube Sampling 2.000 sampel pada ruang lima dimensi (dua parameter kebijakan dan tiga asumsi ±10%), lalu penyempurnaan lokal (pattern search)."}
           </p>
           <p>
             Saran utama adalah titik yang memenuhi semua target dengan jarak ternormalisasi terkecil dari BAU, yaitu √Σ((xᵢ − xᵢ,BAU) ÷

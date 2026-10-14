@@ -55,10 +55,10 @@ Penurunan Dasar, Sensitivitas Konstruksi terhadap TPK, TPK Ambang, Sensitivitas 
 Investasi, Laju Pembangunan ODTW Non Investasi, Laju Penutupan Dasar ODTW, Laju Konversi
 Dasar); parameter regulasi (Laju Demolisi Dasar, Laju Keluar Dasar TK); parameter asumsi
 (bobot daya tarik, elastisitas, batas efek ODTW, lahan per hotel/ODTW, waktu penyesuaian TK);
-dan tuas kebijakan. Halaman Pembaruan Data menampilkannya di panel "Angka yang tidak ikut
+dan parameter kebijakan. Halaman Pembaruan Data menampilkannya di panel "Angka yang tidak ikut
 berubah" (tertutup secara bawaan) sebagai daftar ringkas: nama sehari-hari dan nilai dengan
 satuan yang mudah dipahami. Penjelasan satu kalimat dan nama variabel di model tampil lewat
-ikon ⓘ. Tuas kebijakan cukup disebut dalam satu catatan karena diatur di Skenario dan
+ikon ⓘ. Parameter kebijakan cukup disebut dalam satu catatan karena diatur di Skenario dan
 Eksplorasi Simulasi.
 
 ## 3. Keputusan desain

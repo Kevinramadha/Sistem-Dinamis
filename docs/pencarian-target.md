@@ -1,19 +1,19 @@
 # Fitur Pencarian Target Kebijakan (Goal Seeking)
 
-Fitur ini membalik arah simulasi. Pada halaman Simulasi, pengguna memilih nilai tuas lalu
+Fitur ini membalik arah simulasi. Pada halaman Simulasi, pengguna memilih nilai parameter kebijakan lalu
 melihat hasilnya. Pada halaman **Pencarian Target** (`/pencarian-target`), pengguna
-menentukan target indikator, lalu aplikasi mencari kombinasi nilai tuas yang mencapai
+menentukan target indikator, lalu aplikasi mencari kombinasi nilai parameter kebijakan yang mencapai
 target tersebut dengan intervensi sekecil mungkin dari kondisi Business-as-Usual (BAU).
 
 ## 1. Ringkasan perubahan
 
 | Bagian | Perubahan |
 |---|---|
-| `lib/goalSeek.ts` | Mesin pencarian: daftar indikator, 5 jenis target, fungsi evaluasi target, validasi masukan, ruang pencarian (2 tuas resmi dan 3 asumsi tambahan ±10%), grid search + bisection, Latin Hypercube Sampling + penyempurnaan lokal, pemilihan rekomendasi dan alternatif, diagnosis bila target tidak tercapai. |
+| `lib/goalSeek.ts` | Mesin pencarian: daftar indikator, 5 jenis target, fungsi evaluasi target, validasi masukan, ruang pencarian (2 parameter kebijakan resmi dan 3 asumsi tambahan ±10%), grid search + bisection, Latin Hypercube Sampling + penyempurnaan lokal, pemilihan rekomendasi dan alternatif, diagnosis bila target tidak tercapai. |
 | `lib/goalSeek.worker.ts`, `lib/goalSeekClient.ts` | Pencarian dijalankan di Web Worker dengan laporan progres dan tombol batal; cadangan di thread utama bila browser tidak mendukung Worker. |
-| `app/pencarian-target/page.tsx` | Halaman baru: isian 1–3 target, pilihan asumsi tambahan, progress bar, status, rekomendasi, peta ruang tuas, tabel alternatif, tombol "Terapkan ke Simulasi", catatan tetap tentang sifat hasil. |
-| `components/TargetHeatmap.tsx` | Peta (heatmap) 41 × 41 ruang dua tuas: wilayah yang memenuhi semua target, wilayah yang hanya memenuhi target utama, dan titik rekomendasi/alternatif. |
-| `components/ApplyLeversFromUrl.tsx`, `app/simulasi/page.tsx` | Halaman Simulasi membaca `?insentif=…&konservasi=…` (dan, bila ada, perubahan asumsi `a_lama`, `a_pengeluaran`, `a_odtw` dalam persen, dibatasi ±10%) dari tombol "Coba di halaman Simulasi". Nilai tuas dimuat ke panel; perubahan asumsi ditampilkan pada kotak kuning "Kondisi lain yang diubah" dengan tombol "Kembalikan ke kondisi dasar", ikut dipakai saat simulasi dijalankan, dan disebut dalam ringkasan serta interpretasi. Pembanding tetap BAU dengan asumsi dasar. |
+| `app/pencarian-target/page.tsx` | Halaman baru: isian 1–3 target, pilihan asumsi tambahan, progress bar, status, rekomendasi, peta ruang parameter kebijakan, tabel alternatif, tombol "Terapkan ke Simulasi", catatan tetap tentang sifat hasil. |
+| `components/TargetHeatmap.tsx` | Peta (heatmap) 41 × 41 ruang dua parameter kebijakan: wilayah yang memenuhi semua target, wilayah yang hanya memenuhi target utama, dan titik rekomendasi/alternatif. |
+| `components/ApplyLeversFromUrl.tsx`, `app/simulasi/page.tsx` | Halaman Simulasi membaca `?insentif=…&konservasi=…` (dan, bila ada, perubahan asumsi `a_lama`, `a_pengeluaran`, `a_odtw` dalam persen, dibatasi ±10%) dari tombol "Coba di halaman Simulasi". Nilai parameter kebijakan dimuat ke panel; perubahan asumsi ditampilkan pada kotak kuning "Kondisi lain yang diubah" dengan tombol "Kembalikan ke kondisi dasar", ikut dipakai saat simulasi dijalankan, dan disebut dalam ringkasan serta interpretasi. Pembanding tetap BAU dengan asumsi dasar. |
 | `lib/model.ts` | `runModel` menerima daftar konstanta tambahan opsional (dipakai hanya untuk asumsi tambahan). Pemanggilan lama tidak berubah. |
 | `components/Navbar.tsx` | Menu "Alat Lanjutan ▾" berisi Pencarian Target dan Pembaruan Data. |
 | `tests/goalSeek.test.ts` | 19 tes: evaluasi target, validasi, pembulatan saran, LHS, uji balik SUS dan DP, target mustahil, saran tahun, constraint kepadatan dan saran pelonggarannya, batasan yang tidak terpenuhi di titik mana pun, target yang sudah dipenuhi BAU, pencarian dengan asumsi tambahan, kesamaan hasil asumsi yang dibawa ke Simulasi. |
@@ -24,14 +24,14 @@ berulang kali dengan nilai input yang berbeda.
 ## 2. Metode pencarian
 
 Setiap kombinasi nilai input disimulasikan dengan model SDEverywhere yang sama dengan
-halaman Simulasi. Hasilnya dibandingkan dengan simulasi BAU (kedua tuas = 0) pada tahun
+halaman Simulasi. Hasilnya dibandingkan dengan simulasi BAU (kedua parameter kebijakan = 0) pada tahun
 target. Satu target terpenuhi bila perubahan terhadap BAU (atau nilai absolutnya) memenuhi
 syarat yang ditetapkan pengguna. Target pertama adalah target utama; target kedua dan ketiga
-adalah batasan (constraint). Untuk dua tuas resmi digunakan **grid search** 41 × 41 titik
+adalah batasan (constraint). Untuk dua parameter kebijakan resmi digunakan **grid search** 41 × 41 titik
 (1.681 simulasi) pada rentang slider, yaitu Insentif Kebijakan 0–50% dan Kebijakan
 Konservasi Lahan 0–100%. Pasangan titik bertetangga yang statusnya berbeda (memenuhi vs
 tidak memenuhi semua target) lalu dipertajam dengan **bisection** (12 iterasi per pasangan,
-24 pasangan terdekat dengan BAU) untuk menemukan batas nilai tuas minimum. Bila asumsi
+24 pasangan terdekat dengan BAU) untuk menemukan batas nilai parameter kebijakan minimum. Bila asumsi
 tambahan diaktifkan (5 dimensi), digunakan **Latin Hypercube Sampling** sebanyak 2.000
 sampel dengan *seed* tetap agar hasil dapat diulang. Kedua cara diakhiri **penyempurnaan
 lokal** (pattern search) yang menggeser titik layak terbaik mendekati BAU selama semua target
@@ -43,7 +43,7 @@ Insentif (0–0,5) dan Konservasi (0–1) setara. Alternatif adalah hingga empat
 berikutnya yang berjarak minimal 0,12 satu sama lain. Bila tidak ada kombinasi yang memenuhi
 semua target, status menjadi TIDAK TERCAPAI. Aplikasi lalu melaporkan nilai terbaik target
 utama yang bisa dicapai tanpa melanggar batasan, dipertajam dengan *hill climbing*, beserta
-kombinasi tuasnya. Aplikasi juga menjelaskan penyebabnya: target utama mustahil dicapai,
+kombinasi parameter kebijakannya. Aplikasi juga menjelaskan penyebabnya: target utama mustahil dicapai,
 atau target utama dan batasan saling bertentangan. Satu pencarian membutuhkan sekitar 2.000
 simulasi. Satu simulasi berlangsung 0,1–0,3 ms, sehingga seluruh pencarian selesai sekitar
 0,2–0,4 detik di peramban.
@@ -84,13 +84,13 @@ kerja pencarian".
 
 Catatan dari struktur model yang relevan untuk pembacaan hasil:
 
-- Dengan kedua tuas pada nilai maksimum, PDRB 2035 hanya naik sekitar +2,4% dibanding BAU
+- Dengan kedua parameter kebijakan pada nilai maksimum, PDRB 2035 hanya naik sekitar +2,4% dibanding BAU
   (2050: sekitar +13,3%). Target besar pada tahun dekat akan TIDAK TERCAPAI.
 - PDRB, Jumlah Wisatawan, dan Indeks Kepadatan berubah dengan persentase yang sama terhadap
   BAU. Target "PDRB naik" dengan batasan "kepadatan naik paling banyak" adalah *trade-off*
   langsung.
 - Indeks Kepadatan pada BAU melewati 2,0 mulai 2043. Batasan "kepadatan maksimal 2,0" untuk
-  tahun 2043 ke atas tidak dapat dipenuhi oleh tuas mana pun.
+  tahun 2043 ke atas tidak dapat dipenuhi oleh parameter kebijakan mana pun.
 
 ## 4. Hasil pengujian
 
@@ -102,7 +102,7 @@ Catatan dari struktur model yang relevan untuk pembacaan hasil:
 | Constraint bertentangan | PDRB 2045 naik minimal 5%; Indeks Kepadatan 2045 naik paling banyak 3% | TIDAK TERCAPAI; tidak ada sel hijau; terbaik PDRB +2,99% (Insentif 16,3%, Konservasi 100%) tanpa melanggar batasan |
 | Constraint longgar | PDRB 2045 naik minimal 5%; Indeks Kepadatan 2045 maksimal 1,06 × BAU | TERCAPAI; semua titik yang direkomendasikan memenuhi batas kepadatan |
 | Contoh bawaan halaman | PDRB 2045 naik minimal 5%; Rasio Daya Dukung Lahan 2045 tidak lebih rendah dari BAU | TERCAPAI; Insentif 28,8%, Konservasi 12,5%; 1.986 simulasi, sekitar 0,2 detik |
-| Asumsi tambahan (LHS) | PDRB 2035 naik minimal 5% dengan asumsi tambahan aktif | TERCAPAI; Pengeluaran per Kunjungan +4,8% dari nilai dasar, kedua tuas 0; 2.015 simulasi, sekitar 0,2 detik |
+| Asumsi tambahan (LHS) | PDRB 2035 naik minimal 5% dengan asumsi tambahan aktif | TERCAPAI; Pengeluaran per Kunjungan +4,8% dari nilai dasar, kedua parameter kebijakan 0; 2.015 simulasi, sekitar 0,2 detik |
 | Saran tahun | PDRB 2035 naik minimal 10% | TIDAK TERCAPAI; saran tahun 2047; pencarian ulang dengan tahun 2047 TERCAPAI, dengan 2046 tetap tidak tercapai |
 | Saran pelonggaran syarat | PDRB 2045 naik minimal 5%; kepadatan naik paling banyak 3% | Saran: kepadatan naik paling banyak 5,01%; pencarian ulang TERCAPAI |
 | Asumsi dibawa ke Simulasi | Rekomendasi uji LHS dibuka di halaman Simulasi | Perubahan PDRB 2035 di Simulasi sama dengan hasil pencarian (selisih < 0,05 poin persen) |

@@ -1,4 +1,4 @@
-import { outputVariables, type OutputVariable } from "./scenarios";
+import { dimensionInfo, outputVariables, type OutputVariable } from "./scenarios";
 import {
   KEPADATAN_BATAS,
   RASIO_BATAS,
@@ -17,7 +17,7 @@ import {
 export type Tone = "baik" | "buruk" | "campuran" | "netral";
 
 export interface SummaryRow {
-  label: string; // "Ekonomi", "Lingkungan", "Sosial"
+  label: string; // "Dampak ekonomi", "Dampak lingkungan", "Dampak sosial"
   status: string; // "Lebih baik", "Development Priority unggul", ...
   tone: Tone;
   text: string;
@@ -150,7 +150,7 @@ export function summarizeSingle(
     const vars = ranked(dim);
     if (!baseline) {
       return {
-        label: dim,
+        label: dimensionInfo[dim].title,
         status: "Kondisi acuan",
         tone: "netral" as Tone,
         text: capitalize(joinList(vars.map((v) => trendShort(v, data[v.id] ?? [])))) + ".",
@@ -175,7 +175,7 @@ export function summarizeSingle(
       text = `${capitalize(joinList(items))} dibanding tanpa kebijakan tambahan.`;
       if (same.length) text += ` ${capitalize(joinList(same))} hampir sama.`;
     }
-    return { label: dim, status, tone, text };
+    return { label: dimensionInfo[dim].title, status, tone, text };
   });
 
   const warnings = warningsFor([{ label: "", data }], years, false);
@@ -184,7 +184,8 @@ export function summarizeSingle(
   if (!baseline) {
     conclusion = opts.hintWhenBaseline;
   } else {
-    const by = (t: Tone) => rows.filter((r) => r.tone === t).map((r) => r.label.toLowerCase());
+    // Baris selalu berurutan seperti DIMENSIONS; kalimat memakai nama sisi ("ekonomi"), bukan judul baris.
+    const by = (t: Tone) => DIMENSIONS.filter((_, i) => rows[i].tone === t).map((d) => d.toLowerCase());
     const baik = by("baik");
     const buruk = by("buruk");
     const campur = by("campuran");
@@ -230,21 +231,21 @@ export function summarizeCompare(series: NamedSeries[], years: number[]): Summar
     });
     const bests = Array.from(new Set(results.filter((r) => r.best).map((r) => r.best!.label)));
     if (bests.length === 0) {
-      return { label: dim, status: "Hampir sama", tone: "netral" as Tone, text: capitalize(joinList(results.map((r) => r.detail))) + "." };
+      return { label: dimensionInfo[dim].title, status: "Hampir sama", tone: "netral" as Tone, text: capitalize(joinList(results.map((r) => r.detail))) + "." };
     }
     if (bests.length === 1) {
       winners.push(bests[0]);
       const winner = series.find((s) => s.label === bests[0])!;
       const suffix = winner.id === bau.id ? "" : " dibanding BAU";
       return {
-        label: dim,
+        label: dimensionInfo[dim].title,
         status: `${bests[0]} unggul`,
         tone: "baik" as Tone,
         text: capitalize(joinList(results.map((r) => r.detail))) + suffix + ".",
       };
     }
     return {
-      label: dim,
+      label: dimensionInfo[dim].title,
       status: "Hasil terbagi",
       tone: "campuran" as Tone,
       text:

@@ -673,23 +673,23 @@ export default function ModelEvaluation() {
             <p className="text-sm text-gray-500 leading-relaxed">
               Analisis dilakukan dua tahap. Tahap pertama menguji ke-30 parameter dengan mengubah masing-masing ±10%
               dari nilai dasar untuk menyaring parameter yang paling memengaruhi keluaran model (tornado ranking).
-              Tahap kedua menguji kelompok parameter dengan ketidakpastian terbesar, serta kedua tuas kebijakan,
+              Tahap kedua menguji kelompok parameter dengan ketidakpastian terbesar, serta kedua parameter kebijakan,
               pada rentang nilai yang lebih realistis (bukan sekadar ±10%).
             </p>
             <p className="text-sm text-gray-500 leading-relaxed mt-3">
               Pada tahap pertama, <strong>Laju Penurunan Dasar</strong> menempati peringkat 1 untuk hampir semua
               variabel keluaran (memengaruhi Jumlah Wisatawan hingga 42,07%), diikuti <strong>Bobot ODTW</strong>{" "}
               (22,79%) dan <strong>Rasio Daya Dukung Lahan Referensi</strong> (11,48%). Parameter-parameter ini
-              berstatus asumsi struktural, bukan tuas kebijakan — karena itu diuji lewat rentang penuh dan
+              berstatus asumsi struktural, bukan parameter kebijakan — karena itu diuji lewat rentang penuh dan
               pengujian robustness, bukan dijadikan skenario.
             </p>
             <p className="text-sm text-gray-500 leading-relaxed mt-3">
-              Pada tahap kedua, dua tuas kebijakan diuji pada rentang aktualnya. <strong>Insentif Kebijakan</strong>{" "}
+              Pada tahap kedua, dua parameter kebijakan diuji pada rentang aktualnya. <strong>Insentif Kebijakan</strong>{" "}
               (0–0,5) menggerakkan Jumlah Wisatawan dan PDRB secara hampir linear, dari +2,56% pada 0,1 hingga
               +12,92% pada 0,5. Sebaliknya, <strong>Kebijakan Konservasi Lahan</strong> (0–1) nyaris tak berdaya
               menggerakkan Lahan Terbangun total: pada nilai maksimum (1,0) sekalipun, Lahan Terbangun 2050 hanya
               turun <strong>0,91%</strong>, meskipun Laju Konversi Lahan Pariwisata berhasil ditekan hingga{" "}
-              <strong>−100%</strong>. Ini karena tuas tersebut hanya menghentikan konversi lahan yang berasal dari
+              <strong>−100%</strong>. Ini karena parameter tersebut hanya menghentikan konversi lahan yang berasal dari
               pembangunan hotel dan ODTW, sedangkan konversi lahan non-pariwisata — yang mendominasi total lahan
               terbangun — tidak terpengaruh sama sekali.
             </p>
@@ -727,7 +727,7 @@ export default function ModelEvaluation() {
             )}
           </Card>
 
-          <Card title="Rentang Uji Penuh" subtitle="Lebar dampak (poin %) per kelompok parameter berketidakpastian terbesar, dan kedua tuas kebijakan">
+          <Card title="Rentang Uji Penuh" subtitle="Lebar dampak (poin %) per kelompok parameter berketidakpastian terbesar, dan kedua parameter kebijakan">
             <DataTable
               columns={[
                 { key: "kelompok", label: "Kelompok / Parameter" },
@@ -745,10 +745,10 @@ export default function ModelEvaluation() {
             </p>
           </Card>
 
-          <Card title="Rentang Penuh Dua Tuas Kebijakan" subtitle="Insentif Kebijakan vs Kebijakan Konservasi Lahan, pada rentang nilai aktualnya">
+          <Card title="Rentang Penuh Dua Parameter Kebijakan" subtitle="Insentif Kebijakan vs Kebijakan Konservasi Lahan, pada rentang nilai aktualnya">
             <DataTable
               columns={[
-                { key: "kelompok", label: "Tuas" },
+                { key: "kelompok", label: "Parameter" },
                 { key: "nilaiUji", label: "Nilai Uji" },
                 { key: "wisatawanPct", label: "Wisatawan (%)", align: "right", render: (r) => fmtPct(r.wisatawanPct, 3) },
                 { key: "pdrbPct", label: "PDRB (%)", align: "right", render: (r) => fmtPct(r.pdrbPct, 3) },

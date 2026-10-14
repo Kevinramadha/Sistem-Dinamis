@@ -19,9 +19,9 @@ export interface OutputVariable {
   color?: string;
 }
 
-// Dua tuas kebijakan resmi hasil penyaringan tiga kriteria (relevansi
+// Dua parameter kebijakan resmi hasil penyaringan tiga kriteria (relevansi
 // struktural, dasar kebijakan, keterkendalian) pada skripsi Bab 3.8.1, dan
-// tiga skenario definisinya sesuai Tabel 18 Bab 4.8.1. Nilai tuas merupakan
+// tiga skenario definisinya sesuai Tabel 18 Bab 4.8.1. Nilai parameter kebijakan merupakan
 // ketetapan peneliti, bukan target resmi pemerintah.
 export const scenarios: Record<string, Scenario> = {
   BAU: {

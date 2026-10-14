@@ -22,9 +22,9 @@ import { readableText } from "@/lib/a11yColors";
 const LineChart = dynamic(() => import("@/components/LineChart"), { ssr: false });
 const ComparisonChart = dynamic(() => import("@/components/ComparisonChart"), { ssr: false });
 
-// Dua tuas kebijakan resmi (Bab 3.8.1 & 4.8.1 skripsi): parameter lain sudah
+// Dua parameter kebijakan resmi (Bab 3.8.1 & 4.8.1 skripsi): parameter lain sudah
 // final hasil kalibrasi dan tidak diekspos sebagai input agar sejalan dengan
-// kriteria keterkendalian yang dipakai untuk menyaring tuas kebijakan.
+// kriteria keterkendalian yang dipakai untuk menyaring parameter kebijakan.
 const sliderConfigs = [
   { id: "insentif_kebijakan", label: "Insentif Kebijakan", unit: "%", scale: 100, min: 0, max: 0.5, step: 0.01 },
   { id: "kebijakan_konservasi_lahan", label: "Kebijakan Konservasi Lahan", unit: "%", scale: 100, min: 0, max: 1, step: 0.05 },
@@ -47,10 +47,10 @@ export default function SimulasiPage() {
   const runParams = fresh ? runParamsRaw : null;
   const [isLoading, setIsLoading] = useState(false);
   // Perubahan asumsi model (persen dari nilai dasar) yang dibawa dari Pencarian Target.
-  // Bukan tuas kebijakan; kosong pada pemakaian biasa.
+  // Bukan parameter kebijakan; kosong pada pemakaian biasa.
   const [assumptions, setAssumptions] = useState<AssumptionChanges>({});
   const currentAssumptions = assumptions;
-  // Nilai tuas yang dibawa dari Pencarian Target, untuk mendeteksi bila pengguna mengubah tuas
+  // Nilai parameter kebijakan yang dibawa dari Pencarian Target, untuk mendeteksi bila pengguna mengubah parameter
   // sementara kondisi lain dari Pencarian Target masih aktif.
   const [loadedLevers, setLoadedLevers] = useState<SimulationParams | null>(null);
   // Pengguna sudah memilih tetap memakai kondisi Pencarian Target; tidak ditanya ulang sampai nilai baru dimuat.
@@ -73,7 +73,7 @@ export default function SimulasiPage() {
       JSON.stringify(assumptions) !== JSON.stringify(runAssumptions));
   const hasAssumptions = Object.keys(assumptions).length > 0;
   const assumptionNote = describeAssumptionChanges(assumptions);
-  // Saat Jalankan Simulasi diklik: bila tuas sudah diubah dari nilai Pencarian Target
+  // Saat Jalankan Simulasi diklik: bila parameter sudah diubah dari nilai Pencarian Target
   // sementara kondisinya masih aktif, tanyakan dulu kondisi mana yang dipakai.
   const needsChoice =
     hasAssumptions &&
