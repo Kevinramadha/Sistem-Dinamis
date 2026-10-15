@@ -98,12 +98,12 @@ export default function Footer() {
 
           {/* Identitas skripsi */}
           <section
-            aria-labelledby="identitas-skripsi"
+            aria-labelledby="profil-peneliti"
             className="rounded-2xl p-6 mb-10"
             style={{ background: '#112a43', border: '1px solid #1e3a52' }}
           >
-            <h3 id="identitas-skripsi" className="text-xs font-semibold mb-3 uppercase tracking-widest" style={{ color: '#F4CD53', fontFamily: 'Sora, sans-serif' }}>
-              Identitas Skripsi
+            <h3 id="profil-peneliti" className="text-xs font-semibold mb-3 uppercase tracking-widest" style={{ color: '#F4CD53', fontFamily: 'Sora, sans-serif' }}>
+              Profil
             </h3>
             <p className="text-sm font-semibold leading-relaxed mb-5" style={{ color: '#e6eef6', fontFamily: 'Sora, sans-serif' }}>
               {IDENTITAS.judul}
