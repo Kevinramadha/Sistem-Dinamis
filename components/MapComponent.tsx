@@ -33,7 +33,20 @@ export default function MapComponent() {
           }
         ).addTo(map);
 
-        L.marker([-7.7956, 110.3695])
+        // Ikon penanda bawaan Leaflet gagal dimuat oleh bundler (tampil sebagai gambar rusak "?"),
+        // jadi penanda digambar sendiri dengan SVG sehingga tidak butuh berkas gambar.
+        const pin = L.divIcon({
+          className: "",
+          iconSize: [28, 38],
+          iconAnchor: [14, 38],
+          popupAnchor: [0, -34],
+          html: `<svg width="28" height="38" viewBox="0 0 28 38" aria-hidden="true">
+            <path d="M14 1C7 1 1.5 6.4 1.5 13.2 1.5 22.6 14 37 14 37s12.5-14.4 12.5-23.8C26.5 6.4 21 1 14 1z" fill="#1D5A8C" stroke="#ffffff" stroke-width="2"/>
+            <circle cx="14" cy="13.5" r="4.8" fill="#ffffff"/>
+          </svg>`,
+        });
+
+        L.marker([-7.7956, 110.3695], { icon: pin, title: "Daerah Istimewa Yogyakarta", alt: "Penanda lokasi studi: Daerah Istimewa Yogyakarta" })
           .bindPopup(
             `<div class="text-center">
               <h3 class="font-bold">Daerah Istimewa Yogyakarta</h3>
