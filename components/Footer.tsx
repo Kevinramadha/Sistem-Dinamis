@@ -1,5 +1,7 @@
 "use client";
 
+import { IDENTITAS } from "@/lib/identitas";
+
 const navLinks = [
   { href: "/", label: "Beranda" },
   { href: "/model", label: "Model" },
@@ -60,8 +62,6 @@ export default function Footer() {
               </h3>
               <div className="space-y-3">
                 {[
-                  { key: "Peneliti", val: "Kevin Atha Fathoni Ramadha" },
-                  { key: "NIM", val: "222212691" },
                   { key: "Lokasi", val: "DIY, Indonesia" },
                   { key: "Periode", val: "2025 – 2050" },
                 ].map((item, i) => (
@@ -95,6 +95,34 @@ export default function Footer() {
               </ul>
             </div>
           </div>
+
+          {/* Identitas skripsi */}
+          <section
+            aria-labelledby="identitas-skripsi"
+            className="rounded-2xl p-6 mb-10"
+            style={{ background: '#112a43', border: '1px solid #1e3a52' }}
+          >
+            <h3 id="identitas-skripsi" className="text-xs font-semibold mb-3 uppercase tracking-widest" style={{ color: '#F4CD53', fontFamily: 'Sora, sans-serif' }}>
+              Identitas Skripsi
+            </h3>
+            <p className="text-sm font-semibold leading-relaxed mb-5" style={{ color: '#e6eef6', fontFamily: 'Sora, sans-serif' }}>
+              {IDENTITAS.judul}
+            </p>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-4" style={{ fontFamily: 'DM Sans, sans-serif' }}>
+              {[
+                { key: "Nama", val: IDENTITAS.nama },
+                { key: "NIM", val: IDENTITAS.nim },
+                { key: "Tahun Lulus", val: IDENTITAS.tahunLulus },
+                { key: "Program Studi", val: `${IDENTITAS.programStudi}, ${IDENTITAS.institusi}` },
+                { key: "Dosen Pembimbing", val: IDENTITAS.dosenPembimbing },
+              ].map((item) => (
+                <div key={item.key}>
+                  <dt className="text-xs" style={{ color: '#7d9bb5' }}>{item.key}</dt>
+                  <dd className="text-sm mt-0.5" style={{ color: '#d3e1ee', margin: 0 }}>{item.val}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
 
           {/* Bottom bar */}
           <div className="flex flex-col md:flex-row items-center justify-between pt-8 gap-4" style={{ borderTop: '1px solid #1e3a52' }}>
