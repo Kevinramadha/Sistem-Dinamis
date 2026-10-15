@@ -122,8 +122,10 @@ Chart.js + react-chartjs-2 · Leaflet + react-leaflet · `@sdeverywhere/runtime`
 
 | | |
 |---|---|
-| Judul | Simulasi Sistem Dinamis Pariwisata Berkelanjutan DIY |
+| Judul skripsi | Perancangan Aplikasi Simulasi Kebijakan Pariwisata dengan Sistem Dinamis Menggunakan Statistik Resmi Negara dan Data Citra Satelit di Provinsi Daerah Istimewa Yogyakarta |
 | Peneliti | Kevin Atha Fathoni Ramadha (222212691) |
+| Tahun lulus | 2026 |
+| Dosen pembimbing | Dr. Eng. Arie Wahyu Wijayanto, S.S.T., M.T. |
 | Program Studi | Komputasi Statistik, Program Diploma IV — Politeknik Statistika STIS |
 | Lokasi studi | Daerah Istimewa Yogyakarta |
 | Horizon simulasi | 2025 – 2050 |
